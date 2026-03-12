@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5daecc5b8e9d64d189cd64eb8cb390d3, type: 3}
+  m_Name: NewTowerData
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Data.TowerData
+  m_towerName: Standard Tower
+  m_defaultGroundPrefab: {fileID: 6434753067485243638, guid: 0233600ea876243af85637dfa371794c, type: 3}
+  m_floors:
+  - EnemyPrefabData: {fileID: 11400000, guid: 6dc6402dcc1494ae7a87d4c8c31816bb, type: 2}
+    EnemyCount: 5
+    SpawnInterval: 1
+    PreSpawnEnemies: 1
+    TrainSpacing: 1
+    SpawnPackets: []
+  - EnemyPrefabData: {fileID: 11400000, guid: 6dc6402dcc1494ae7a87d4c8c31816bb, type: 2}
+    EnemyCount: 5
+    SpawnInterval: 1
+    PreSpawnEnemies: 1
+    TrainSpacing: 1
+    SpawnPackets: []

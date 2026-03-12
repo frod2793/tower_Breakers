@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Forest_BG
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 4
+      m_BuildTarget: DefaultTexturePlatform
+      m_MaxTextureSize: 4096
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: -1
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 0
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: da12253629964114a8bd25cd44f702c6, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - 286a4551889aeb14ea582f7457c94017: 21300000
+    - 53333951e5563e04dbc41a67b7c21e49: 21300000
+    - 33c67712ef8d44a4e836eccdd2da7495: 21300000
+    - 9539239211de4a74ba1ab37590ce59cd: 21300000
+    - ddf8baf393e43a14883a46ccad07a5ae: 21300000
+    - 715eabd5494626b43b448642245e013e: 21300000
+    - eed0dc0664ecb454f8e8f5b1be670954: 21300000
+    - aec87c0765b66324bafd7ac51c65f6ec: 21300000
+    - 7f36fea71eb617945b445b235e149a35: 21300000
+    - 9c2f87c819c1425428f8aaefea0e9d49: 21300000
+    - 56e8d539f5b1efc46ae7d202f60ae326: 21300000
+    - 630bffa9d5c418c41af45b6b328dab82: 21300000
+    - 2f15b60bbe7df7f4ea54cf1abca024d2: 21300000
+    - 7b601b9cad2ff9e49b2b20c182521830: 21300000
+    - eaf58ecd48e46ab4fb5218fdc0798a04: 21300000
+    - dc5d705ece2289741887da29325b1970: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 286a4551889aeb14ea582f7457c94017, type: 3}
+  - {fileID: 21300000, guid: 53333951e5563e04dbc41a67b7c21e49, type: 3}
+  - {fileID: 21300000, guid: 33c67712ef8d44a4e836eccdd2da7495, type: 3}
+  - {fileID: 21300000, guid: 9539239211de4a74ba1ab37590ce59cd, type: 3}
+  - {fileID: 21300000, guid: ddf8baf393e43a14883a46ccad07a5ae, type: 3}
+  - {fileID: 21300000, guid: 715eabd5494626b43b448642245e013e, type: 3}
+  - {fileID: 21300000, guid: eed0dc0664ecb454f8e8f5b1be670954, type: 3}
+  - {fileID: 21300000, guid: aec87c0765b66324bafd7ac51c65f6ec, type: 3}
+  - {fileID: 21300000, guid: 7f36fea71eb617945b445b235e149a35, type: 3}
+  - {fileID: 21300000, guid: 9c2f87c819c1425428f8aaefea0e9d49, type: 3}
+  - {fileID: 21300000, guid: 56e8d539f5b1efc46ae7d202f60ae326, type: 3}
+  - {fileID: 21300000, guid: 630bffa9d5c418c41af45b6b328dab82, type: 3}
+  - {fileID: 21300000, guid: 2f15b60bbe7df7f4ea54cf1abca024d2, type: 3}
+  - {fileID: 21300000, guid: 7b601b9cad2ff9e49b2b20c182521830, type: 3}
+  - {fileID: 21300000, guid: eaf58ecd48e46ab4fb5218fdc0798a04, type: 3}
+  - {fileID: 21300000, guid: dc5d705ece2289741887da29325b1970, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - Bird_2
+  - Small_Bush
+  - Rock
+  - Bird_1
+  - Tile
+  - Background
+  - Tree
+  - Big_Grass
+  - Big_Bush
+  - Bird_3
+  - Bird_5
+  - Bird_4
+  - Flower
+  - Small_Grass
+  - Cloud
+  - Background_Outline
+  m_RenderDataMap: {}
+  m_Tag: Forest_BG
+  m_IsVariant: 0

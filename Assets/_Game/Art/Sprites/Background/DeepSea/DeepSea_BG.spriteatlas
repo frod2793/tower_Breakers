@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: DeepSea_BG
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 4
+      m_BuildTarget: DefaultTexturePlatform
+      m_MaxTextureSize: 4096
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: -1
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 0
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: 6a3512bd14fdd3c4fa4c12bd0cfe93aa, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - d399694298824e045a7fd52090999e24: 7760295261869778992
+    - d399694298824e045a7fd52090999e24: -5436802619434398293
+    - d399694298824e045a7fd52090999e24: -8654290394840056157
+    - d399694298824e045a7fd52090999e24: -398976733762393548
+    - d399694298824e045a7fd52090999e24: 8455658351031947288
+    - d399694298824e045a7fd52090999e24: 4910504079231180571
+    - d399694298824e045a7fd52090999e24: -5083986668672301617
+    - d399694298824e045a7fd52090999e24: 4871596408121196270
+    - 2a9e19824a96a5f4d9e3cd0866418a29: 21300000
+    - a5498b3505c699a45a58791c1534c506: 8556319996051563299
+    - a5498b3505c699a45a58791c1534c506: 6722886776455125311
+    - a5498b3505c699a45a58791c1534c506: -3614582503460171793
+    - acfcf9d51df3655468e329542f119ee5: 21300000
+    - ac9506be55ec09942aeb69a07cac13a4: -3271108594756287175
+    - ac9506be55ec09942aeb69a07cac13a4: 8480034582714276303
+    - ac9506be55ec09942aeb69a07cac13a4: -2265980911195668551
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 7760295261869778992, guid: d399694298824e045a7fd52090999e24, type: 3}
+  - {fileID: -5436802619434398293, guid: d399694298824e045a7fd52090999e24, type: 3}
+  - {fileID: -8654290394840056157, guid: d399694298824e045a7fd52090999e24, type: 3}
+  - {fileID: -398976733762393548, guid: d399694298824e045a7fd52090999e24, type: 3}
+  - {fileID: 8455658351031947288, guid: d399694298824e045a7fd52090999e24, type: 3}
+  - {fileID: 4910504079231180571, guid: d399694298824e045a7fd52090999e24, type: 3}
+  - {fileID: -5083986668672301617, guid: d399694298824e045a7fd52090999e24, type: 3}
+  - {fileID: 4871596408121196270, guid: d399694298824e045a7fd52090999e24, type: 3}
+  - {fileID: 21300000, guid: 2a9e19824a96a5f4d9e3cd0866418a29, type: 3}
+  - {fileID: 8556319996051563299, guid: a5498b3505c699a45a58791c1534c506, type: 3}
+  - {fileID: 6722886776455125311, guid: a5498b3505c699a45a58791c1534c506, type: 3}
+  - {fileID: -3614582503460171793, guid: a5498b3505c699a45a58791c1534c506, type: 3}
+  - {fileID: 21300000, guid: acfcf9d51df3655468e329542f119ee5, type: 3}
+  - {fileID: -3271108594756287175, guid: ac9506be55ec09942aeb69a07cac13a4, type: 3}
+  - {fileID: 8480034582714276303, guid: ac9506be55ec09942aeb69a07cac13a4, type: 3}
+  - {fileID: -2265980911195668551, guid: ac9506be55ec09942aeb69a07cac13a4, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - DeepSea_Atlas_7
+  - DeepSea_Atlas_6
+  - DeepSea_Atlas_5
+  - DeepSea_Atlas_4
+  - DeepSea_Atlas_3
+  - DeepSea_Atlas_2
+  - DeepSea_Atlas_1
+  - DeepSea_Atlas_0
+  - DeepSea_BG
+  - Middle_Fish_0
+  - Middle_Fish_1
+  - Middle_Fish_2
+  - Bubble
+  - Upper_Fish_2
+  - Upper_Fish_1
+  - Upper_Fish_0
+  m_RenderDataMap: {}
+  m_Tag: DeepSea_BG
+  m_IsVariant: 0
