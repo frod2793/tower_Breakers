@@ -15,6 +15,7 @@ namespace TowerBreakers.Enemy.View
 
         #region 내부 변수
         private SpriteRenderer[] m_renderers;
+        private Animator m_cachedAnimator;
         #endregion
 
         #region 초기화
@@ -22,9 +23,25 @@ namespace TowerBreakers.Enemy.View
         {
             if (m_spumPrefabs != null)
             {
-                // 애니메이션 상태 및 컨트롤러 초기화 (풀링 재사용 시 필수)
-                m_spumPrefabs.OverrideControllerInit();
-                m_spumPrefabs.PlayAnimation(global::PlayerState.IDLE, 0);
+                // Animator 참조가 없으면 자식에서 자동 탐색
+                if (m_spumPrefabs._anim == null)
+                {
+                    m_spumPrefabs._anim = m_spumPrefabs.GetComponentInChildren<Animator>();
+                }
+
+                if (m_spumPrefabs._anim != null)
+                {
+                    // 애니메이션 상태 및 컨트롤러 초기화 (풀링 재사용 시 필수)
+                    m_spumPrefabs.OverrideControllerInit();
+                    m_spumPrefabs.PlayAnimation(global::PlayerState.IDLE, 0);
+                }
+                else
+                {
+                    Debug.LogError($"[EnemyView] {gameObject.name}: SPUM Animator를 찾을 수 없습니다.");
+                }
+
+                // [추가]: 애니메이터 캐싱
+                m_cachedAnimator = m_spumPrefabs._anim;
             }
 
             // [추가]: 자식들의 모든 렌더러를 캐싱하여 피격 효과에 사용
@@ -34,11 +51,29 @@ namespace TowerBreakers.Enemy.View
 
         public void PlayAnimation(global::PlayerState state, int index = 0)
         {
-            if (m_spumPrefabs != null)
+            if (m_spumPrefabs == null) return;
+
+            // StateAnimationPairs가 비어있으면 초기화가 안 된 상태이므로 재초기화 시도
+            if (m_spumPrefabs.StateAnimationPairs == null || m_spumPrefabs.StateAnimationPairs.Count == 0)
             {
-                m_spumPrefabs.PlayAnimation(state, index);
+                Debug.LogWarning($"[EnemyView] StateAnimationPairs 미초기화 감지 — OverrideControllerInit 재시도");
+                m_spumPrefabs.OverrideControllerInit();
             }
+
+            string key = state.ToString();
+            if (!m_spumPrefabs.StateAnimationPairs.ContainsKey(key))
+            {
+                Debug.LogWarning($"[EnemyView] 애니메이션 키 '{key}' 없음 — 스킵");
+                return;
+            }
+
+        m_spumPrefabs.PlayAnimation(state, index);
         }
+
+        /// <summary>
+        /// [설명]: 캐싱된 애니메이터를 반환합니다. (성능 최적화용)
+        /// </summary>
+        public Animator CachedAnimator => m_cachedAnimator;
         #endregion
 
         #region 피격 효과 (Visual Feedback)

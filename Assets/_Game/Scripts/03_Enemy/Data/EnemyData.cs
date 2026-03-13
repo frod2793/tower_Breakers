@@ -5,6 +5,9 @@ namespace TowerBreakers.Enemy.Data
     public enum EnemyType
     {
         Normal,
+        Tank,
+        SupportBuffer,
+        SupportShooter,
         Elite,
         Boss
     }
@@ -36,16 +39,32 @@ namespace TowerBreakers.Enemy.Data
 
         [SerializeField, Tooltip("처치 시 획득 포인트/재화")]
         private int m_rewardPoints = 10;
+
+        [Header("서포터 설정")]
+        [SerializeField, Tooltip("특수 능력 쿨다운 주기")]
+        private float m_abilityCooldown = 5.0f;
+
+        [SerializeField, Tooltip("버프 HP 회복량")]
+        private int m_buffHealAmount = 10;
+
+        [SerializeField, Tooltip("투사체 프리팹")]
+        private GameObject m_projectilePrefab;
+
+        [SerializeField, Tooltip("투사체 밀기 거리")]
+        private float m_projectilePushDistance = 8.0f;
+
+        [SerializeField, Tooltip("능력 시전 모션 시간")]
+        private float m_abilityDuration = 0.5f;
         #endregion
 
         #region 프로퍼티
         /// <summary>
-        /// [설명]: 적의 타입(일반, 엘리트, 보스)을 반환합니다.
+        /// [설명]: 적의 타입(일반, 탱커, 서포터, 엘리트, 보스)을 반환합니다.
         /// </summary>
         public EnemyType Type => m_enemyType;
 
         /// <summary>
-        /// [설명]: 적 생성 시 사용할 오리지널 프리팹입니다.
+        /// [설명]: 적 생성 시 사용할 오리지널 프리닥입니다.
         /// </summary>
         public GameObject EnemyPrefab => m_enemyPrefab;
 
@@ -54,6 +73,13 @@ namespace TowerBreakers.Enemy.Data
         public float PushForce => m_pushForce;
         public float MoveSpeed => m_moveSpeed;
         public int RewardPoints => m_rewardPoints;
+
+        // 서포터 전용 프로퍼티
+        public float AbilityCooldown => m_abilityCooldown;
+        public int BuffHealAmount => m_buffHealAmount;
+        public GameObject ProjectilePrefab => m_projectilePrefab;
+        public float ProjectilePushDistance => m_projectilePushDistance;
+        public float AbilityDuration => m_abilityDuration;
         #endregion
     }
 }

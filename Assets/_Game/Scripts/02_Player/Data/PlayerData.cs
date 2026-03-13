@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace TowerBreakers.Player.Data
 {
@@ -10,8 +11,8 @@ namespace TowerBreakers.Player.Data
     {
         #region 에디터 설정
         [Header("기본 스탯")]
-        [SerializeField, Tooltip("최대 체력")]
-        private int m_maxHp = 100;
+        [SerializeField, FormerlySerializedAs("m_maxHp"), Tooltip("최대 생명 횟수 (피격 가능 횟수)")]
+        private int m_maxLifeCount = 3;
 
         [SerializeField, Tooltip("기본 공격력")]
         private int m_attackPower = 10;
@@ -39,13 +40,34 @@ namespace TowerBreakers.Player.Data
         [SerializeField, Tooltip("스킬 3 (배시) 데미지 배율")]
         private float m_skill3Multiplier = 1.2f;
 
+        [Header("방어 설정")]
+        [SerializeField, Tooltip("방어 가능 거리 (이 범위 내의 적만 스턴에 걸림)")]
+        private float m_defendRange = 2.5f;
+
+        [SerializeField, Tooltip("방어 시 적 행렬 밀어내기 거리")]
+        private float m_defendPushbackDistance = 3.0f;
+
+        [SerializeField, Tooltip("벽 압착 데미지 배율 (밀린 거리 × 배율 = 데미지)")]
+        private float m_wallCrushDamageMultiplier = 10f;
+
         [Header("장비 설정")]
         [SerializeField, Tooltip("게임 시작 시 기본으로 장착될 무기")]
         private WeaponData m_defaultWeapon;
         #endregion
 
         #region 프로퍼티
-        public int MaxHp => m_maxHp;
+        // Note: The TakeDamage method and related properties (IsDead, CurrentLifeCount) typically belong to a runtime PlayerModel class,
+        // not a ScriptableObject PlayerData. This implementation is based on the provided instruction.
+        public bool IsDead { get; private set; } // Placeholder for IsDead, assuming it exists in the context where TakeDamage is used
+        public int CurrentLifeCount { get; private set; } // Placeholder for CurrentLifeCount, assuming it exists in the context where TakeDamage is used
+
+        public void TakeDamage(int damage)
+        {
+            if (IsDead) return;
+            // [변경]: 데미지 수치와 상관없이 1회 피격 시 생명 1 감소
+            CurrentLifeCount -= 1;
+        }
+        public int MaxLifeCount => m_maxLifeCount;
         public int AttackPower => m_attackPower;
         public float AttackRange => m_attackRange;
         public float AttackSpeed => m_attackSpeed;
@@ -54,6 +76,9 @@ namespace TowerBreakers.Player.Data
         public float Skill1Multiplier => m_skill1Multiplier;
         public float Skill2Multiplier => m_skill2Multiplier;
         public float Skill3Multiplier => m_skill3Multiplier;
+        public float DefendRange => m_defendRange;
+        public float DefendPushbackDistance => m_defendPushbackDistance;
+        public float WallCrushDamageMultiplier => m_wallCrushDamageMultiplier;
         public WeaponData DefaultWeapon => m_defaultWeapon;
         #endregion
     }

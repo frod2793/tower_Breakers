@@ -3,16 +3,20 @@ using TowerBreakers.Player.Logic;
 using TowerBreakers.Player.View;
 using TowerBreakers.Enemy.Factory;
 using TowerBreakers.Enemy.Logic;
-using TowerBreakers.Combat;
+using TowerBreakers.Combat.Logic;
 using TowerBreakers.Combat.View;
 using TowerBreakers.Tower.Logic;
 using TowerBreakers.UI.HUD;
 using TowerBreakers.UI.Screens;
-using TowerBreakers.Environment;
+using TowerBreakers.Environment.Logic;
+using TowerBreakers.Environment.View;
+using TowerBreakers.Input.Logic;
 using TowerBreakers.Core.Events;
 using TowerBreakers.Core.GameState;
 using TowerBreakers.Core;
 using TowerBreakers.Tower.Data;
+using TowerBreakers.UI.Effects.View;
+using TowerBreakers.UI.Effects.Logic;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -50,6 +54,19 @@ namespace TowerBreakers.Core.DI
 
         [SerializeField, Tooltip("장비 UI 뷰")]
         private TowerBreakers.UI.Equipment.EquipmentView m_equipmentView;
+
+        [SerializeField, Tooltip("HUD UI 뷰")]
+        private HUDView m_hudView;
+
+        [SerializeField, Tooltip("층 전환 연출 프리젠터")]
+        private TowerBreakers.Tower.View.TowerTransitionPresenter m_towerTransitionPresenter;
+
+        [Header("데미지 텍스트 설정")]
+        [SerializeField, Tooltip("데미지 텍스트 프리팹 (DamageTextView)")]
+        private DamageTextView m_damageTextPrefab;
+
+        [SerializeField, Tooltip("데미지 텍스트가 생성될 부모 트랜스폼 (World Space Canvas 등)")]
+        private Transform m_damageTextParent;
         #endregion
 
         protected override void Configure(IContainerBuilder builder)
@@ -64,15 +81,24 @@ namespace TowerBreakers.Core.DI
             RegisterSceneComponent(builder, m_playerView, "PlayerView", isRequired: true);
             RegisterSceneComponent(builder, m_playerEquipment, "PlayerEquipment");
             RegisterSceneComponent(builder, m_combatEffectPresenter, "CombatEffectPresenter");
+            RegisterSceneComponent(builder, m_towerTransitionPresenter, "TowerTransitionPresenter");
 
-            // PlayerPushReceiver → EnemyFactory에 지연 주입
+            // PlayerPushReceiver → EnemyFactory에 지연 주입 및 초기화
             if (m_playerPushReceiver != null)
             {
                 builder.RegisterComponent(m_playerPushReceiver);
                 builder.RegisterBuildCallback(resolver =>
                 {
+                    // 1. 적군 팩토리에 플레이어 참조 전달
                     var factory = resolver.Resolve<EnemyFactory>();
                     factory.SetPlayerPushReceiver(m_playerPushReceiver);
+
+                    // 2. 플레이어 밀기 수신자 자체 초기화 (모델 및 이벤트 버스 주입)
+                    var model = resolver.Resolve<PlayerModel>();
+                    var eventBus = resolver.Resolve<Core.Events.IEventBus>();
+                    m_playerPushReceiver.Initialize(model, eventBus);
+                    
+                    Debug.Log("[GameLifetimeScope] PlayerPushReceiver 초기화 완료");
                 });
             }
             else
@@ -108,17 +134,29 @@ namespace TowerBreakers.Core.DI
             // ── Enemy 시스템 등록 ──
             builder.Register<EnemyFactory>(Lifetime.Singleton);
             builder.Register<EnemySpawner>(Lifetime.Singleton);
+            builder.Register<ProjectileFactory>(Lifetime.Singleton);
 
             // ── Tower 시스템 등록 ──
             builder.Register<TowerManager>(Lifetime.Singleton);
 
             // ── Combat 시스템 등록 ──
-            builder.Register<CombatSystem>(Lifetime.Singleton);
+            builder.Register<CombatSystem>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
             // ── UI 시스템 등록 (HUD & Screens) ──
             builder.Register<HUDViewModel>(Lifetime.Singleton);
             builder.Register<GameOverViewModel>(Lifetime.Singleton);
             builder.Register<TowerBreakers.UI.Equipment.EquipmentViewModel>(Lifetime.Singleton);
+
+            // ── 데미지 텍스트 시스템 등록 ──
+            if (m_damageTextPrefab != null)
+            {
+                builder.RegisterInstance(new DamageTextPool(m_damageTextPrefab, m_damageTextParent)).AsSelf();
+                builder.RegisterEntryPoint<DamageTextPresenter>();
+            }
+            else
+            {
+                Debug.LogWarning("[GameLifetimeScope] DamageTextPrefab이 설정되지 않았습니다.");
+            }
 
             // EquipmentView 등록 및 ViewModel 연결
             if (m_equipmentView != null)
@@ -130,6 +168,23 @@ namespace TowerBreakers.Core.DI
                     var vm = resolver.Resolve<TowerBreakers.UI.Equipment.EquipmentViewModel>();
                     cachedEquipmentView.Initialize(vm);
                 });
+            }
+
+            // HUDView 등록 및 ViewModel 연결 (Part 6-1)
+            if (m_hudView != null)
+            {
+                builder.RegisterComponent(m_hudView);
+                var cachedHudView = m_hudView;
+                builder.RegisterBuildCallback(resolver =>
+                {
+                    var vm = resolver.Resolve<HUDViewModel>();
+                    cachedHudView.Initialize(vm);
+                    Debug.Log("[GameLifetimeScope] HUDView 초기화 완료");
+                });
+            }
+            else
+            {
+                Debug.LogWarning("[GameLifetimeScope] HUDView가 인스펙터에 설정되지 않았습니다.");
             }
 
             // ── Player States 등록 ──

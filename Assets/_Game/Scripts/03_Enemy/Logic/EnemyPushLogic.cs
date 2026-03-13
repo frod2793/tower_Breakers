@@ -9,8 +9,6 @@ namespace TowerBreakers.Enemy.Logic
     public class EnemyPushLogic : MonoBehaviour
     {
         #region 에디터 설정
-        [SerializeField, Tooltip("밀기 감지 거리")]
-        private float m_pushDistance = 1.0f;
         #endregion
 
         #region 내부 필드
@@ -21,7 +19,21 @@ namespace TowerBreakers.Enemy.Logic
         private EnemyPushLogic m_aheadEnemy;
         private EnemyPushLogic m_followerEnemy;
         
+        // [최적화]: 리더 및 상태 캐싱을 위한 필드
+        private static int s_generation = 0;
+        private EnemyPushLogic m_cachedLeader;
+        private int m_cachedLeaderGen = -1;
+
+        // [최적화]: 그룹 차단 여부 캐싱 (프레임 단위)
+        private bool m_cachedGroupBlocked;
+        private int m_cachedBlockedGen = -1;
+
         public float TrainSpacing { get; set; } = 1.5f;
+
+        /// <summary>
+        /// [설명]: 현재 추적 중인 플레이어 밀림 수신 객체입니다.
+        /// </summary>
+        public PlayerPushReceiver PlayerReceiver => m_target;
         #endregion
 
         #region 초기화
@@ -49,9 +61,15 @@ namespace TowerBreakers.Enemy.Logic
         {
             m_aheadEnemy = null;
             m_followerEnemy = null;
+            InvalidateLeaderCache(); // 캐시 무효화
             UpdateCollider();
             enabled = true;
         }
+
+        /// <summary>
+        /// [설명]: 대열이 변경될 때 모든 적 캐릭터의 리더 캐시를 무효화합니다.
+        /// </summary>
+        public static void InvalidateLeaderCache() => s_generation++;
         #endregion
 
         #region 링크드 리스트 및 기차 이동 로직
@@ -65,6 +83,7 @@ namespace TowerBreakers.Enemy.Logic
             {
                 m_aheadEnemy.SetFollower(this);
             }
+            InvalidateLeaderCache(); // 대열 변경 시 무효화
             UpdateCollider();
         }
 
@@ -101,7 +120,30 @@ namespace TowerBreakers.Enemy.Logic
 
             m_aheadEnemy = null;
             m_followerEnemy = null;
+            InvalidateLeaderCache(); // 대열 변경 시 무효화
             UpdateCollider();
+        }
+
+        /// <summary>
+        /// [설명]: 현재 나를 포함한 이 대열의 맨 앞 리더를 찾아 반환합니다.
+        /// </summary>
+        public EnemyPushLogic GetLeader()
+        {
+            // [최적화]: 세대 번호가 같으면 캐싱된 리더 반환
+            if (m_cachedLeaderGen == s_generation && m_cachedLeader != null)
+            {
+                return m_cachedLeader;
+            }
+
+            EnemyPushLogic current = this;
+            while (current.m_aheadEnemy != null && current.m_aheadEnemy.gameObject.activeInHierarchy)
+            {
+                current = current.m_aheadEnemy;
+            }
+
+            m_cachedLeader = current;
+            m_cachedLeaderGen = s_generation;
+            return current;
         }
         #endregion
 
@@ -113,38 +155,83 @@ namespace TowerBreakers.Enemy.Logic
         {
             if (m_target == null) return;
 
-            float distance = Vector2.Distance(transform.position, m_target.transform.position);
-            if (distance <= m_pushDistance)
+            // X축 거리 기반으로 밀기 판정
+            float xDist = transform.position.x - m_target.transform.position.x;
+            
+            // 적이 플레이어 근처에 있거나 이미 겹쳐진 상태(Overlapping)에서도 밀기 작동
+            if (xDist >= -1.0f && xDist <= 1.2f)
             {
-                m_target.ReceivePush(m_force);
+                m_target.ApplyPushForce(m_force);
             }
         }
 
         /// <summary>
-        /// [설명]: 레이캐스트 물리 연산 대신 앞 연대의 좌표만 판독하여 전진 가능 여부를 확인합니다.
+        /// [설명]: 플레이어와 밀착(밀기 범위 내)해 있는지 여부를 반환합니다.
         /// </summary>
-        /// <param name="gap">유지할 최소 간격</param>
-        /// <returns>막혀있으면 true</returns>
+        public bool IsTouchingPlayer(float gap)
+        {
+            if (m_target == null) return false;
+            float distToPlayer = transform.position.x - m_target.transform.position.x;
+            
+            return distToPlayer >= -1.0f && distToPlayer <= gap;
+        }
+
+        /// <summary>
+        /// [설명]: 현재 적이 속한 그룹 전체가 막혀있는지 확인합니다. (리더의 상태를 따름)
+        /// </summary>
+        public bool IsGroupBlocked(float gap)
+        {
+            // [최적화]: 리더를 찾아서 그 결과를 재사용
+            var leader = GetLeader();
+            
+            // 리더가 현재 프레임에 이미 계산했다면 그 결과 반환
+            if (leader.m_cachedBlockedGen == Time.frameCount)
+            {
+                return leader.m_cachedGroupBlocked;
+            }
+
+            // 리더가 직접 계산하여 캐싱
+            leader.m_cachedGroupBlocked = leader.CheckLeaderBlocked(gap);
+            leader.m_cachedBlockedGen = Time.frameCount;
+            
+            return leader.m_cachedGroupBlocked;
+        }
+
+        /// <summary>
+        /// [설명]: 리더 본인이 막혀있는지 확인하는 내부 로직입니다.
+        /// </summary>
+        private bool CheckLeaderBlocked(float gap)
+        {
+            if (m_target == null) return false;
+            
+            // [통합 판정]: 정지 판정 기준 거리를 1.3f(gap + 0.2f)로 통일
+            bool isTouching = IsTouchingPlayer(gap + 0.2f); 
+            bool isPlayerAtWall = m_target.IsAtWall;
+
+            // 리더가 플레이어와 닿아 있고, 플레이어가 벽 때문에 더 밀릴 수 없을 때 그룹 전체 정지
+            return isTouching && isPlayerAtWall;
+        }
+
+        /// <summary>
+        /// [설명]: 리더가 플레이어를 벽으로 밀어붙이고 있는지 여부를 정확히 판정합니다. (데미지용)
+        /// </summary>
+        public bool IsLeaderPushingAtWall(float gap)
+        {
+            var leader = GetLeader();
+            if (leader != this) return false; 
+            
+            // IsGroupBlocked 상태이면서 플레이어와 밀착(정지 판정과 동일한 1.3f)해 있는지 확인
+            return IsGroupBlocked(gap) && IsTouchingPlayer(gap + 0.2f);
+        }
+
+        /// <summary>
+        /// [설명]: 개별적으로 전진 가능 여부를 확인합니다. (기존 대열 간격 유지용 보조 로직)
+        /// </summary>
         public bool IsBlocked(float gap)
         {
-            // 1. 전방에 위치한 적(동료)의 공간 체크 (최우선)
-            if (m_aheadEnemy != null && m_aheadEnemy.gameObject.activeInHierarchy)
-            {
-                // 적은 왼쪽으로 전진하므로 내 X가 클 수록 뒤에 있음
-                float distance = transform.position.x - m_aheadEnemy.transform.position.x;
-                if (distance <= gap) return true;
-                
-                return false;
-            }
-
-            // 2. 앞선 적이 없다면(리더 적일 경우) 플레이어와의 접촉 체크
-            if (m_target != null)
-            {
-                float distToPlayer = transform.position.x - m_target.transform.position.x;
-                if (distToPlayer <= gap) return true;
-            }
-
-            return false;
+            // [최적화]: IsGroupBlocked()와 IsBlocked()의 로직을 통합하여 O(n) 재귀 제거
+            // 기차 대열 방식에서는 "그룹이 막혀있는지"와 "내 앞이 막혀있는지"가 동일한 결과여야 부드럽게 움직임
+            return IsGroupBlocked(gap);
         }
         #endregion
         

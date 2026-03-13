@@ -2,6 +2,7 @@ using UnityEngine;
 using TowerBreakers.Core.Events;
 using TowerBreakers.Tower.Data;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 
 namespace TowerBreakers.Tower.Logic
 {
@@ -14,6 +15,7 @@ namespace TowerBreakers.Tower.Logic
         private readonly IEventBus m_eventBus;
         private TowerData m_currentTower;
         private int m_currentFloorIndex = 0;
+        private readonly Dictionary<int, int> m_activeEnemiesPerFloor = new Dictionary<int, int>();
         #endregion
 
         #region 프로퍼티
@@ -28,6 +30,8 @@ namespace TowerBreakers.Tower.Logic
             m_eventBus = eventBus;
             m_currentTower = towerData;
             m_currentFloorIndex = 0;
+
+            m_eventBus.Subscribe<OnEnemyKilled>(HandleEnemyKilled);
             Debug.Log($"[TowerManager] '{towerData?.TowerName}' 데이터로 초기화 완료");
         }
 
@@ -36,11 +40,48 @@ namespace TowerBreakers.Tower.Logic
         /// </summary>
         public void NextFloor()
         {
+            if (IsFinished) return;
+
             m_currentFloorIndex++;
-            if (!IsFinished)
+            Debug.Log($"[TowerManager] {m_currentFloorIndex}층으로 이동");
+            m_eventBus.Publish(new OnFloorCleared(m_currentFloorIndex));
+        }
+
+        /// <summary>
+        /// [설명]: 특정 층에 스폰된 적의 수를 등록합니다.
+        /// </summary>
+        public void RegisterEnemies(int floorIndex, int count)
+        {
+            if (!m_activeEnemiesPerFloor.ContainsKey(floorIndex))
+                m_activeEnemiesPerFloor[floorIndex] = 0;
+            
+            m_activeEnemiesPerFloor[floorIndex] += count;
+            Debug.Log($"[TowerManager] Floor {floorIndex} 적 등록: {count}명 (합계: {m_activeEnemiesPerFloor[floorIndex]})");
+        }
+
+        private void HandleEnemyKilled(OnEnemyKilled evt)
+        {
+            if (m_activeEnemiesPerFloor.ContainsKey(evt.FloorIndex))
             {
-                m_eventBus.Publish(new OnFloorCleared(m_currentFloorIndex));
+                m_activeEnemiesPerFloor[evt.FloorIndex]--;
+                Debug.Log($"[TowerManager] Floor {evt.FloorIndex} 적 처치. 남은 수: {m_activeEnemiesPerFloor[evt.FloorIndex]}");
+
+                // 현재 진행 중인 층의 모든 적을 처치했다면 1초 후 다음 층 준비 이벤트 발행
+                if (evt.FloorIndex == m_currentFloorIndex && m_activeEnemiesPerFloor[evt.FloorIndex] <= 0)
+                {
+                    HandleFloorClearedDelayedAsync().Forget();
+                }
             }
+        }
+
+        /// <summary>
+        /// [설명]: 적 처치 완료 후 1초 대기 후에 'GO' 대기 상태로 전환합니다.
+        /// </summary>
+        private async UniTaskVoid HandleFloorClearedDelayedAsync()
+        {
+            Debug.Log($"[TowerManager] Floor {m_currentFloorIndex} 처치 완료! 1초 후 'GO' 표시 예정");
+            await UniTask.Delay(1000);
+            m_eventBus.Publish(new OnFloorReadyForNext());
         }
 
         /// <summary>

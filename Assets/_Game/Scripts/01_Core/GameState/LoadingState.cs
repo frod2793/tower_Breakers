@@ -12,7 +12,7 @@ namespace TowerBreakers.Core.GameState
         {
             Debug.Log("[LoadingState] 진입: 에셋 및 데이터 로딩 시작");
             // TODO: 실제 로딩 로직 구현 (Addressables 등)
-            await UniTask.Delay(500); // 임시 딜레이
+            await UniTask.Yield(); // 1프레임 대기 후 즉시 완료
         }
 
         public UniTask OnExit()

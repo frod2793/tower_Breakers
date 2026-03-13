@@ -15,6 +15,10 @@ namespace TowerBreakers.Enemy.Logic
         private readonly EnemyPushLogic m_pushLogic;
         #endregion
 
+        #region 내부 변수
+        private bool m_isMoving = false;
+        #endregion
+
         public EnemyPushState(EnemyView view, EnemyData data, EnemyPushLogic pushLogic)
         {
             m_view = view;
@@ -24,24 +28,17 @@ namespace TowerBreakers.Enemy.Logic
 
         public void OnEnter()
         {
-            // 애니메이션 재생 등
+            m_isMoving = false;
+            // 초기 애니메이션 설정
+            m_view.PlayAnimation(global::PlayerState.IDLE);
         }
 
         public void OnExit() { }
 
         public void OnTick()
         {
-            // 기차 대열 유지를 위해 전방 확인 (간격 1.5 유지)
-            if (!m_pushLogic.IsBlocked(1.5f))
-            {
-                // Y축 변화 없이 X축으로만 정교하게 이동
-                Vector3 currentPos = m_view.transform.position;
-                float nextX = currentPos.x - (m_data.MoveSpeed * Time.deltaTime);
-                m_view.transform.position = new Vector3(nextX, currentPos.y, currentPos.z);
-            }
-            
-            // 밀기 로직 실행 (접촉 시)
-            m_pushLogic.TryPushPlayer();
+            // [성능/리팩토링]: 중복 전진 로직을 헬퍼로 통합하고 최적화 적용
+            EnemyMovementHelper.ExecuteMovement(m_view, m_data, m_pushLogic, ref m_isMoving);
         }
     }
 }

@@ -34,7 +34,11 @@ namespace TowerBreakers.Enemy.Logic
 
         public void ChangeState<T>() where T : IEnemyState
         {
-            var type = typeof(T);
+            ChangeState(typeof(T));
+        }
+
+        public void ChangeState(Type type)
+        {
             if (!m_states.TryGetValue(type, out var nextState))
             {
                 Debug.LogError($"[EnemyStateMachine] 상태를 찾을 수 없습니다: {type.Name}");
@@ -49,6 +53,14 @@ namespace TowerBreakers.Enemy.Logic
         public void Tick()
         {
             m_currentState?.OnTick();
+        }
+
+        /// <summary>
+        /// [설명]: 현재 상태가 특정 타입인지 확인합니다.
+        /// </summary>
+        public bool IsCurrentState<T>() where T : IEnemyState
+        {
+            return m_currentState is T;
         }
         #endregion
     }

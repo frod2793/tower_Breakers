@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
@@ -37,8 +37,20 @@ public class SPUM_Prefabs : MonoBehaviour
     public void OverrideControllerInit()
     {
         Animator animator = _anim;
+        if (animator == null) return;
+
+        RuntimeAnimatorController currentController = animator.runtimeAnimatorController;
+        if (currentController == null) return;
+
+        // [수정]: 이미 오버라이드 컨트롤러라면 부모(Base) 컨트롤러를 가져와 중첩을 방지합니다.
+        RuntimeAnimatorController baseController = currentController;
+        if (currentController is AnimatorOverrideController existingOverride)
+        {
+            baseController = existingOverride.runtimeAnimatorController;
+        }
+
         OverrideController = new AnimatorOverrideController();
-        OverrideController.runtimeAnimatorController= animator.runtimeAnimatorController;
+        OverrideController.runtimeAnimatorController = baseController;
 
         // 모든 애니메이션 클립을 가져옵니다
         AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
@@ -156,9 +168,21 @@ public class SPUM_Prefabs : MonoBehaviour
     }
     public void PlayAnimation(PlayerState PlayState, int index){
         Animator animator = _anim;
-        //Debug.Log(PlayState.ToString());
-        var animations =  StateAnimationPairs[PlayState.ToString()];
-        //Debug.Log(OverrideController[PlayState.ToString()].name);
+        var animations = StateAnimationPairs[PlayState.ToString()];
+        
+        // [수정]: 인덱스 범위 초과 방어 로직 추가
+        if (animations == null || animations.Count == 0)
+        {
+            Debug.LogWarning($"[SPUM_Prefabs] {PlayState} 상태의 애니메이션 목록이 비어 있습니다.");
+            return;
+        }
+
+        if (index < 0 || index >= animations.Count)
+        {
+            Debug.LogWarning($"[SPUM_Prefabs] {PlayState}의 인덱스 {index}가 범위를 벗어났습니다. (Count: {animations.Count}). 0번을 대신 사용합니다.");
+            index = 0;
+        }
+
         OverrideController[PlayState.ToString()] = animations[index];
         //Debug.Log( OverrideController[PlayState.ToString()].name);
         var StateStr = PlayState.ToString();

@@ -22,11 +22,13 @@ namespace TowerBreakers.Player.Logic
     {
         #region 내부 필드
         private readonly PlayerStateMachine m_stateMachine;
+        private readonly Core.Events.IEventBus m_eventBus;
         #endregion
 
-        public PlayerActionHandler(PlayerStateMachine stateMachine)
+        public PlayerActionHandler(PlayerStateMachine stateMachine, Core.Events.IEventBus eventBus)
         {
             m_stateMachine = stateMachine;
+            m_eventBus = eventBus;
         }
 
         #region 공개 메서드
@@ -35,6 +37,11 @@ namespace TowerBreakers.Player.Logic
         /// </summary>
         public void ExecuteAction(PlayerActionType actionType)
         {
+            UnityEngine.Debug.Log($"[PlayerActionHandler] ExecuteAction 호출: {actionType}");
+            
+            // 이벤트 발행 (CombatSystem 등에서 감지용)
+            m_eventBus?.Publish(new Core.Events.OnPlayerActionStarted(actionType.ToString()));
+
             switch (actionType)
             {
                 case PlayerActionType.Attack:
@@ -54,6 +61,9 @@ namespace TowerBreakers.Player.Logic
                 case PlayerActionType.Skill3:
                     m_stateMachine.GetState<PlayerSkillState>().SetSkill(3);
                     m_stateMachine.ChangeState<PlayerSkillState>();
+                    break;
+                case PlayerActionType.Defend:
+                    m_stateMachine.ChangeState<PlayerDefendState>();
                     break;
                 default:
                     UnityEngine.Debug.LogWarning($"[PlayerActionHandler] 미구현 액션: {actionType}");

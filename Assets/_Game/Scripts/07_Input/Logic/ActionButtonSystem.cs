@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using VContainer;
 using TowerBreakers.Player.Logic;
 
-namespace TowerBreakers.Input
+namespace TowerBreakers.Input.Logic
 {
     /// <summary>
     /// [설명]: UI 버튼 입력을 플레이어 액션으로 연결하는 컴포넌트입니다.
@@ -51,7 +51,16 @@ namespace TowerBreakers.Input
                 m_leapButton.onClick.AddListener(() => m_actionHandler.ExecuteAction(PlayerActionType.Leap));
 
             if (m_defendButton != null)
-                m_defendButton.onClick.AddListener(() => m_actionHandler.ExecuteAction(PlayerActionType.Defend));
+            {
+                m_defendButton.onClick.AddListener(() => 
+                {
+                    Debug.Log("[ActionButtonSystem] 방어 버튼 클릭됨");
+                    if (m_actionHandler != null)
+                        m_actionHandler.ExecuteAction(PlayerActionType.Defend);
+                    else
+                        Debug.LogError("[ActionButtonSystem] PlayerActionHandler가 null입니다!");
+                });
+            }
         }
         #endregion
 

@@ -16,9 +16,6 @@ namespace TowerBreakers.Combat.View
         #region 에디터 설정
         [SerializeField, Tooltip("메인 카메라 참조 (쉐이크 연출용)")]
         private Camera m_mainCamera;
-
-        [SerializeField, Tooltip("기본 쉐이크 강도")]
-        private float m_defaultShakeIntensity = 0.5f;
         #endregion
 
         #region 내부 필드

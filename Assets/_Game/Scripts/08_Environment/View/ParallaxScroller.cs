@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TowerBreakers.Environment
+namespace TowerBreakers.Environment.View
 {
     /// <summary>
     /// [설명]: 가로 스크롤에 따른 원경 배경의 깊이감(Parallax)을 연출하는 클래스입니다.

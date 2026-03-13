@@ -10,15 +10,17 @@ namespace TowerBreakers.Enemy.Logic
     {
         #region 내부 필드
         private readonly EnemyView m_view;
+        private readonly EnemyStateMachine m_stateMachine;
+        private readonly System.Type m_returnStateType;
         private float m_duration;
         private float m_timer;
-        private readonly EnemyStateMachine m_stateMachine;
         #endregion
 
-        public EnemyStunnedState(EnemyView view, EnemyStateMachine stateMachine, float duration = 1.0f)
+        public EnemyStunnedState(EnemyView view, EnemyStateMachine stateMachine, System.Type returnStateType, float duration = 1.0f)
         {
             m_view = view;
             m_stateMachine = stateMachine;
+            m_returnStateType = returnStateType;
             m_duration = duration;
         }
 
@@ -34,7 +36,8 @@ namespace TowerBreakers.Enemy.Logic
         public void OnEnter()
         {
             m_timer = 0f;
-            // 기절 애니메이션 또는 이펙트 연출
+            // 기절 애니메이션 (SPUM의 IDLE 사용)
+            m_view.PlayAnimation(global::PlayerState.IDLE);
             Debug.Log("[EnemyStunnedState] 적 기절 시작");
         }
 
@@ -48,7 +51,7 @@ namespace TowerBreakers.Enemy.Logic
             m_timer += Time.deltaTime;
             if (m_timer >= m_duration)
             {
-                m_stateMachine.ChangeState<EnemyPushState>();
+                m_stateMachine.ChangeState(m_returnStateType);
             }
         }
     }

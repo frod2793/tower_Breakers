@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace TowerBreakers.Core.Events
 {
@@ -9,11 +10,10 @@ namespace TowerBreakers.Core.Events
     public class EventBus : IEventBus
     {
         #region 내부 필드
-        /// <summary>
-        /// [설명]: 타입별 이벤트 핸들러를 저장하는 딕셔너리입니다.
-        /// </summary>
         private readonly Dictionary<Type, object> m_handlers = new Dictionary<Type, object>();
         #endregion
+
+        public EventBus() { }
 
         #region 공개 메서드
         /// <summary>

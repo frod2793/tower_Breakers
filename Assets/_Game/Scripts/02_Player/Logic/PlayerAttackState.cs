@@ -17,6 +17,9 @@ namespace TowerBreakers.Player.Logic
         private readonly PlayerData m_data;
         private readonly IEventBus m_eventBus;
         private float m_attackTimer;
+
+        // [최적화]: GC 할당을 방지하기 위한 정적 히트 버퍼
+        private static readonly Collider2D[] s_hitBuffer = new Collider2D[32];
         #endregion
 
         public PlayerAttackState(PlayerView view, PlayerModel model, PlayerData data, IEventBus eventBus)
@@ -75,10 +78,11 @@ namespace TowerBreakers.Player.Logic
                 enemyLayer = -1; // All Layers
             }
 
-            Collider2D[] hitEnemies = Physics2D.OverlapBoxAll(attackPoint, size, 0f, enemyLayer);
+            int hitCount = Physics2D.OverlapBoxNonAlloc(attackPoint, size, 0f, s_hitBuffer, enemyLayer);
 
-            foreach (var enemyCollider in hitEnemies)
+            for (int i = 0; i < hitCount; i++)
             {
+                var enemyCollider = s_hitBuffer[i];
                 var controller = enemyCollider.GetComponent<EnemyController>();
                 if (controller != null && !controller.IsDead)
                 {
@@ -94,7 +98,7 @@ namespace TowerBreakers.Player.Logic
             }
 
             // 3. 타격 연출 실행 (카메라 쉐이크, 역경직)
-            if (hitEnemies.Length > 0)
+            if (hitCount > 0)
             {
                 m_eventBus?.Publish(new OnHitEffectRequested(attackPoint, 0.4f, 0.15f, 0.08f));
             }

@@ -10,6 +10,7 @@ using TowerBreakers.Combat;
 using TowerBreakers.Enemy.Logic;
 using TowerBreakers.Tower.Logic;
 using Cysharp.Threading.Tasks;
+using TowerBreakers.Combat.Logic;
 
 namespace TowerBreakers.Core.DI
 {
@@ -58,7 +59,8 @@ namespace TowerBreakers.Core.DI
             CombatSystem combatSystem,
             EnemySpawner enemySpawner,
             TowerManager towerManager,
-            PlayerData playerData)
+            PlayerData playerData,
+            PlayerView playerView)
         {
             m_stateMachine = stateMachine;
             m_loadingState = loadingState;
@@ -77,6 +79,13 @@ namespace TowerBreakers.Core.DI
             m_enemySpawner = enemySpawner;
             m_towerManager = towerManager;
             m_playerData = playerData;
+
+            // PlayerView 주입 및 초기화
+            m_playerView = playerView;
+            if (m_playerView != null)
+            {
+                m_playerView.Initialize(m_playerStateMachine);
+            }
         }
 
         public void Start()
@@ -117,8 +126,7 @@ namespace TowerBreakers.Core.DI
             // 초기 상태 시작
             await m_stateMachine.ChangeState<LoadingState>();
 
-            // 로딩 후 플레이 상태로 전환 (임시 흐름)
-            await UniTask.Delay(1000);
+            // 로딩 후 플레이 상태로 즉시 전환
             await m_stateMachine.ChangeState<PlayingState>();
 
             // 플레이어 초기 상태 설정
@@ -143,8 +151,10 @@ namespace TowerBreakers.Core.DI
         #region 유니티 라이프사이클 (ITickable)
         public void Tick()
         {
+            float deltaTime = Time.deltaTime;
             m_stateMachine?.Tick();
             m_playerStateMachine?.Tick();
+            m_playerModel?.Tick(deltaTime);
         }
         #endregion
 

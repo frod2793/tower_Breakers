@@ -17,13 +17,28 @@ MonoBehaviour:
   m_floors:
   - EnemyPrefabData: {fileID: 11400000, guid: 6dc6402dcc1494ae7a87d4c8c31816bb, type: 2}
     EnemyCount: 5
-    SpawnInterval: 1
+    SpawnInterval: 0
     PreSpawnEnemies: 1
-    TrainSpacing: 1
+    TrainSpacing: 0.5
     SpawnPackets: []
   - EnemyPrefabData: {fileID: 11400000, guid: 6dc6402dcc1494ae7a87d4c8c31816bb, type: 2}
     EnemyCount: 5
-    SpawnInterval: 1
+    SpawnInterval: 0
     PreSpawnEnemies: 1
-    TrainSpacing: 1
-    SpawnPackets: []
+    TrainSpacing: 0.5
+    SpawnPackets:
+    - EnemyPrefabData: {fileID: 11400000, guid: fe1f598b4b9e34e4da34f5d2d05e603a, type: 2}
+      EnemyCount: 5
+      SpawnInterval: 0
+    - EnemyPrefabData: {fileID: 11400000, guid: 6dc6402dcc1494ae7a87d4c8c31816bb, type: 2}
+      EnemyCount: 5
+      SpawnInterval: 0
+  - EnemyPrefabData: {fileID: 11400000, guid: 6dc6402dcc1494ae7a87d4c8c31816bb, type: 2}
+    EnemyCount: 5
+    SpawnInterval: 0
+    PreSpawnEnemies: 1
+    TrainSpacing: 0.5
+    SpawnPackets:
+    - EnemyPrefabData: {fileID: 11400000, guid: fe1f598b4b9e34e4da34f5d2d05e603a, type: 2}
+      EnemyCount: 5
+      SpawnInterval: 0

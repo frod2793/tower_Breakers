@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 105ec899c3c86425cbcdc879de1de266, type: 3}
   m_Name: NewPlayerData
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Data.PlayerData
-  m_maxHp: 100
+  m_maxLifeCount: 3
   m_attackPower: 10
   m_attackRange: 1.5
   m_attackSpeed: 1
@@ -21,4 +21,7 @@ MonoBehaviour:
   m_skill1Multiplier: 1.5
   m_skill2Multiplier: 3.5
   m_skill3Multiplier: 1.2
+  m_defendRange: 2.5
+  m_defendPushbackDistance: 1
+  m_wallCrushDamageMultiplier: 10
   m_defaultWeapon: {fileID: 11400000, guid: 9323f696b6008425d8de16c56d618e12, type: 2}
