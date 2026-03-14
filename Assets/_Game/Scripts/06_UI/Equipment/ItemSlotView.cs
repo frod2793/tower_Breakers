@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using TowerBreakers.Player.Data;
+using TowerBreakers.Player.Data.SO;
 using System;
 
 namespace TowerBreakers.UI.Equipment

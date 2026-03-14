@@ -1,4 +1,5 @@
-using TowerBreakers.Player.Data;
+using TowerBreakers.Player.Data.SO;
+using TowerBreakers.Player.Data.Models;
 using TowerBreakers.Player.Logic;
 using TowerBreakers.Player.View;
 using TowerBreakers.Enemy.Factory;
@@ -17,6 +18,7 @@ using TowerBreakers.Core;
 using TowerBreakers.Tower.Data;
 using TowerBreakers.UI.Effects.View;
 using TowerBreakers.UI.Effects.Logic;
+using TowerBreakers.Interactions.Logic;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -36,6 +38,8 @@ namespace TowerBreakers.Core.DI
         [SerializeField, Tooltip("타워 구성 데이터 (ScriptableObject)")]
         private TowerData m_towerData;
 
+        [SerializeField] private PlayerDebugger m_playerDebugger;
+        
         [Header("씬 컴포넌트 참조")]
         [SerializeField, Tooltip("플레이어 뷰 (씬에 배치 필수)")]
         private PlayerView m_playerView;
@@ -67,6 +71,10 @@ namespace TowerBreakers.Core.DI
 
         [SerializeField, Tooltip("데미지 텍스트가 생성될 부모 트랜스폼 (World Space Canvas 등)")]
         private Transform m_damageTextParent;
+
+        [Header("보물상자 시스템 설정")]
+        [SerializeField, Tooltip("보상 지급 매니저")]
+        private RewardApplier m_rewardApplier;
         #endregion
 
         protected override void Configure(IContainerBuilder builder)
@@ -82,6 +90,7 @@ namespace TowerBreakers.Core.DI
             RegisterSceneComponent(builder, m_playerEquipment, "PlayerEquipment");
             RegisterSceneComponent(builder, m_combatEffectPresenter, "CombatEffectPresenter");
             RegisterSceneComponent(builder, m_towerTransitionPresenter, "TowerTransitionPresenter");
+            RegisterSceneComponent(builder, m_playerDebugger, "PlayerDebugger");
 
             // PlayerPushReceiver → EnemyFactory에 지연 주입 및 초기화
             if (m_playerPushReceiver != null)
@@ -138,6 +147,9 @@ namespace TowerBreakers.Core.DI
 
             // ── Tower 시스템 등록 ──
             builder.Register<TowerManager>(Lifetime.Singleton);
+
+            // ── Object/Reward 시스템 등록 ──
+            RegisterSceneComponent(builder, m_rewardApplier, "RewardApplier");
 
             // ── Combat 시스템 등록 ──
             builder.Register<CombatSystem>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();

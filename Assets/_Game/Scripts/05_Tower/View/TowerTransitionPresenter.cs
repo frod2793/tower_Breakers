@@ -9,7 +9,7 @@ namespace TowerBreakers.Tower.View
 {
     /// <summary>
     /// [설명]: 층 클리어 및 다음 층 전환 시 시각적 연출을 담당하는 클래스입니다.
-    /// DOTween을 활용하여 카메라 또는 배경 배경을 이동시킵니다.
+    /// DOTween을 활용하여 타워(월드)를 하강시켜 플레이어가 상승하는 느낌을 줍니다.
     /// </summary>
     public class TowerTransitionPresenter : MonoBehaviour
     {
@@ -43,63 +43,58 @@ namespace TowerBreakers.Tower.View
             m_eventBus = eventBus;
             m_envManager = envManager;
 
-            string targetName = m_targetTransform != null ? m_targetTransform.name : "None";
-            Debug.Log($"[TowerTransitionPresenter] Initialize 호출됨. Target: {targetName}, EventBus: {eventBus != null}, EnvManager: {envManager != null}");
-
             if (m_eventBus != null)
             {
                 m_eventBus.Subscribe<OnFloorCleared>(PlayTransition);
-                Debug.Log("[TowerTransitionPresenter] OnFloorCleared 이벤트 구독 완료");
             }
             else
             {
-                Debug.LogError("[TowerTransitionPresenter] EventBus가 null입니다. 연출이 작동하지 않습니다.");
+                Debug.LogError("[TowerTransitionPresenter] EventBus가 null입니다.");
             }
         }
         #endregion
 
         #region 비즈니스 로직
         /// <summary>
-        /// [설명]: 다음 층으로 넘어가는 연출을 실행합니다.
+        /// [설명]: 다음 층으로 넘어가는 하강 연출을 실행합니다.
         /// </summary>
+        /// <param name="evt">층 클리어 이벤트 데이터</param>
         private void PlayTransition(OnFloorCleared evt)
         {
             if (m_targetTransform == null)
             {
-                Debug.LogError("[TowerTransitionPresenter] m_targetTransform이 설정되지 않았습니다! (인스펙터 확인 필요)");
+                Debug.LogWarning("[TowerTransitionPresenter] 연출 대상(m_targetTransform)이 지정되지 않았습니다.");
                 return;
             }
 
-            // [동적 높이 설정]: EnvironmentManager 정보가 있으면 우선 사용
+            // EnvironmentManager에 설정된 높이를 우선 사용
             float moveHeight = m_envManager != null ? m_envManager.DefaultSegmentHeight : m_floorHeight;
-
-            // [지면 하강 방식]: 카메라가 올라가는 대신 지면(월드)이 내려가도록 음수 좌표 설정
             float targetY = -(evt.FloorIndex * moveHeight);
 
-            Debug.Log($"[TowerTransitionPresenter] {evt.FloorIndex}층 지면 하강 연출 수신: TargetY={targetY:F2}, CurrentY={m_targetTransform.position.y:F2}");
-
-            // 기존 트윈 제거 및 시퀀스 생성
+            // 기존 연출 중단 및 초기화
             m_targetTransform.DOKill();
+
             Sequence seq = DOTween.Sequence();
 
-            // 1. 지면 흔들림 (도약의 충격 표현)
+            // 1. 도약 충격 흔들림
             seq.Append(m_targetTransform.DOShakePosition(0.15f, m_shakeStrength, m_shakeVibrato));
 
-            // 2. 수직 하강 (OutExpo 이징으로 강력한 상승감 부여)
+            // 2. 부드러운 하강 (OutExpo)
             seq.Join(m_targetTransform.DOMoveY(targetY, m_transitionDuration)
-                .SetEase(Ease.OutExpo)
-                .OnStart(() => Debug.Log($"[TowerTransitionPresenter] {evt.FloorIndex}층 지면 하강 시작 (To: {targetY:F2})")));
+                .SetEase(Ease.OutExpo));
 
-            seq.OnComplete(() => {
-                Debug.Log($"[TowerTransitionPresenter] {evt.FloorIndex}층 지면 하강 완료. 실제Y: {m_targetTransform.position.y:F2}");
-            });
+            seq.OnStart(() => Debug.Log($"[TowerTransitionPresenter] {evt.FloorIndex}층 이동 시작"))
+               .OnComplete(() => Debug.Log($"[TowerTransitionPresenter] {evt.FloorIndex}층 이동 완료"));
         }
         #endregion
 
-        #region 해제
+        #region 유니티 생명주기
         private void OnDestroy()
         {
-            m_eventBus?.Unsubscribe<OnFloorCleared>(PlayTransition);
+            if (m_eventBus != null)
+            {
+                m_eventBus.Unsubscribe<OnFloorCleared>(PlayTransition);
+            }
         }
         #endregion
     }

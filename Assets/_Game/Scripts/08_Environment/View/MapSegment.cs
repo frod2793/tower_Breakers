@@ -17,25 +17,23 @@ namespace TowerBreakers.Environment.View
         
         [SerializeField, Tooltip("지면(Ground) 프리팹이 생성되어 부착될 위치")]
         private Transform m_groundAnchor;
-        
-        [SerializeField, Tooltip("적 스폰 지점 (오프셋)")]
-        private Transform m_enemySpawnPoint;
+        #endregion
 
-        [SerializeField, Tooltip("플레이어 스폰 위치 (대시 연출 시작점)")]
-        private Transform m_playerSpawnPoint;
+        #region 초기화 및 자동 할당
+        private void OnValidate()
+        {
+            // 에디터에서 값이 변경될 때마다 누락된 참조 자동 할당 시도
+            AutoAssignReferences();
+        }
 
-        [SerializeField, Tooltip("플레이어 착지 위치 (대시 연출 도착점 = 전투 시작 위치)")]
-        private Transform m_playerLandingPoint;
-
-        [SerializeField] private Transform m_BackflipStarts;
-        
+        [ContextMenu("자식 오브젝트 자동 할당")]
+        public void AutoAssignReferences()
+        {
+            if (m_groundAnchor == null) m_groundAnchor = transform.Find("Ground Anchor");
+        }
         #endregion
 
         #region 프로퍼티
-        /// <summary>
-        /// [설명]: 이 세그먼트에서 백플립 연출이 시작되는 지점을 반환합니다.
-        /// </summary>
-        public Transform BackflipStartPoint => m_BackflipStarts;
         #endregion
 
         #region 내부 필드
@@ -46,23 +44,6 @@ namespace TowerBreakers.Environment.View
         #region 프로퍼티
         public float SegmentWidth => m_segmentWidth;
         public float SegmentHeight => m_segmentHeight;
-        public Vector2 EnemySpawnPosition => m_enemySpawnPoint != null 
-            ? (Vector2)m_enemySpawnPoint.position 
-            : new Vector2(transform.position.x + (m_segmentWidth * 0.45f), transform.position.y - 1.3f); // 기본 우측
-
-        /// <summary>
-        /// [설명]: 플레이어가 층 진입 시 대시를 시작하는 위치입니다.
-        /// </summary>
-        public Vector2 PlayerSpawnPosition => m_playerSpawnPoint != null
-            ? (Vector2)m_playerSpawnPoint.position
-            : new Vector2(transform.position.x - (m_segmentWidth * 0.5f) - 2f, transform.position.y - 1.3f); // 기본 좌측 외부
-
-        /// <summary>
-        /// [설명]: 플레이어가 대시 후 도착하는 전투 시작 위치입니다.
-        /// </summary>
-        public Vector2 PlayerLandingPosition => m_playerLandingPoint != null
-            ? (Vector2)m_playerLandingPoint.position
-            : new Vector2(transform.position.x + 2f, transform.position.y - 1.3f);
 
         /// <summary>
         /// [설명]: 이 세그먼트의 왼쪽 경계 X 좌표를 반환합니다.

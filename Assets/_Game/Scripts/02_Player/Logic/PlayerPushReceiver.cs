@@ -1,5 +1,5 @@
 using UnityEngine;
-using TowerBreakers.Player.Data;
+using TowerBreakers.Player.Data.Models;
 using TowerBreakers.Core.Events;
 using System;
 
@@ -22,7 +22,7 @@ namespace TowerBreakers.Player.Logic
         private float m_screenEdgeOffset = 0.5f;
 
         [SerializeField, Tooltip("이 지점(X)을 넘어서 적진에 있을 때 패링하면 백플립 활성화")]
-        private Transform m_backflipStarts;
+        private float m_backflipThresholdX = 4.0f;
 
         [SerializeField, Tooltip("현재 위치 보정(Clamping) 활성화 여부")]
         private bool m_isClampingEnabled = true;
@@ -31,20 +31,30 @@ namespace TowerBreakers.Player.Logic
         #region 내부 필드
         private PlayerModel m_model;
         private IEventBus m_eventBus;
+        private Camera m_mainCamera;
+        private Transform m_cachedTransform;
+
         private float m_mapLeftLimit = -100f; // 맵의 물리적 하한선
         #endregion
 
         #region 초기화
+        /// <summary>
+        /// [설명]: 플레이어 모델과 이벤트 버스를 주입받아 초기화합니다.
+        /// </summary>
+        /// <param name="model">플레이어 데이터 모델</param>
+        /// <param name="eventBus">이벤트 시스템 버스</param>
         public void Initialize(PlayerModel model, IEventBus eventBus)
         {
             m_model = model;
             m_eventBus = eventBus;
+            
+            // [최적화]: 자주 접근하는 참조 캐싱
+            m_cachedTransform = transform;
+            m_mainCamera = Camera.main;
 
-            // [추가]: 모델의 초기 위치를 현재 씬의 실제 좌표와 동기화 (순간이동 방지)
             if (m_model != null)
             {
-                m_model.Position = transform.position;
-                // Debug.Log($"[PlayerPushReceiver] 모델 좌표 동기화 완료: {m_model.Position.x:F2}");
+                m_model.Position = m_cachedTransform.position;
             }
 
             if (m_useCameraBounds)
@@ -57,27 +67,24 @@ namespace TowerBreakers.Player.Logic
         #region 유니티 생명주기
         private void LateUpdate()
         {
-            // 위치 보정이 비활성화되어 있다면 처리 스킵 (연출 중 등)
             if (!m_isClampingEnabled) return;
 
-            // 매 프레임 카메라와 맵의 경계 중 더 보수적인(오른쪽인) 곳을 실제 벽으로 설정
             if (m_useCameraBounds)
             {
                 UpdateLeftWallThresholdFromCamera();
             }
 
-            // 플레이어가 현재 벽 임계값을 벗어났다면 (예: 카메라가 앞서 나가서 플레이어가 강제로 벽에 걸림)
-            // 위치를 즉시 보정하여 화면 밖으로 이탈 차단
+            // 플레이어가 현재 벽 임계값을 벗어났다면 위치 보정
             if (m_model != null && m_model.Position.x < m_leftWallXThreshold)
             {
                 var correctedPos = m_model.Position;
                 correctedPos.x = m_leftWallXThreshold;
                 m_model.Position = correctedPos;
                 
-                var worldPos = transform.position;
+                var worldPos = m_cachedTransform.position;
                 worldPos.x = correctedPos.x;
                 worldPos.y = correctedPos.y;
-                transform.position = worldPos;
+                m_cachedTransform.position = worldPos;
             }
         }
         #endregion
@@ -105,20 +112,7 @@ namespace TowerBreakers.Player.Logic
         /// <summary>
         /// [설명]: 백플립이 활성화되는 X 좌표 기점을 반환합니다.
         /// </summary>
-        public float BackflipThresholdX
-        {
-            get
-            {
-                // 트랜스폼이 할당되어 있다면 해당 지점 사용
-                if (m_backflipStarts != null)
-                {
-                    return m_backflipStarts.position.x;
-                }
-                
-                // 할당되지 않았다면 벽으로부터 7.5 유닛 떨어진 지점을 기본값으로 사용
-                return m_leftWallXThreshold + 7.5f;
-            }
-        }
+        public float BackflipThresholdX => m_backflipThresholdX;
         #endregion
 
         #region 공개 API
@@ -129,7 +123,6 @@ namespace TowerBreakers.Player.Logic
         public void SetMapLimit(float limit)
         {
             m_mapLeftLimit = limit;
-            Debug.Log($"[PlayerPushReceiver] 맵 경계 제한 설정: {limit:F2}");
         }
 
         /// <summary>
@@ -139,21 +132,29 @@ namespace TowerBreakers.Player.Logic
         public void SetWallThreshold(float threshold)
         {
             m_leftWallXThreshold = threshold;
-            Debug.Log($"[PlayerPushReceiver] 벽 임계값 강제 설정: {threshold:F2}");
         }
 
         /// <summary>
-        /// [설명]: 백플립 연출이 활성화되는 기준 지점(Transform)을 설정합니다.
+        /// [설명]: 백플립 연출이 활성화되는 기준 지점(X 월드 좌표)을 설정합니다.
         /// </summary>
-        /// <param name="threshold">기준 위치를 가진 트랜스폼</param>
-        public void SetBackflipThreshold(Transform threshold)
+        /// <param name="thresholdX">기준 X 좌표</param>
+        public void SetBackflipThreshold(float thresholdX)
         {
-            m_backflipStarts = threshold;
-            if (m_backflipStarts != null)
-            {
-                Debug.Log($"[PlayerPushReceiver] 백플립 기점 설정 완료: {m_backflipStarts.position.x:F2}");
-            }
+            m_backflipThresholdX = thresholdX;
         }
+
+        #region 에디터 지원
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Color.cyan;
+            float x = m_backflipThresholdX;
+            Gizmos.DrawLine(new Vector3(x, -5f, 0f), new Vector3(x, 5f, 0f));
+            
+            Gizmos.color = Color.red;
+            float wallX = m_leftWallXThreshold;
+            Gizmos.DrawLine(new Vector3(wallX, -5f, 0f), new Vector3(wallX, 5f, 0f));
+        }
+        #endregion
         #endregion
 
         #region 공개 메서드
@@ -165,8 +166,11 @@ namespace TowerBreakers.Player.Logic
         {
             if (m_model == null) return;
 
-            Vector2 newPosition = m_model.Position + Vector2.right * deltaX;
-            ApplyPositionWithLimit(newPosition, Mathf.Abs(deltaX));
+            float resistance = m_model != null ? m_model.FinalPushResistance : 0f;
+            float adjustedDelta = deltaX * (1.0f - resistance);
+
+            Vector2 newPosition = m_model.Position + Vector2.right * adjustedDelta;
+            ApplyPositionWithLimit(newPosition, Mathf.Abs(adjustedDelta));
         }
 
         /// <summary>
@@ -177,9 +181,10 @@ namespace TowerBreakers.Player.Logic
         {
             if (m_model == null) return;
 
-            float moveAmount = pushForce * Time.deltaTime;
-            Vector2 newPosition = m_model.Position + Vector2.left * moveAmount;
+            float resistance = m_model != null ? m_model.FinalPushResistance : 0f;
+            float moveAmount = (pushForce * Time.deltaTime) * (1.0f - resistance);
             
+            Vector2 newPosition = m_model.Position + Vector2.left * moveAmount;
             ApplyPositionWithLimit(newPosition, moveAmount);
         }
 
@@ -191,20 +196,20 @@ namespace TowerBreakers.Player.Logic
         {
             if (m_model == null) return;
             
-            Vector2 newPos = m_model.Position + Vector2.left * distance;
+            float resistance = m_model != null ? m_model.FinalPushResistance : 0f;
+            float adjustedDistance = distance * (1.0f - resistance);
             
-            // 벽 클램프만 수행 (OnPlayerPushed 발행하지 않음)
+            Vector2 newPos = m_model.Position + Vector2.left * adjustedDistance;
+            
             if (newPos.x < m_leftWallXThreshold)
                 newPos.x = m_leftWallXThreshold;
                 
             m_model.Position = newPos;
             
-            var worldPos = transform.position;
+            var worldPos = m_cachedTransform.position;
             worldPos.x = newPos.x;
             worldPos.y = newPos.y;
-            transform.position = worldPos;
-            
-            Debug.Log($"[PlayerPushReceiver] 투사체 피격 노크백: Distance={distance}");
+            m_cachedTransform.position = worldPos;
         }
         #endregion
 
@@ -214,18 +219,16 @@ namespace TowerBreakers.Player.Logic
         /// </summary>
         private void UpdateLeftWallThresholdFromCamera()
         {
-            Camera mainCam = Camera.main;
-            if (mainCam == null) return;
+            if (m_mainCamera == null)
+            {
+                m_mainCamera = Camera.main;
+                if (m_mainCamera == null) return;
+            }
 
-            // 뷰포트 좌표 (0, 0.5)은 화면 왼쪽 중앙의 월드 좌표로 변환
-            Vector3 leftEdgeWorld = mainCam.ViewportToWorldPoint(new Vector3(0f, 0.5f, mainCam.nearClipPlane));
-            
+            Vector3 leftEdgeWorld = m_mainCamera.ViewportToWorldPoint(new Vector3(0f, 0.5f, m_mainCamera.nearClipPlane));
             float cameraThreshold = leftEdgeWorld.x + m_screenEdgeOffset;
             
-            // 카메라 경계와 맵 경계 중 더 오른쪽인(보수적인) 곳을 최종 경계로 채택
             m_leftWallXThreshold = Mathf.Max(cameraThreshold, m_mapLeftLimit);
-            
-            // Debug.Log($"[PlayerPushReceiver] 벽 임계값 계산: {m_leftWallXThreshold:F2} (Cam: {cameraThreshold:F2}, Map: {m_mapLeftLimit:F2})");
         }
 
         /// <summary>
@@ -233,29 +236,21 @@ namespace TowerBreakers.Player.Logic
         /// </summary>
         private void ApplyPositionWithLimit(Vector2 newPosition, float moveDelta)
         {
-            // [추가]: 만약 카메라가 이동하는 환경이라면 매 프레임 또는 필요 시 갱신 가능
-            // 타워 브레이커는 수직 이동이 메인이므로 가로 범위는 보통 고정되지만, 안전을 위해 체크 가능
-            // if (m_useCameraBounds) UpdateLeftWallThresholdFromCamera();
-
-            // 왼쪽 벽 충돌 판정 (IsAtWall 판정과 동일한 0.01f 여유분 적용하여 데드 존 제거)
             bool isHittingWall = newPosition.x <= m_leftWallXThreshold + 0.01f;
             if (isHittingWall)
             {
                 if (newPosition.x < m_leftWallXThreshold)
                     newPosition.x = m_leftWallXThreshold;
-                // 벽에 닿은 상태에서 계속 밀리면 데미지/충격 이벤트 발생 (필요 시 주석 해제)
-                // Debug.Log($"[PlayerPushReceiver] 벽 충돌 감지! OnPlayerPushed 발행 (Delta: {moveDelta:F4})");
+                
                 m_eventBus?.Publish(new OnPlayerPushed(moveDelta));
             }
 
-            // Debug.Log($"[PlayerPushReceiver] 위치 적용: {newPosition.x:F2} (Threshold: {m_leftWallXThreshold:F2}, 벽충돌: {isHittingWall})");
-
             m_model.Position = newPosition;
             
-            var worldPos = transform.position;
+            var worldPos = m_cachedTransform.position;
             worldPos.x = newPosition.x;
             worldPos.y = newPosition.y;
-            transform.position = worldPos;
+            m_cachedTransform.position = worldPos;
         }
         #endregion
     }

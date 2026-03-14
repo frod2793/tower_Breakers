@@ -1,0 +1,189 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Totem_Lightning
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: 86997e935698d174e92a17f8b913e006, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - f6bf7b10396b919479e79049d6fb5575: 21300000
+    - ff95c901b6fc1494f816574c1886f5dd: 21300000
+    - 4f02a22124e12794e90b9c2d2ebfacfa: 21300000
+    - 9034a2b19fc2c9c4885cad51e72f6f30: 21300000
+    - 132074e10d0b29f4baa0799e38cf2e19: 21300000
+    - 6af3c152d7d15544fa1484adb20ed820: 21300000
+    - 8b4065e2e0ee7d042b5a94a8e280f61d: 21300000
+    - b0fd1f33916fccd4d8e673f77249d08c: 21300000
+    - ac0bfa63812957c4bacd622041ad2ef4: 21300000
+    - de41ec83e90236c42b8e9b079a137545: 21300000
+    - 959d23f3f5cdac645a5a3e9d70a31ee0: 21300000
+    - 60ad2cf3f33a66b42b88a4c401937909: 21300000
+    - 7769a724b658a11429aaca5d0d11502a: 21300000
+    - 6c520f54ff9119047b0c42ec40872ee9: 21300000
+    - fc0b00a43e6d5be4097349d45921c683: 21300000
+    - 24d416d4cfb1f56408b4071cc307ec45: 21300000
+    - 7293a6d4edf91aa49b2cdef480e99ac4: 21300000
+    - 8752e9d47d5b049449dd85c1d2b529b1: 21300000
+    - 4f402545a8fcef947bbe3e133dd1caac: 21300000
+    - 9866779592f23ee4995f6d5443a99362: 21300000
+    - 21e24516b9d8ff144899441be39083d4: 21300000
+    - 931cfd57990b0c24ea30abd5bbd74f4a: 21300000
+    - 5efdb4a7098363f4cab744a5a57d9471: 21300000
+    - 50b85ac7230839543bf8d104f71d9ef6: 21300000
+    - 4dea54f73b745d144a669787799a8596: 21300000
+    - e17ee568cb975864794412a8e67c5c07: 21300000
+    - 70606e097613ccb4595a6c5c5f2f4f50: 21300000
+    - 3c46c2f934b3b534abf6a7d6da71a744: 21300000
+    - affbc7f97e3d58a47a6d6f91ab14ace5: 21300000
+    - 9b149d0adf5ec6c4cbb961304c742de3: 21300000
+    - 9f8e065a858ebd54db49576d3ca0a0e1: 21300000
+    - 610e91ca48d4a1a468154541b178f707: 21300000
+    - ef1762dbc93b16547a4f667661cacac7: 21300000
+    - 56ff9e0c3261f9144967ee2b0d76c481: 21300000
+    - ee8e649cab497a04b927e6900b5f025a: 21300000
+    - 49a5269c85394ba468a93210c5f7aae7: 21300000
+    - e587589cdcacfd548b7138a49c14caf1: 21300000
+    - f54198bc7996d604baa901432716fd37: 21300000
+    - 20bb5aec430a895468954377e9ebb6cf: 21300000
+    - c16d2e4d3b79cf34d8b5a802e3a244b5: 21300000
+    - d0e4316dfc00a314ba83806b6e1cea63: 21300000
+    - 3626647d48253054d84d1896965fffca: 21300000
+    - 8ab7b34ef2eab70408d6aa2826ebc07a: 21300000
+    - 26115b4ee8e3ca24ebac81cb6ca8bc73: 21300000
+    - 8198aa7e3fde777479b36056c6997c9c: 21300000
+    - 415086ae510f9aa4e930ccc58fd38f87: 21300000
+    - 4057c5be058ad5940af2a11869d0c8ea: 21300000
+    - ed97a53fb5e0f77438e3d0bcb6da01b5: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: f6bf7b10396b919479e79049d6fb5575, type: 3}
+  - {fileID: 21300000, guid: ff95c901b6fc1494f816574c1886f5dd, type: 3}
+  - {fileID: 21300000, guid: 4f02a22124e12794e90b9c2d2ebfacfa, type: 3}
+  - {fileID: 21300000, guid: 9034a2b19fc2c9c4885cad51e72f6f30, type: 3}
+  - {fileID: 21300000, guid: 132074e10d0b29f4baa0799e38cf2e19, type: 3}
+  - {fileID: 21300000, guid: 6af3c152d7d15544fa1484adb20ed820, type: 3}
+  - {fileID: 21300000, guid: 8b4065e2e0ee7d042b5a94a8e280f61d, type: 3}
+  - {fileID: 21300000, guid: b0fd1f33916fccd4d8e673f77249d08c, type: 3}
+  - {fileID: 21300000, guid: ac0bfa63812957c4bacd622041ad2ef4, type: 3}
+  - {fileID: 21300000, guid: de41ec83e90236c42b8e9b079a137545, type: 3}
+  - {fileID: 21300000, guid: 959d23f3f5cdac645a5a3e9d70a31ee0, type: 3}
+  - {fileID: 21300000, guid: 60ad2cf3f33a66b42b88a4c401937909, type: 3}
+  - {fileID: 21300000, guid: 7769a724b658a11429aaca5d0d11502a, type: 3}
+  - {fileID: 21300000, guid: 6c520f54ff9119047b0c42ec40872ee9, type: 3}
+  - {fileID: 21300000, guid: fc0b00a43e6d5be4097349d45921c683, type: 3}
+  - {fileID: 21300000, guid: 24d416d4cfb1f56408b4071cc307ec45, type: 3}
+  - {fileID: 21300000, guid: 7293a6d4edf91aa49b2cdef480e99ac4, type: 3}
+  - {fileID: 21300000, guid: 8752e9d47d5b049449dd85c1d2b529b1, type: 3}
+  - {fileID: 21300000, guid: 4f402545a8fcef947bbe3e133dd1caac, type: 3}
+  - {fileID: 21300000, guid: 9866779592f23ee4995f6d5443a99362, type: 3}
+  - {fileID: 21300000, guid: 21e24516b9d8ff144899441be39083d4, type: 3}
+  - {fileID: 21300000, guid: 931cfd57990b0c24ea30abd5bbd74f4a, type: 3}
+  - {fileID: 21300000, guid: 5efdb4a7098363f4cab744a5a57d9471, type: 3}
+  - {fileID: 21300000, guid: 50b85ac7230839543bf8d104f71d9ef6, type: 3}
+  - {fileID: 21300000, guid: 4dea54f73b745d144a669787799a8596, type: 3}
+  - {fileID: 21300000, guid: e17ee568cb975864794412a8e67c5c07, type: 3}
+  - {fileID: 21300000, guid: 70606e097613ccb4595a6c5c5f2f4f50, type: 3}
+  - {fileID: 21300000, guid: 3c46c2f934b3b534abf6a7d6da71a744, type: 3}
+  - {fileID: 21300000, guid: affbc7f97e3d58a47a6d6f91ab14ace5, type: 3}
+  - {fileID: 21300000, guid: 9b149d0adf5ec6c4cbb961304c742de3, type: 3}
+  - {fileID: 21300000, guid: 9f8e065a858ebd54db49576d3ca0a0e1, type: 3}
+  - {fileID: 21300000, guid: 610e91ca48d4a1a468154541b178f707, type: 3}
+  - {fileID: 21300000, guid: ef1762dbc93b16547a4f667661cacac7, type: 3}
+  - {fileID: 21300000, guid: 56ff9e0c3261f9144967ee2b0d76c481, type: 3}
+  - {fileID: 21300000, guid: ee8e649cab497a04b927e6900b5f025a, type: 3}
+  - {fileID: 21300000, guid: 49a5269c85394ba468a93210c5f7aae7, type: 3}
+  - {fileID: 21300000, guid: e587589cdcacfd548b7138a49c14caf1, type: 3}
+  - {fileID: 21300000, guid: f54198bc7996d604baa901432716fd37, type: 3}
+  - {fileID: 21300000, guid: 20bb5aec430a895468954377e9ebb6cf, type: 3}
+  - {fileID: 21300000, guid: c16d2e4d3b79cf34d8b5a802e3a244b5, type: 3}
+  - {fileID: 21300000, guid: d0e4316dfc00a314ba83806b6e1cea63, type: 3}
+  - {fileID: 21300000, guid: 3626647d48253054d84d1896965fffca, type: 3}
+  - {fileID: 21300000, guid: 8ab7b34ef2eab70408d6aa2826ebc07a, type: 3}
+  - {fileID: 21300000, guid: 26115b4ee8e3ca24ebac81cb6ca8bc73, type: 3}
+  - {fileID: 21300000, guid: 8198aa7e3fde777479b36056c6997c9c, type: 3}
+  - {fileID: 21300000, guid: 415086ae510f9aa4e930ccc58fd38f87, type: 3}
+  - {fileID: 21300000, guid: 4057c5be058ad5940af2a11869d0c8ea, type: 3}
+  - {fileID: 21300000, guid: ed97a53fb5e0f77438e3d0bcb6da01b5, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - Lightning-Totem-Die-6
+  - Lightning-Totem-Idle-6
+  - Lightning-Totem-Die-3
+  - Lightning-Totem-Idle-8
+  - Lightning-Totem-Idle-11
+  - Lightning-Totem-Attack-Effeck-11
+  - Lightning-Totem-Die-8
+  - Lightning-Totem-Attack-Effeck-7
+  - Lightning-Totem-Attack-Effeck-10
+  - Lightning-Totem-Attack-Effeck-15
+  - Lightning-Totem-Idle-14
+  - Lightning-Totem-Attack-Effeck-13
+  - Lightning-Totem-Idle-2
+  - Lightning-Totem-Die-5
+  - Lightning-Totem-Attack-Effeck-4
+  - Lightning-Totem-Attack-Effeck-8
+  - Lightning-Totem-Attack-Effeck-1
+  - Lightning-Totem-Idle-9
+  - Lightning-Totem-Idle-7
+  - Lightning-Totem-Attack-Effeck-2
+  - Lightning-Totem-Idle-13
+  - Lightning-Totem-Attack-3
+  - Lightning-Totem-Attack-Effeck-6
+  - Lightning-Totem-Idle-10
+  - Lightning-Totem-Attack-1
+  - Lightning-Totem-Attack-Effeck-12
+  - Lightning-Totem-Idle-5
+  - Lightning-Totem-Attack-4
+  - Lightning-Totem-Idle-4
+  - Lightning-Totem-Idle-16
+  - Lightning-Totem-Die-2
+  - Lightning-Totem-Attack-2
+  - Lightning-Totem-Idle-3
+  - Lightning-Totem-Attack-Effeck-9
+  - Lightning-Totem-Attack-6
+  - Lightning-Totem-Damage-1
+  - Lightning-Totem-Die-1
+  - Lightning-Totem-Attack-Effeck-16
+  - Lightning-Totem-Attack-Effeck-5
+  - Lightning-Totem-Die-9
+  - Lightning-Totem-Idle-1
+  - Lightning-Totem-Attack-Effeck-14
+  - Lightning-Totem-Idle-12
+  - Lightning-Totem-Die-7
+  - Lightning-Totem-Idle-15
+  - Lightning-Totem-Attack-Effeck-3
+  - Lightning-Totem-Die-4
+  - Lightning-Totem-Attack-5
+  m_RenderDataMap: {}
+  m_Tag: Totem_Lightning
+  m_IsVariant: 0

@@ -1,18 +1,20 @@
-using UnityEngine;
 using System.Collections.Generic;
 using TowerBreakers.Core.Events;
-using TowerBreakers.Tower.Logic;
 using TowerBreakers.Environment.View;
+using TowerBreakers.Tower.Logic;
+using UnityEngine;
 using VContainer;
 
 namespace TowerBreakers.Environment.Logic
 {
     /// <summary>
     /// [설명]: 층 진행에 따라 맵 세그먼트를 동적으로 생성하고 관리하는 환경 시스템입니다.
+    /// 플레이어와 적의 스폰 위치 및 맵 경계를 관리합니다.
     /// </summary>
     public class EnvironmentManager : MonoBehaviour
     {
         #region 에디터 설정
+        [Header("프리팹 및 부모 설정")]
         [SerializeField, Tooltip("사용할 맵 세그먼트 프리팹(기본 틀)")]
         private MapSegment m_segmentPrefab;
 
@@ -25,8 +27,21 @@ namespace TowerBreakers.Environment.Logic
         [SerializeField, Tooltip("스폰된 적들이 배치될 부모 오브젝트")]
         private Transform m_enemyParent;
 
+        [Header("좌표 설정")]
         [SerializeField, Tooltip("플레이어의 기본 착지(전투 시) Y 좌표 (화면 중심 기준)")]
         private float m_defaultLandingY = -1.3f;
+
+        [SerializeField, Tooltip("플레이어 대시 시작 X 오프셋")]
+        private float m_playerSpawnOffsetX = -12.0f;
+
+        [SerializeField, Tooltip("플레이어 착지(전투 시작) X 오프셋")]
+        private float m_playerLandingOffsetX = 2.0f;
+
+        [SerializeField, Tooltip("백플립 기점 X 오프셋 (세그먼트 원점 기준)")]
+        private float m_backflipThresholdOffsetX = 3.76f;
+
+        [SerializeField, Tooltip("적 스폰 X 오프셋")]
+        private float m_enemySpawnOffsetX = 9.0f;
         #endregion
 
         #region 내부 필드
@@ -34,7 +49,8 @@ namespace TowerBreakers.Environment.Logic
         private TowerManager m_towerManager;
         private Player.Logic.PlayerPushReceiver m_playerReceiver;
         private Enemy.Logic.EnemySpawner m_enemySpawner;
-        private List<MapSegment> m_activeSegments = new List<MapSegment>();
+
+        private readonly List<MapSegment> m_activeSegments = new List<MapSegment>();
         private float m_currentOffset = 0f;
         private int m_spawnedSegmentCount = 0;
         #endregion
@@ -56,16 +72,22 @@ namespace TowerBreakers.Environment.Logic
         public float DefaultLandingY => m_defaultLandingY;
         #endregion
 
-        #region 초기화
+        #region 초기화 및 바인딩 로직
+        /// <summary>
+        /// [설명]: 의존성을 주입받고 이벤트를 구독합니다.
+        /// </summary>
         [Inject]
-        public void Construct(IEventBus eventBus, TowerManager towerManager, Player.Logic.PlayerPushReceiver playerReceiver, Enemy.Logic.EnemySpawner enemySpawner)
+        public void Construct(
+            IEventBus eventBus, 
+            TowerManager towerManager, 
+            Player.Logic.PlayerPushReceiver playerReceiver, 
+            Enemy.Logic.EnemySpawner enemySpawner)
         {
             m_eventBus = eventBus;
             m_towerManager = towerManager;
             m_playerReceiver = playerReceiver;
             m_enemySpawner = enemySpawner;
             
-            // Spawner에 부모 설정
             if (m_enemySpawner != null)
             {
                 m_enemySpawner.SetEnemyParent(m_enemyParent);
@@ -80,87 +102,85 @@ namespace TowerBreakers.Environment.Logic
         {
             m_currentOffset = 0f;
             m_spawnedSegmentCount = 0;
+            m_activeSegments.Clear();
 
-            // 초기 세그먼트 생성 (TowerManager에 데이터가 있는 만큼만 혹은 최소 수량)
             for (int i = 0; i < m_initialSegmentCount; i++)
             {
                 CreateNextSegment();
             }
 
-            // [추가]: 현재 층의 배경 경계를 플레이어에게 적용
             UpdatePlayerBoundary();
         }
         #endregion
 
         #region 비즈니스 로직
+        /// <summary>
+        /// [설명]: 층 클리어 이벤트 핸들러입니다. 새로운 세그먼트를 생성하고 이전 세그먼트를 정리합니다.
+        /// </summary>
         private void OnFloorCleared(OnFloorCleared evt)
         {
-            // 새로운 층으로 갈 때마다 새 세그먼트 미리 추가
             CreateNextSegment();
-            
-            // [추가]: 층이 바뀌었으므로 플레이어의 배경 경계도 갱신
             UpdatePlayerBoundary();
 
-            // 최적화: 너무 멀어진 이전 세그먼트 정리
+            // 메모리 최적화: 시야에서 완전히 사라진 과거 세그먼트 삭제
             if (m_activeSegments.Count > m_initialSegmentCount + 2)
             {
                 var oldSegment = m_activeSegments[0];
                 m_activeSegments.RemoveAt(0);
-                if (oldSegment != null) Destroy(oldSegment.gameObject);
+                if (oldSegment != null)
+                {
+                    Destroy(oldSegment.gameObject);
+                }
             }
         }
 
         /// <summary>
-        /// [설명]: 현재 진행 중인 층의 환경 데이터를 기반으로 플레이어의 이동 제한 경계를 갱신합니다.
+        /// [설명]: 현재 층에 맞춰 플레이어의 월드 경계(좌측 벽, 백플립 지점)를 갱신합니다.
         /// </summary>
         private void UpdatePlayerBoundary()
         {
-            if (m_playerReceiver == null || m_towerManager == null || m_activeSegments.Count == 0) return;
+            if (m_playerReceiver == null || m_towerManager == null) return;
 
-            int currentIndex = m_towerManager.CurrentFloorIndex;
-            int firstSegmentFloorIndex = m_spawnedSegmentCount - m_activeSegments.Count;
-            int targetIndex = currentIndex - firstSegmentFloorIndex;
-
-            if (targetIndex < 0) targetIndex = 0;
-            if (targetIndex >= m_activeSegments.Count) targetIndex = m_activeSegments.Count - 1;
-
-            var currentSegment = m_activeSegments[targetIndex];
+            var currentSegment = GetSegmentForFloor(m_towerManager.CurrentFloorIndex);
             if (currentSegment != null)
             {
-                // 배경의 왼쪽 경계를 맵 제한(Map Limit)으로 설정
                 m_playerReceiver.SetMapLimit(currentSegment.LeftBoundaryX);
                 
-                // 백플립 시작 지점 연동
-                m_playerReceiver.SetBackflipThreshold(currentSegment.BackflipStartPoint);
+                // 세그먼트 위치를 기준으로 백플립 기준점 X 좌표 계산
+                float backflipWorldX = currentSegment.transform.position.x + m_backflipThresholdOffsetX;
+                m_playerReceiver.SetBackflipThreshold(backflipWorldX);
             }
         }
 
+        /// <summary>
+        /// [설명]: 다음 세그먼트를 생성하고 수직 위치를 설정합니다.
+        /// </summary>
         private void CreateNextSegment()
         {
             if (m_segmentPrefab == null) return;
 
-            // 지정된 부모가 있으면 해당 부모 하위에 생성, 없으면 관리자 본인의 자식으로 생성
             Transform parent = (m_segmentParent != null) ? m_segmentParent : transform;
             MapSegment newSegment = Instantiate(m_segmentPrefab, parent);
             
-            // 수직으로 쌓기 (Y축 오프셋 적용, X는 0 고정)
             newSegment.SetPosition(new Vector2(0f, m_currentOffset));
-            
-            // [최적화]: 타일맵이 이미 루트에 배치되어 있으므로 추가적인 지면 클론 생성을 생략합니다.
-            
             m_activeSegments.Add(newSegment);
-            // 다음 세그먼트 위치를 위해 높이만큼 오프셋 누적
+            
             m_currentOffset += newSegment.SegmentHeight;
             m_spawnedSegmentCount++;
         }
+        #endregion
 
+        #region 공개 API
         /// <summary>
         /// [설명]: 특정 층의 플레이어 스폰(대시 시작) 위치를 반환합니다.
         /// </summary>
         public Vector2 GetPlayerSpawnPosition(int floorIndex)
         {
             var segment = GetSegmentForFloor(floorIndex);
-            return segment != null ? segment.PlayerSpawnPosition : new Vector2(-8f, -1.3f);
+            if (segment == null) return new Vector2(m_playerSpawnOffsetX, m_defaultLandingY);
+            
+            Vector3 segPos = segment.transform.position;
+            return new Vector2(segPos.x + m_playerSpawnOffsetX, segPos.y + m_defaultLandingY);
         }
 
         /// <summary>
@@ -169,20 +189,38 @@ namespace TowerBreakers.Environment.Logic
         public Vector2 GetPlayerLandingPosition(int floorIndex)
         {
             var segment = GetSegmentForFloor(floorIndex);
-            return segment != null ? segment.PlayerLandingPosition : new Vector2(2f, -1.3f);
+            if (segment == null) return new Vector2(m_playerLandingOffsetX, m_defaultLandingY);
+
+            Vector3 segPos = segment.transform.position;
+            return new Vector2(segPos.x + m_playerLandingOffsetX, segPos.y + m_defaultLandingY);
         }
 
         /// <summary>
-        /// [설명]: 특정 층 인덱스에 매칭되는 세그먼트의 스폰 위치를 반환합니다.
+        /// [설명]: 특정 층의 세그먼트 Transform을 반환합니다.
+        /// </summary>
+        public Transform GetSegmentTransform(int floorIndex)
+        {
+            var segment = GetSegmentForFloor(floorIndex);
+            return (segment != null) ? segment.transform : null;
+        }
+
+        /// <summary>
+        /// [설명]: 특정 층의 적 스폰 위치를 반환합니다.
         /// </summary>
         public Vector2 GetSpawnPosition(int floorIndex)
         {
             var segment = GetSegmentForFloor(floorIndex);
-            return segment != null ? segment.EnemySpawnPosition : new Vector2(5f, -1f);
-        }
+            if (segment == null) return new Vector2(m_enemySpawnOffsetX, m_defaultLandingY);
 
+            Vector3 segPos = segment.transform.position;
+            return new Vector2(segPos.x + m_enemySpawnOffsetX, segPos.y + m_defaultLandingY);
+        }
+        #endregion
+
+        #region 내부 로직
         /// <summary>
-        /// [설명]: 특정 층 인덱스에 해당하는 세그먼트를 반환합니다. 필요 시 세그먼트를 추가 생성합니다.
+        /// [설명]: 층 인덱스에 해당하는 세그먼트를 리스트에서 찾아 반환합니다.
+        /// 인덱스 범위를 벗어나면 자동으로 세그먼트를 추가 생성하여 가용성을 보장합니다.
         /// </summary>
         private MapSegment GetSegmentForFloor(int floorIndex)
         {
@@ -193,13 +231,16 @@ namespace TowerBreakers.Environment.Logic
 
             if (targetIndex < 0) targetIndex = 0;
             
-            // 아직 세그먼트가 생성되지 않았을 경우 필요한 만큼 더 생성 시도
+            // 부족한 세그먼트 자동 생성 로직 (Batching 방지 위해 최소 필요한 만큼만)
             while (targetIndex >= m_activeSegments.Count && m_spawnedSegmentCount < floorIndex + 2)
             {
                 CreateNextSegment();
             }
 
-            if (targetIndex >= m_activeSegments.Count) targetIndex = m_activeSegments.Count - 1;
+            if (targetIndex >= m_activeSegments.Count)
+            {
+                targetIndex = m_activeSegments.Count - 1;
+            }
 
             return m_activeSegments[targetIndex];
         }
@@ -208,7 +249,10 @@ namespace TowerBreakers.Environment.Logic
         #region 유니티 생명주기
         private void OnDestroy()
         {
-            m_eventBus?.Unsubscribe<OnFloorCleared>(OnFloorCleared);
+            if (m_eventBus != null)
+            {
+                m_eventBus.Unsubscribe<OnFloorCleared>(OnFloorCleared);
+            }
         }
         #endregion
     }

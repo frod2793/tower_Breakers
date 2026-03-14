@@ -179,7 +179,8 @@ public class SPUM_Prefabs : MonoBehaviour
 
         if (index < 0 || index >= animations.Count)
         {
-            Debug.LogWarning($"[SPUM_Prefabs] {PlayState}의 인덱스 {index}가 범위를 벗어났습니다. (Count: {animations.Count}). 0번을 대신 사용합니다.");
+            // [수정]: 단순 클램핑 대신 원인을 파악할 수 있도록 상세 경고 로그 출력
+            Debug.LogWarning($"[SPUM_Prefabs] {PlayState}의 인덱스 {index}가 범위를 벗어났습니다. (보유 개수: {animations.Count}). 0번(기본) 애니메이션을 대신 사용합니다. 연출을 위해서는 프리펩의 리스트를 채워주세요.");
             index = 0;
         }
 

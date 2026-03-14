@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Gunner
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: 3a10f7ca1a80cfe4f98f79cf67e44ccb, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - 75b743133faa5c54bbb3dcc9fe4747e4: 21300000
+    - 653eb913e7792ed40bb98f95aa08e521: 21300000
+    - ee374144010ffa944835ec07213c8d0f: 21300000
+    - 33b4d0b65041bd14891ebdc3f81ea228: 21300000
+    - 4c2496f789cf47e40b7afbcc1cfffdd0: 21300000
+    - a2763f58ba786744e86695e44cd39f79: 21300000
+    - 467a8c695578570498e25283e8f9dc11: 21300000
+    - d3b0f19b800313c498954f742c380ea7: 21300000
+    - 3df9a70df37d6894380c88202558a82a: 21300000
+    - fbc0006d922ee4341a5a38b091f85b7d: 21300000
+    - a862ae5e786b88041855b3b0c197264f: 21300000
+    - a16478be342625d4f9bd3106d49d97ca: 21300000
+    - c233222fce70cb3428a94aa627ee257c: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 75b743133faa5c54bbb3dcc9fe4747e4, type: 3}
+  - {fileID: 21300000, guid: 653eb913e7792ed40bb98f95aa08e521, type: 3}
+  - {fileID: 21300000, guid: ee374144010ffa944835ec07213c8d0f, type: 3}
+  - {fileID: 21300000, guid: 33b4d0b65041bd14891ebdc3f81ea228, type: 3}
+  - {fileID: 21300000, guid: 4c2496f789cf47e40b7afbcc1cfffdd0, type: 3}
+  - {fileID: 21300000, guid: a2763f58ba786744e86695e44cd39f79, type: 3}
+  - {fileID: 21300000, guid: 467a8c695578570498e25283e8f9dc11, type: 3}
+  - {fileID: 21300000, guid: d3b0f19b800313c498954f742c380ea7, type: 3}
+  - {fileID: 21300000, guid: 3df9a70df37d6894380c88202558a82a, type: 3}
+  - {fileID: 21300000, guid: fbc0006d922ee4341a5a38b091f85b7d, type: 3}
+  - {fileID: 21300000, guid: a862ae5e786b88041855b3b0c197264f, type: 3}
+  - {fileID: 21300000, guid: a16478be342625d4f9bd3106d49d97ca, type: 3}
+  - {fileID: 21300000, guid: c233222fce70cb3428a94aa627ee257c, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - Gun-Boss-Front-Arm-Attack-1
+  - Gun-Boss-Body-Idle-5
+  - Gun-Boss-Front-Arm-Attack-3
+  - Gun-Boss-Body-Idle-1
+  - Gun-Boss-Body-Idle-2
+  - Gun-Boss-Body-Idle-4
+  - Gun-Boss-Front-Arm-Idle-1
+  - Gun-Boss-behind-Arm-Attack-3
+  - Gun-Boss-behind-Arm-Idle-1
+  - Gun-Boss-Body-Idle-3
+  - Gun-Boss-behind-Arm-Attack-2
+  - Gun-Boss-Front-Arm-Attack-2
+  - Gun-Boss-behind-Arm-Attack-1
+  m_RenderDataMap: {}
+  m_Tag: Gunner
+  m_IsVariant: 0

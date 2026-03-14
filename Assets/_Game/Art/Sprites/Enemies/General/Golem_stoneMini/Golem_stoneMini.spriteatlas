@@ -1,0 +1,133 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Golem_stoneMini
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 4
+      m_BuildTarget: DefaultTexturePlatform
+      m_MaxTextureSize: 4096
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: -1
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 0
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: d47d4503347cfaa408bd423e815319e7, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - 7ea5d7f0e803b0e428d8b867437c53b0: 21300000
+    - 251408f0626a00745a62881a874c3d01: 21300000
+    - 04f93521f0953e943a463578e32ce48d: 21300000
+    - 120b4832a14daa541a6ca865eba122ed: 21300000
+    - c6dccdc23f6bf134ab78c5ee5e3f9d3a: 21300000
+    - a641edc220a796b499295fe40267b87a: 21300000
+    - 3f8b2fe2673708f4f98bd58b1a42a098: 21300000
+    - 5845efb369167644eaa4b895adab81dd: 21300000
+    - 5ce00be3e07aa4b4388a9558e2bcbbb1: 21300000
+    - d9f584049866d3f4aa5a1c2cad94b6b9: 21300000
+    - 4d41bfa5a21bcc5409e39ca91bfb873a: 21300000
+    - 21709a062c3b8bb4db2058c3e9764252: 21300000
+    - ed0f423618d3a66499cc83a7a495d36b: 21300000
+    - 81de29369e26c024688ec5a5911f9129: 21300000
+    - 37d76b96b8b220440bf2934caf647f3a: 21300000
+    - 648b8f374d140c246a7f840092e225e8: 21300000
+    - 8d445cb79fd5ec34aa0bc11c0a775f5c: 21300000
+    - 7f3a33b960dbe2942bd51560b7e0226f: 21300000
+    - 96dd233b6fd042d46989b319af34730c: 21300000
+    - c18606bbbd7774b46b14c4c2c4ea0036: 21300000
+    - 1b48f1cb469d5994593d9a67b6878710: 21300000
+    - 846f7ccb35ac8c54ab98acb127713092: 21300000
+    - cf0a3f5c329274a428a204a67512b664: 21300000
+    - d6e29ddcab918d64197bb3e7637fd9d2: 21300000
+    - 61a9846f04de37148b59c53fcbcab3e7: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 7ea5d7f0e803b0e428d8b867437c53b0, type: 3}
+  - {fileID: 21300000, guid: 251408f0626a00745a62881a874c3d01, type: 3}
+  - {fileID: 21300000, guid: 04f93521f0953e943a463578e32ce48d, type: 3}
+  - {fileID: 21300000, guid: 120b4832a14daa541a6ca865eba122ed, type: 3}
+  - {fileID: 21300000, guid: c6dccdc23f6bf134ab78c5ee5e3f9d3a, type: 3}
+  - {fileID: 21300000, guid: a641edc220a796b499295fe40267b87a, type: 3}
+  - {fileID: 21300000, guid: 3f8b2fe2673708f4f98bd58b1a42a098, type: 3}
+  - {fileID: 21300000, guid: 5845efb369167644eaa4b895adab81dd, type: 3}
+  - {fileID: 21300000, guid: 5ce00be3e07aa4b4388a9558e2bcbbb1, type: 3}
+  - {fileID: 21300000, guid: d9f584049866d3f4aa5a1c2cad94b6b9, type: 3}
+  - {fileID: 21300000, guid: 4d41bfa5a21bcc5409e39ca91bfb873a, type: 3}
+  - {fileID: 21300000, guid: 21709a062c3b8bb4db2058c3e9764252, type: 3}
+  - {fileID: 21300000, guid: ed0f423618d3a66499cc83a7a495d36b, type: 3}
+  - {fileID: 21300000, guid: 81de29369e26c024688ec5a5911f9129, type: 3}
+  - {fileID: 21300000, guid: 37d76b96b8b220440bf2934caf647f3a, type: 3}
+  - {fileID: 21300000, guid: 648b8f374d140c246a7f840092e225e8, type: 3}
+  - {fileID: 21300000, guid: 8d445cb79fd5ec34aa0bc11c0a775f5c, type: 3}
+  - {fileID: 21300000, guid: 7f3a33b960dbe2942bd51560b7e0226f, type: 3}
+  - {fileID: 21300000, guid: 96dd233b6fd042d46989b319af34730c, type: 3}
+  - {fileID: 21300000, guid: c18606bbbd7774b46b14c4c2c4ea0036, type: 3}
+  - {fileID: 21300000, guid: 1b48f1cb469d5994593d9a67b6878710, type: 3}
+  - {fileID: 21300000, guid: 846f7ccb35ac8c54ab98acb127713092, type: 3}
+  - {fileID: 21300000, guid: cf0a3f5c329274a428a204a67512b664, type: 3}
+  - {fileID: 21300000, guid: d6e29ddcab918d64197bb3e7637fd9d2, type: 3}
+  - {fileID: 21300000, guid: 61a9846f04de37148b59c53fcbcab3e7, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - Golem-Idle-1
+  - Golem-Move-1
+  - Golem-Idle-4
+  - Golem-Damage-1
+  - Golem-Move-7
+  - Golem-Attack-1
+  - Golem-Damage-2
+  - Golem-Attack-3
+  - Golem-Attack-11
+  - Golem-Idle-3
+  - Golem-Die-3
+  - Golem-Attack-12
+  - Golem-Move-8
+  - Golem-Die-1
+  - Golem-Move-2
+  - Golem-Idle-7
+  - Golem-Move-3
+  - Golem-Move-5
+  - Golem-Idle-5
+  - Golem-Attack-2
+  - Golem-Die-2
+  - Golem-Move-4
+  - Golem-Attack-9
+  - Golem-Idle-8
+  - Golem-Attack-10
+  m_RenderDataMap: {}
+  m_Tag: Golem_stoneMini
+  m_IsVariant: 0

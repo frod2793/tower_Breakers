@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ee98a53028474daf98420b0ee20b5f3, type: 3}
+  m_Name: HeavyArmorData
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Data.ArmorData
+  m_armorName: HeavyArmor
+  m_category: 1
+  m_type: 2
+  m_bodyArmorSprite: {fileID: -6505695957970812123, guid: 61f60bf66a0684be3b448f6e237a3f12, type: 3}
+  m_leftShoulderSprite: {fileID: 3257737980328237110, guid: 61f60bf66a0684be3b448f6e237a3f12, type: 3}
+  m_rightShoulderSprite: {fileID: -5502725330888511627, guid: 61f60bf66a0684be3b448f6e237a3f12, type: 3}
+  m_helmetSprite: {fileID: 0}
+  m_damagedClip: {fileID: 0}
+  m_deathClip: {fileID: 0}
+  m_lifeBonus: 3
+  m_pushResistance: 0.5
+  m_moveSpeedModifier: 1

@@ -1,5 +1,6 @@
 using UnityEngine;
-using TowerBreakers.Player.Data;
+using TowerBreakers.Player.Data.SO;
+using TowerBreakers.Player.Data.Models;
 using TowerBreakers.Player.View;
 using VContainer;
 using System;
@@ -8,8 +9,8 @@ using System.Collections.Generic;
 namespace TowerBreakers.Player.Logic
 {
     /// <summary>
-    /// [설명]: 플레이어의 무기 장착 및 외형/애니메이션 교체를 담당하는 컴포넌트입니다.
-    /// PlayerModel의 무기 변경 이벤트를 구독하여 실시간으로 반영합니다.
+    /// [설명]: 플레이어의 무기/갑주 장착 및 외형/애니메이션 교체를 담당하는 컴포넌트입니다.
+    /// PlayerModel의 장비 변경 이벤트를 구독하여 실시간으로 반영합니다.
     /// </summary>
     public class PlayerEquipment : MonoBehaviour
     {
@@ -17,15 +18,23 @@ namespace TowerBreakers.Player.Logic
         private PlayerModel m_model;
         private PlayerView m_view;
 
-        // 렌더러 캐시 (Awake 후 한 번만 탐색)
+        // 렌더러 캐시
         private SpriteRenderer m_mainWeaponRenderer;
         private List<SpriteRenderer> m_otherWeaponRenderers = new List<SpriteRenderer>();
+        
+        // 갑주 전용 렌더러 캐시
+        private SpriteRenderer m_bodyArmorRenderer;
+        private SpriteRenderer m_leftShoulderRenderer;
+        private SpriteRenderer m_rightShoulderRenderer;
+        private SpriteRenderer m_hairRenderer; // [추가]: 헬멧 장착 시 숨길 머리카락
+        private List<SpriteRenderer> m_helmetRenderers = new List<SpriteRenderer>();
+
         private bool m_isRendererCached;
         #endregion
 
         #region 초기화
         /// <summary>
-        /// [설명]: 의존성을 주입받아 무기 변경 이벤트를 구독합니다.
+        /// [설명]: 의존성을 주입받아 장비 변경 이벤트를 구독합니다.
         /// </summary>
         [Inject]
         public void Initialize(PlayerModel model, PlayerView view)
@@ -33,45 +42,97 @@ namespace TowerBreakers.Player.Logic
             m_model = model;
             m_view = view;
 
-            CacheWeaponRenderers();
+            CacheAllRenderers();
 
             if (m_model != null)
             {
                 m_model.OnWeaponChanged += UpdateWeaponVisuals;
+                m_model.OnHelmetChanged += UpdateHelmetVisuals;
+                m_model.OnBodyArmorChanged += UpdateBodyArmorVisuals;
 
                 // 현재 이미 장착된 무기가 있다면 즉시 시각화 갱신
                 if (m_model.CurrentWeapon != null)
                 {
                     UpdateWeaponVisuals(m_model.CurrentWeapon);
                 }
+
+                // 장착된 헬멧/흉갑이 있다면 갱신
+                if (m_model.CurrentHelmet != null)
+                {
+                    UpdateHelmetVisuals(m_model.CurrentHelmet);
+                }
+
+                if (m_model.CurrentBodyArmor != null)
+                {
+                    UpdateBodyArmorVisuals(m_model.CurrentBodyArmor);
+                }
             }
         }
 
         /// <summary>
-        /// [설명]: 무기 관련 SpriteRenderer를 캐싱합니다. 최초 1회만 수행됩니다.
+        /// [설명]: 장비 관련 SpriteRenderer들을 캐싱합니다. 최초 1회만 수행됩니다.
+        /// SPUM_MatchingList가 있다면 이를 우선 활용하고, 없으면 이름 기반으로 찾습니다.
         /// </summary>
-        private void CacheWeaponRenderers()
+        private void CacheAllRenderers()
         {
-            if (m_isRendererCached || m_view == null) return;
+            if (m_view == null || m_isRendererCached) return;
 
-            m_mainWeaponRenderer = null;
+            // 초기화
             m_otherWeaponRenderers.Clear();
+            m_helmetRenderers.Clear();
 
-            var allRenderers = m_view.GetComponentsInChildren<SpriteRenderer>(true);
-            foreach (var renderer in allRenderers)
+            // SPUM_MatchingList 활용 시도
+            var matchingList = m_view.GetComponentInChildren<SPUM_MatchingList>();
+            if (matchingList != null && matchingList.matchingTables != null && matchingList.matchingTables.Count > 0)
             {
-                string objName = renderer.gameObject.name;
-
-                if (objName.Contains("Weapon", StringComparison.OrdinalIgnoreCase))
+                foreach (var element in matchingList.matchingTables)
                 {
-                    if (objName.Contains("R_Weapon", StringComparison.OrdinalIgnoreCase))
+                    if (element.renderer == null) continue;
+
+                    string partType = element.PartType;
+                    string structure = element.Structure;
+
+                    switch (partType)
                     {
-                        m_mainWeaponRenderer = renderer;
+                        case "Armor":
+                            if (structure == "Body") m_bodyArmorRenderer = element.renderer;
+                            else if (structure == "Left") m_leftShoulderRenderer = element.renderer;
+                            else if (structure == "Right") m_rightShoulderRenderer = element.renderer;
+                            break;
+                        case "Helmet":
+                            m_helmetRenderers.Add(element.renderer);
+                            break;
+                        case "Hair":
+                            m_hairRenderer = element.renderer;
+                            break;
+                        case "Weapons":
+                            if (element.Dir == "Right") m_mainWeaponRenderer = element.renderer;
+                            else m_otherWeaponRenderers.Add(element.renderer);
+                            break;
                     }
-                    else
+                }
+            }
+            else
+            {
+                // MatchingList가 없을 경우 이름 기반 검색 (Fallback)
+                SpriteRenderer[] allRenderers = m_view.GetComponentsInChildren<SpriteRenderer>(true);
+                foreach (var renderer in allRenderers)
+                {
+                    string objName = renderer.gameObject.name;
+
+                    if (objName.Contains("Weapon", StringComparison.OrdinalIgnoreCase))
                     {
-                        m_otherWeaponRenderers.Add(renderer);
+                        if (objName.Contains("R_") || objName.Contains("Right")) m_mainWeaponRenderer = renderer;
+                        else m_otherWeaponRenderers.Add(renderer);
                     }
+                    else if (objName.Equals("BodyArmor", StringComparison.OrdinalIgnoreCase)) m_bodyArmorRenderer = renderer;
+                    else if (objName.Contains("Shoulder"))
+                    {
+                        if (objName.Contains("L_") || objName.Contains("Left")) m_leftShoulderRenderer = renderer;
+                        else m_rightShoulderRenderer = renderer;
+                    }
+                    else if (objName.Contains("Helmet")) m_helmetRenderers.Add(renderer);
+                    else if (objName.Contains("Hair") && !objName.Contains("Face")) m_hairRenderer = renderer;
                 }
             }
 
@@ -90,6 +151,8 @@ namespace TowerBreakers.Player.Logic
             if (m_model != null)
             {
                 m_model.OnWeaponChanged -= UpdateWeaponVisuals;
+                m_model.OnHelmetChanged -= UpdateHelmetVisuals;
+                m_model.OnBodyArmorChanged -= UpdateBodyArmorVisuals;
             }
         }
         #endregion
@@ -101,23 +164,7 @@ namespace TowerBreakers.Player.Logic
         /// <param name="weapon">새로 장착할 무기 데이터</param>
         private void UpdateWeaponVisuals(WeaponData weapon)
         {
-            if (m_view == null)
-            {
-                Debug.LogError("[PlayerEquipment] PlayerView가 null입니다.");
-                return;
-            }
-
-            if (m_view.SpumPrefabs == null)
-            {
-                Debug.LogError("[PlayerEquipment] PlayerView.SpumPrefabs가 null입니다.");
-                return;
-            }
-
-            if (weapon == null)
-            {
-                Debug.LogWarning("[PlayerEquipment] 전달된 WeaponData가 null입니다.");
-                return;
-            }
+            if (m_view == null || m_view.SpumPrefabs == null || weapon == null) return;
 
             var spum = m_view.SpumPrefabs;
 
@@ -125,11 +172,6 @@ namespace TowerBreakers.Player.Logic
             if (m_mainWeaponRenderer != null)
             {
                 m_mainWeaponRenderer.sprite = weapon.WeaponSprite;
-                Debug.Log($"[PlayerEquipment] 주무기 렌더러 교체 완료: {m_mainWeaponRenderer.gameObject.name}");
-            }
-            else
-            {
-                Debug.LogWarning("[PlayerEquipment] 'Weapon' 이름이 포함된 SpriteRenderer를 찾지 못했습니다. 계층 구조를 확인해주세요.");
             }
 
             // 보조 무기 비우기
@@ -146,12 +188,72 @@ namespace TowerBreakers.Player.Logic
             {
                 spum.ATTACK_List[0] = weapon.AttackClip;
                 spum.OverrideControllerInit();
-                Debug.Log($"[PlayerEquipment] 애니메이션 클립 교체 완료: {weapon.WeaponName}");
+                Debug.Log($"[PlayerEquipment] 무기 교체 완료: {weapon.WeaponName}");
             }
-            else
+        }
+
+        /// <summary>
+        /// [설명]: 헬멧 데이터를 기반으로 머리 부위 외형을 교체합니다.
+        /// </summary>
+        /// <param name="helmet">새로 장착할 헬멧 데이터</param>
+        private void UpdateHelmetVisuals(ArmorData helmet)
+        {
+            if (m_view == null || helmet == null) return;
+
+            // 헬멧 스프라이트 갱신
+            foreach (var helmetRenderer in m_helmetRenderers)
             {
-                Debug.LogWarning("[PlayerEquipment] SPUM.ATTACK_List가 비어있어 애니메이션 오버라이드를 건너뜁니다.");
+                if (helmetRenderer != null)
+                    helmetRenderer.sprite = helmet.HelmetSprite;
             }
+
+            // 헬멧 장착 시 머리카락 숨기기
+            if (m_hairRenderer != null)
+            {
+                m_hairRenderer.gameObject.SetActive(helmet.HelmetSprite == null);
+            }
+
+            Debug.Log($"[PlayerEquipment] 헬멧 교체 완료: {helmet.ArmorName}");
+        }
+
+        /// <summary>
+        /// [설명]: 흉갑 데이터를 기반으로 몸체 스프라이트와 피격/사망 애니메이션을 교체합니다.
+        /// </summary>
+        /// <param name="bodyArmor">새로 장착할 흉갑 데이터</param>
+        private void UpdateBodyArmorVisuals(ArmorData bodyArmor)
+        {
+            if (m_view == null || m_view.SpumPrefabs == null || bodyArmor == null) return;
+
+            var spum = m_view.SpumPrefabs;
+            bool needsRebind = false;
+
+            // 흉갑 스프라이트 갱신
+            if (m_bodyArmorRenderer != null) 
+                m_bodyArmorRenderer.sprite = bodyArmor.BodyArmorSprite;
+
+            // 어깨 스프라이트 갱신
+            if (m_leftShoulderRenderer != null)
+                m_leftShoulderRenderer.sprite = bodyArmor.LeftShoulderSprite;
+
+            if (m_rightShoulderRenderer != null)
+                m_rightShoulderRenderer.sprite = bodyArmor.RightShoulderSprite;
+
+            // 애니메이션 클립 교체
+            if (spum.DAMAGED_List != null && spum.DAMAGED_List.Count > 0 && bodyArmor.DamagedClip != null)
+            {
+                spum.DAMAGED_List[0] = bodyArmor.DamagedClip;
+                needsRebind = true;
+            }
+
+            if (spum.DEATH_List != null && spum.DEATH_List.Count > 0 && bodyArmor.DeathClip != null)
+            {
+                spum.DEATH_List[0] = bodyArmor.DeathClip;
+                needsRebind = true;
+            }
+
+            if (needsRebind) spum.OverrideControllerInit();
+            
+            Debug.Log($"[PlayerEquipment] 흉갑 교체 완료: {bodyArmor.ArmorName}");
         }
         #endregion
     }

@@ -1,5 +1,7 @@
 using System;
-using TowerBreakers.Player.Data;
+using TowerBreakers.Player.Data.Models;
+using TowerBreakers.Player.Data.SO;
+using UnityEngine;
 using TowerBreakers.Tower.Logic;
 using TowerBreakers.Core;
 using TowerBreakers.Core.Events;

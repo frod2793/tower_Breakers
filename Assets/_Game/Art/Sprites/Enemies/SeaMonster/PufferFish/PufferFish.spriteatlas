@@ -1,0 +1,120 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: PufferFish
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: a596d6ef62512514ca362cf584a41b06, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - fe70ee40384f11f48996bfd387381184: 21300000
+    - 745a37506d7d4234ba5737ea671c7c6c: 21300000
+    - 64e72b906e38a194ea48c8051962f803: 21300000
+    - 1512ca01e9af0e54eaa520d5b0d8282a: 21300000
+    - e1bd8e519a8136d439f5391e4cab8958: 21300000
+    - 8364f0d1cceafbe468c7a28e2e62e27d: 21300000
+    - 949b1192bfbd3a249bd8b140eaf67615: 21300000
+    - 3da890d2049761f41a83a7f4fc3dc467: 21300000
+    - 81af2d33fb7363e4a80364f0acbae1c7: 21300000
+    - b23342d39643672478d0277c803bd7b4: 21300000
+    - e8501a94c39885747b98937831150574: 21300000
+    - fa7803c455cd04d47b94338ef1f59ee3: 21300000
+    - 7b3a55f41ae304145827d8ad0584d1a0: 21300000
+    - 5992d4059033dde4f9af5feb70f1cc8b: 21300000
+    - 5ccae175edb1d5c4c9c89c2a5b220ad9: 21300000
+    - d19082377eca3cf4c9b42a7443eb2807: 21300000
+    - c6a7fb57382ab28478648a5b93c48507: 21300000
+    - ab3d0188ae595bb448abed62df685b23: 21300000
+    - 68597f3973a18524c8fe46b1721f94a2: 21300000
+    - 49bdfcb982aecfb4693b8cacf7e76fd8: 21300000
+    - b0823eaa7280c8e4d87de80a1ef38da8: 21300000
+    - 891a3d0d70eeb2340bf027954ac46008: 21300000
+    - 6940e21ebaee9624fa9b3fa455fb533a: 21300000
+    - 7d01484f04c19b54e9610cfb2a9210fe: 21300000
+    - 3b9d887f245f503409c043c7625e66cd: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: fe70ee40384f11f48996bfd387381184, type: 3}
+  - {fileID: 21300000, guid: 745a37506d7d4234ba5737ea671c7c6c, type: 3}
+  - {fileID: 21300000, guid: 64e72b906e38a194ea48c8051962f803, type: 3}
+  - {fileID: 21300000, guid: 1512ca01e9af0e54eaa520d5b0d8282a, type: 3}
+  - {fileID: 21300000, guid: e1bd8e519a8136d439f5391e4cab8958, type: 3}
+  - {fileID: 21300000, guid: 8364f0d1cceafbe468c7a28e2e62e27d, type: 3}
+  - {fileID: 21300000, guid: 949b1192bfbd3a249bd8b140eaf67615, type: 3}
+  - {fileID: 21300000, guid: 3da890d2049761f41a83a7f4fc3dc467, type: 3}
+  - {fileID: 21300000, guid: 81af2d33fb7363e4a80364f0acbae1c7, type: 3}
+  - {fileID: 21300000, guid: b23342d39643672478d0277c803bd7b4, type: 3}
+  - {fileID: 21300000, guid: e8501a94c39885747b98937831150574, type: 3}
+  - {fileID: 21300000, guid: fa7803c455cd04d47b94338ef1f59ee3, type: 3}
+  - {fileID: 21300000, guid: 7b3a55f41ae304145827d8ad0584d1a0, type: 3}
+  - {fileID: 21300000, guid: 5992d4059033dde4f9af5feb70f1cc8b, type: 3}
+  - {fileID: 21300000, guid: 5ccae175edb1d5c4c9c89c2a5b220ad9, type: 3}
+  - {fileID: 21300000, guid: d19082377eca3cf4c9b42a7443eb2807, type: 3}
+  - {fileID: 21300000, guid: c6a7fb57382ab28478648a5b93c48507, type: 3}
+  - {fileID: 21300000, guid: ab3d0188ae595bb448abed62df685b23, type: 3}
+  - {fileID: 21300000, guid: 68597f3973a18524c8fe46b1721f94a2, type: 3}
+  - {fileID: 21300000, guid: 49bdfcb982aecfb4693b8cacf7e76fd8, type: 3}
+  - {fileID: 21300000, guid: b0823eaa7280c8e4d87de80a1ef38da8, type: 3}
+  - {fileID: 21300000, guid: 891a3d0d70eeb2340bf027954ac46008, type: 3}
+  - {fileID: 21300000, guid: 6940e21ebaee9624fa9b3fa455fb533a, type: 3}
+  - {fileID: 21300000, guid: 7d01484f04c19b54e9610cfb2a9210fe, type: 3}
+  - {fileID: 21300000, guid: 3b9d887f245f503409c043c7625e66cd, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - PufferFish-Attack-8
+  - PufferFish-Attack-1
+  - PufferFish-Attack-6
+  - PufferFish-Idle-4
+  - PufferFish-Idle-5
+  - PufferFish-Die-3
+  - PufferFish-Attack-12
+  - PufferFish-Attack-7
+  - PufferFish-Idle-2
+  - PufferFish-Attack-11
+  - PufferFish-Attack-2
+  - PufferFish-Idle-3
+  - PufferFish-Die
+  - PufferFish-Idle-7
+  - PufferFish-Attack-4
+  - PufferFish-Attack-10
+  - PufferFish-Attack-5
+  - PufferFish-Attack-3
+  - PufferFish-Attack-9
+  - PufferFish-Damage
+  - PufferFish-Attack-13
+  - PufferFish-Idle-6
+  - PufferFish-Die-2
+  - PufferFish-Idle-8
+  - PufferFish-Idle-1
+  m_RenderDataMap: {}
+  m_Tag: PufferFish
+  m_IsVariant: 0

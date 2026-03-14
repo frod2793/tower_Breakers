@@ -42,13 +42,16 @@ namespace TowerBreakers.Enemy.Logic
         /// <summary>
         /// [설명]: 층 데이터를 기반으로 여러 그룹의 적을 순차적으로 스폰합니다.
         /// </summary>
-        public async UniTask SpawnFloorEnemiesAsync(FloorData floorData, Vector2 basePos, int floorIndex, bool isPreSpawn = false)
+        public async UniTask SpawnFloorEnemiesAsync(FloorData floorData, Vector2 basePos, int floorIndex, Transform parent = null, bool isPreSpawn = false)
         {
             m_cts?.Cancel();
             m_cts = new CancellationTokenSource();
 
             float totalOffset = 0f;
             Logic.EnemyPushLogic previousEnemy = null;
+
+            // 스폰 시 사용할 부모 결정 (매개변수가 없으면 기본 m_enemyParent 사용)
+            Transform actualParent = (parent != null) ? parent : m_enemyParent;
 
             // 0. 즉시 스폰 또는 패킷 순차 스폰 처리
             if (floorData.SpawnPackets != null && floorData.SpawnPackets.Count > 0)
@@ -80,7 +83,7 @@ namespace TowerBreakers.Enemy.Logic
                     {
                         var entry = mixedPool[i];
                         Vector2 spawnPos = basePos + Vector2.right * totalOffset;
-                        var view = m_factory.Create(entry.data, spawnPos, m_enemyParent);
+                        var view = m_factory.Create(entry.data, spawnPos, actualParent);
                         
                         var logic = view.GetComponent<Logic.EnemyPushLogic>();
                         var controller = view.GetComponent<Logic.EnemyController>();
@@ -118,7 +121,7 @@ namespace TowerBreakers.Enemy.Logic
                         for (int i = 0; i < packet.EnemyCount; i++)
                         {
                             Vector2 spawnPos = basePos + Vector2.right * totalOffset;
-                            var view = m_factory.Create(packet.EnemyPrefabData, spawnPos, m_enemyParent);
+                            var view = m_factory.Create(packet.EnemyPrefabData, spawnPos, actualParent);
                             
                             var logic = view.GetComponent<Logic.EnemyPushLogic>();
                             var controller = view.GetComponent<Logic.EnemyController>();
@@ -155,7 +158,7 @@ namespace TowerBreakers.Enemy.Logic
                 for (int i = 0; i < floorData.EnemyCount; i++)
                 {
                     Vector2 spawnPos = basePos + Vector2.right * totalOffset;
-                    var view = m_factory.Create(floorData.EnemyPrefabData, spawnPos, m_enemyParent);
+                    var view = m_factory.Create(floorData.EnemyPrefabData, spawnPos, actualParent);
 
                     var logic = view.GetComponent<Logic.EnemyPushLogic>();
                     var controller = view.GetComponent<Logic.EnemyController>();

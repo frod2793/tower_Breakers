@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using TowerBreakers.Player.Data;
+using TowerBreakers.Player.Data.Models;
+using TowerBreakers.Player.Data.SO;
 
 namespace TowerBreakers.UI.Equipment
 {

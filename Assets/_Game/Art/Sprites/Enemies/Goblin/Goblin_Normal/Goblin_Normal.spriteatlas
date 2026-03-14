@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Goblin_Normal
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: 9e52ba742712af6428a2d4c1cf8d39b4, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - ba2efb301c1c05d4fbffad094fc63515: 21300000
+    - e4aa94346f26958428a6563945fa7c75: 21300000
+    - 0168d1e480429b04c8d058e200fda1d4: 21300000
+    - b25f96c5bb2b0be40bdc30df2a411e22: 21300000
+    - 66d4161642eb2ad4d99bf5a6c275549f: 21300000
+    - 1c1d0217202aab0439fa9a3f7bf2d037: 21300000
+    - cc71dc37acb6bb04abc9fdf92f74fbfb: 21300000
+    - 987df387ede41b2459928fd6a58ea956: 21300000
+    - 396c7fc7397a29844b038a21a7aa0721: 21300000
+    - 7c3add18589180e4eab4df79b1c6b756: 21300000
+    - 54b9e458052a17747a455bff492c980f: 21300000
+    - a681f758441985142b26c092fe304975: 21300000
+    - 6bcdc2d82ad775f4f930ada19c43ea56: 21300000
+    - 5f36f37a7f7bb4c49b538cebf3fd2d68: 21300000
+    - d1a5f8aae5c716146955c8eaf5b855c1: 21300000
+    - 313b431b6fd884643809a932a77e699e: 21300000
+    - 30c0ca2b153b5c34eb67eb5ec82bfb44: 21300000
+    - 3b6dd96bae60c3a479e8854fa8a58495: 21300000
+    - 67254a9b5db43874fa83f174e22d5fd5: 21300000
+    - 53c7ab8cc78a5f54f8d6029766c6d965: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: ba2efb301c1c05d4fbffad094fc63515, type: 3}
+  - {fileID: 21300000, guid: e4aa94346f26958428a6563945fa7c75, type: 3}
+  - {fileID: 21300000, guid: 0168d1e480429b04c8d058e200fda1d4, type: 3}
+  - {fileID: 21300000, guid: b25f96c5bb2b0be40bdc30df2a411e22, type: 3}
+  - {fileID: 21300000, guid: 66d4161642eb2ad4d99bf5a6c275549f, type: 3}
+  - {fileID: 21300000, guid: 1c1d0217202aab0439fa9a3f7bf2d037, type: 3}
+  - {fileID: 21300000, guid: cc71dc37acb6bb04abc9fdf92f74fbfb, type: 3}
+  - {fileID: 21300000, guid: 987df387ede41b2459928fd6a58ea956, type: 3}
+  - {fileID: 21300000, guid: 396c7fc7397a29844b038a21a7aa0721, type: 3}
+  - {fileID: 21300000, guid: 7c3add18589180e4eab4df79b1c6b756, type: 3}
+  - {fileID: 21300000, guid: 54b9e458052a17747a455bff492c980f, type: 3}
+  - {fileID: 21300000, guid: a681f758441985142b26c092fe304975, type: 3}
+  - {fileID: 21300000, guid: 6bcdc2d82ad775f4f930ada19c43ea56, type: 3}
+  - {fileID: 21300000, guid: 5f36f37a7f7bb4c49b538cebf3fd2d68, type: 3}
+  - {fileID: 21300000, guid: d1a5f8aae5c716146955c8eaf5b855c1, type: 3}
+  - {fileID: 21300000, guid: 313b431b6fd884643809a932a77e699e, type: 3}
+  - {fileID: 21300000, guid: 30c0ca2b153b5c34eb67eb5ec82bfb44, type: 3}
+  - {fileID: 21300000, guid: 3b6dd96bae60c3a479e8854fa8a58495, type: 3}
+  - {fileID: 21300000, guid: 67254a9b5db43874fa83f174e22d5fd5, type: 3}
+  - {fileID: 21300000, guid: 53c7ab8cc78a5f54f8d6029766c6d965, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - Goblin-Idle-1
+  - Goblin-Move-6
+  - Goblin-Attack-4
+  - Goblin-Move-2
+  - Goblin-Damage-1
+  - Goblin-Die-1
+  - Goblin-Attack-3
+  - Goblin-Idle-4
+  - Goblin-Idle-2
+  - Goblin-Move-1
+  - Goblin-Die-2
+  - Goblin-Move-5
+  - Goblin-Attack-2
+  - Goblin-Move-3
+  - Goblin-Attack-5
+  - Goblin-Idle-5
+  - Goblin-Move-4
+  - Goblin-Attack-1
+  - Goblin-Idle-3
+  - Goblin-Damage-2
+  m_RenderDataMap: {}
+  m_Tag: Goblin_Normal
+  m_IsVariant: 0

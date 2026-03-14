@@ -208,4 +208,34 @@ namespace TowerBreakers.Core.Events
             Count = count;
         }
     }
+
+    /// <summary>
+    /// [설명]: 보상 상자가 특정 위치에 스폰되었음을 알리는 이벤트입니다.
+    /// </summary>
+    public struct OnRewardChestSpawned
+    {
+        public UnityEngine.Vector3 Position;
+        public int FloorIndex;
+
+        public OnRewardChestSpawned(UnityEngine.Vector3 position, int floorIndex)
+        {
+            Position = position;
+            FloorIndex = floorIndex;
+        }
+    }
+
+    /// <summary>
+    /// [설명]: 보상 상자가 플레이어에 의해 열렸음을 알리는 이벤트입니다.
+    /// </summary>
+    public struct OnRewardChestOpened
+    {
+        public UnityEngine.Vector3 Position;
+        public int FloorIndex;
+
+        public OnRewardChestOpened(UnityEngine.Vector3 position, int floorIndex)
+        {
+            Position = position;
+            FloorIndex = floorIndex;
+        }
+    }
 }
