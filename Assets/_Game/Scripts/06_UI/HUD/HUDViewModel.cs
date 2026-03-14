@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TowerBreakers.Player.Data.Models;
 using TowerBreakers.Player.Data.SO;
 using UnityEngine;
@@ -27,6 +28,11 @@ namespace TowerBreakers.UI.HUD
         public int ChestCount => m_playerModel.ChestCount;
         public int CurrentFloor => m_towerManager.CurrentFloorIndex + 1;
         public bool IsGoVisible { get; private set; } = false;
+
+        /// <summary>
+        /// [설명]: 현재 층에서 살아있는 적의 타입 리스트입니다.
+        /// </summary>
+        public IReadOnlyList<TowerBreakers.Enemy.Data.EnemyType> CurrentFloorEnemies => m_towerManager.CurrentFloorEnemies;
         #endregion
 
         #region 이벤트
@@ -44,6 +50,8 @@ namespace TowerBreakers.UI.HUD
             m_playerModel.OnKillsChanged += HandleKillsChanged;
             m_playerModel.OnChestsChanged += HandleChestsChanged;
 
+            m_towerManager.OnDataChanged += HandleTowerDataChanged;
+
             m_eventBus.Subscribe<OnFloorCleared>(HandleFloorCleared);
             m_eventBus.Subscribe<OnFloorReadyForNext>(HandleFloorReadyForNext);
             m_eventBus.Subscribe<OnEnemyKilled>(HandleEnemyKilled);
@@ -53,10 +61,12 @@ namespace TowerBreakers.UI.HUD
         private void HandleLifeCountChanged(int current, int max) => OnDataUpdated?.Invoke();
         private void HandleKillsChanged(int kills) => OnDataUpdated?.Invoke();
         private void HandleChestsChanged(int chests) => OnDataUpdated?.Invoke();
+        private void HandleTowerDataChanged() => OnDataUpdated?.Invoke();
 
         private void HandleEnemyKilled(OnEnemyKilled evt)
         {
             m_playerModel.AddKill();
+            OnDataUpdated?.Invoke();
         }
 
         private void HandleChestCollected(OnChestCollected evt)
@@ -90,6 +100,9 @@ namespace TowerBreakers.UI.HUD
             m_playerModel.OnLifeCountChanged -= HandleLifeCountChanged;
             m_playerModel.OnKillsChanged -= HandleKillsChanged;
             m_playerModel.OnChestsChanged -= HandleChestsChanged;
+
+            if (m_towerManager != null)
+                m_towerManager.OnDataChanged -= HandleTowerDataChanged;
 
             m_eventBus.Unsubscribe<OnFloorCleared>(HandleFloorCleared);
             m_eventBus.Unsubscribe<OnFloorReadyForNext>(HandleFloorReadyForNext);

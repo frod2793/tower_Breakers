@@ -3312,9 +3312,9 @@ GameObject:
   - component: {fileID: 1062093783691750256}
   - component: {fileID: 3325913374216392224}
   - component: {fileID: 937473926098505345}
+  - component: {fileID: 2057661867462243581}
   - component: {fileID: 2282247759135278491}
   - component: {fileID: 2743128493557396364}
-  - component: {fileID: 2057661867462243581}
   m_Layer: 7
   m_Name: skull
   m_TagString: Enemy
@@ -6308,7 +6308,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64513172cf01546c8816059ecc4c3d75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Logic.EnemyPushLogic
-  m_pushDistance: 1
+--- !u!114 &2057661867462243581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7359377293411260106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9db7404a231704dd5b07e8afd3dcae10, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Logic.EnemyController
 --- !u!70 &2282247759135278491
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -6373,18 +6384,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &2057661867462243581
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7359377293411260106}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9db7404a231704dd5b07e8afd3dcae10, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Logic.EnemyController
 --- !u!1 &7382781275474857725
 GameObject:
   m_ObjectHideFlags: 0

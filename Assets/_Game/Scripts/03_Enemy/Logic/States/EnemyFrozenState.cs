@@ -24,7 +24,7 @@ namespace TowerBreakers.Enemy.Logic
             if (m_view != null)
             {
                 m_view.PlayAnimation(global::PlayerState.IDLE);
-                Debug.Log($"[EnemyFrozenState] {m_view.name} 동결 시작 (벽 압착)");
+                // [로그 제거]: 콘솔 노이즈 방지
             }
         }
 
@@ -32,7 +32,7 @@ namespace TowerBreakers.Enemy.Logic
         {
             if (m_view != null)
             {
-                Debug.Log($"[EnemyFrozenState] {m_view.name} 동결 해제");
+                // [로그 제거]: 콘솔 노이즈 방지
             }
         }
 

@@ -16,11 +16,17 @@ namespace TowerBreakers.Enemy.View
         #region 내부 변수
         private SpriteRenderer[] m_renderers;
         private Animator m_cachedAnimator;
+        private bool m_isInitialized = false;
         #endregion
 
         #region 초기화
+        /// <summary>
+        /// [설명]: 첫 생성 시 1회 호출되어 렌더러 캐싱 및 애니메이터 설정을 수행합니다.
+        /// </summary>
         public void Initialize()
         {
+            if (m_isInitialized) return;
+
             if (m_spumPrefabs != null)
             {
                 // Animator 참조가 없으면 자식에서 자동 탐색
@@ -31,22 +37,35 @@ namespace TowerBreakers.Enemy.View
 
                 if (m_spumPrefabs._anim != null)
                 {
-                    // 애니메이션 상태 및 컨트롤러 초기화 (풀링 재사용 시 필수)
+                    // 애니메이션 상태 및 컨트롤러 초기화 (최초 1회만 수행)
                     m_spumPrefabs.OverrideControllerInit();
-                    m_spumPrefabs.PlayAnimation(global::PlayerState.IDLE, 0);
                 }
                 else
                 {
                     Debug.LogError($"[EnemyView] {gameObject.name}: SPUM Animator를 찾을 수 없습니다.");
                 }
 
-                // [추가]: 애니메이터 캐싱
                 m_cachedAnimator = m_spumPrefabs._anim;
             }
 
-            // [추가]: 자식들의 모든 렌더러를 캐싱하여 피격 효과에 사용
             m_renderers = GetComponentsInChildren<SpriteRenderer>(true);
+            m_isInitialized = true;
+            
+            ResetState();
+        }
+
+        /// <summary>
+        /// [설명]: 풀링에서 재사용될 때 호출되어 시각적 상태와 애니메이션을 초기화합니다.
+        /// 무거운 OverrideControllerInit 호출을 방지합니다.
+        /// </summary>
+        public void ResetState()
+        {
             ResetColor();
+            
+            if (m_spumPrefabs != null)
+            {
+                m_spumPrefabs.PlayAnimation(global::PlayerState.IDLE, 0);
+            }
         }
 
         public void PlayAnimation(global::PlayerState state, int index = 0)
@@ -79,21 +98,33 @@ namespace TowerBreakers.Enemy.View
         #region 피격 효과 (Visual Feedback)
         /// <summary>
         /// [설명]: 적 캐릭터 전체가 붉은색으로 깜빡이는 피격 시각 효과를 재생합니다.
+        /// [최적화]: 렌더러당 개별 트윈 생성 대신, 단 하나의 가상 트윈으로 모든 렌더러 일괄 업데이트
         /// </summary>
         public void PlayHitEffect()
         {
             if (m_renderers == null || m_renderers.Length == 0) return;
 
-            // 모든 렌더러에 대해 빨간색으로 변경 후 원래 색(White)으로 복귀하는 트윈 적용
-            foreach (var r in m_renderers)
+            // 기존 진행 중인 뷰 타겟 트윈 종료
+            DOTween.Kill(this);
+
+            // [최적화]: 가상 트윈을 활용하여 0.0(Red) -> 1.0(White)으로 변하는 값을 모든 렌더러에 적용
+            // 루프 내부의 null 체크 비용을 줄이기 위해 초기 캐싱 시 필터링 수행 검토 가능하나, 
+            // 여기서는 루프의 효율성에 집중합니다.
+            DOVirtual.Float(0f, 1f, 0.15f, (value) =>
             {
-                if (r != null)
+                Color targetColor = Color.Lerp(Color.red, Color.white, value);
+                int len = m_renderers.Length;
+                for (int i = 0; i < len; i++)
                 {
-                    // 현재 진행 중인 색상 트윈을 덮어씀
-                    r.DOColor(Color.red, 0.1f)
-                     .OnComplete(() => r.DOColor(Color.white, 0.1f));
+                    var renderer = m_renderers[i];
+                    if (renderer != null)
+                    {
+                        renderer.color = targetColor;
+                    }
                 }
-            }
+            })
+            .SetTarget(this)
+            .SetEase(Ease.OutSine);
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using TowerBreakers.Player.Data.SO;
 
 namespace TowerBreakers.Core.Events
 {
@@ -20,6 +21,42 @@ namespace TowerBreakers.Core.Events
     /// HUD에서 'GO' UI를 표시하는 데 사용됩니다.
     /// </summary>
     public struct OnFloorReadyForNext { }
+
+    /// <summary>
+    /// [설명]: 현재 층의 모든 적이 처치되었음을 알리는 이벤트입니다.
+    /// 보상 상자가 있다면 이 이벤트를 통해 활성화됩니다.
+    /// </summary>
+    public struct OnFloorEnemiesCleared
+    {
+        public int FloorIndex;
+        public OnFloorEnemiesCleared(int floorIndex) => FloorIndex = floorIndex;
+    }
+
+    /// <summary>
+    /// [설명]: 보상 상자가 씬에 존재함을 알리는 이벤트입니다 (TowerManager 등록용).
+    /// </summary>
+    public struct OnRewardChestRegistered
+    {
+        public int FloorIndex;
+        public OnRewardChestRegistered(int floorIndex) => FloorIndex = floorIndex;
+    }
+
+    /// <summary>
+    /// [설명]: 상자가 열리고 실제 보상 아이템이 결정되었을 때 연출을 위해 발행됩니다.
+    /// </summary>
+    public struct OnRewardSpawned
+    {
+        public string RewardKey;
+        public UnityEngine.Vector3 Position;
+        public int FloorIndex;
+
+        public OnRewardSpawned(string rewardKey, UnityEngine.Vector3 position, int floorIndex)
+        {
+            RewardKey = rewardKey;
+            Position = position;
+            FloorIndex = floorIndex;
+        }
+    }
 
     /// <summary>
     /// [설명]: 특정 층의 전투가 시작됨을 알리는 이벤트입니다.
@@ -57,11 +94,13 @@ namespace TowerBreakers.Core.Events
     {
         public int EnemyId;
         public int FloorIndex;
+        public TowerBreakers.Enemy.Data.EnemyType EnemyType;
 
-        public OnEnemyKilled(int enemyId, int floorIndex)
+        public OnEnemyKilled(int enemyId, int floorIndex, TowerBreakers.Enemy.Data.EnemyType enemyType)
         {
             EnemyId = enemyId;
             FloorIndex = floorIndex;
+            EnemyType = enemyType;
         }
     }
 
@@ -117,11 +156,11 @@ namespace TowerBreakers.Core.Events
     /// </summary>
     public struct OnPlayerActionStarted
     {
-        public string ActionName;
+        public TowerBreakers.Player.Logic.PlayerActionType ActionType;
 
-        public OnPlayerActionStarted(string actionName)
+        public OnPlayerActionStarted(TowerBreakers.Player.Logic.PlayerActionType actionType)
         {
-            ActionName = actionName;
+            ActionType = actionType;
         }
     }
 
@@ -135,13 +174,15 @@ namespace TowerBreakers.Core.Events
         public float PushbackDistance;
         public float DefendRange;
         public int FloorIndex;
+        public UnityEngine.Vector3 PlayerPosition;
 
-        public OnDefendActionTriggered(float duration, float pushbackDistance, float defendRange, int floorIndex)
+        public OnDefendActionTriggered(float duration, float pushbackDistance, float defendRange, int floorIndex, UnityEngine.Vector3 playerPosition)
         {
             StunDuration = duration;
             PushbackDistance = pushbackDistance;
             DefendRange = defendRange;
             FloorIndex = floorIndex;
+            PlayerPosition = playerPosition;
         }
     }
 
@@ -231,11 +272,13 @@ namespace TowerBreakers.Core.Events
     {
         public UnityEngine.Vector3 Position;
         public int FloorIndex;
+        public RewardTableData RewardTable;
 
-        public OnRewardChestOpened(UnityEngine.Vector3 position, int floorIndex)
+        public OnRewardChestOpened(UnityEngine.Vector3 position, int floorIndex, RewardTableData rewardTable)
         {
             Position = position;
             FloorIndex = floorIndex;
+            RewardTable = rewardTable;
         }
     }
 }

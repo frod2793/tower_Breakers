@@ -21,6 +21,16 @@ namespace TowerBreakers.Enemy.Logic
         }
 
         /// <summary>
+        /// [설명]: 등록된 모든 상태를 제거합니다. 재사용 시 호출됩니다.
+        /// </summary>
+        public void ClearStates()
+        {
+            m_currentState?.OnExit();
+            m_currentState = null;
+            m_states.Clear();
+        }
+
+        /// <summary>
         /// [설명]: 특정 타입의 상태를 반환합니다.
         /// </summary>
         public T GetState<T>() where T : class, IEnemyState

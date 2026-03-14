@@ -1,4 +1,5 @@
 using UnityEngine;
+using TowerBreakers.Core;
 using TowerBreakers.Player.Logic;
 
 namespace TowerBreakers.Enemy.Logic
@@ -9,8 +10,36 @@ namespace TowerBreakers.Enemy.Logic
     /// </summary>
     public class EnemyPushLogic : MonoBehaviour
     {
+        // [최적화] 군집의 Collider 활성화 정책: 스킬 사용 시 전체 활성화, 종료 시 리더만 활성화
+        public static void EnableAllGroupCollidersForSkill()
+        {
+            foreach (var ep in FindObjectsOfType<EnemyPushLogic>())
+            {
+                var c = ep.GetComponent<Collider2D>();
+                if (c != null) c.enabled = true;
+            }
+        }
+
+        public static void DisableAllGroupCollidersForSkill()
+        {
+            foreach (var ep in FindObjectsOfType<EnemyPushLogic>())
+            {
+                var c = ep.GetComponent<Collider2D>();
+                if (c != null) c.enabled = (ep.GetLeader() == ep);
+            }
+        }
+
+        public static void EnableAllCollidersForSkill()
+        {
+            foreach (var ep in FindObjectsOfType<EnemyPushLogic>())
+            {
+                var c = ep.GetComponent<Collider2D>();
+                if (c != null) c.enabled = true;
+            }
+        }
         #region 내부 필드
         private float m_force;
+
         private PlayerPushReceiver m_target;
         private Transform m_targetTransform;
         private Transform m_cachedTransform;
@@ -27,6 +56,15 @@ namespace TowerBreakers.Enemy.Logic
         // [최적화]: 그룹 차단 여부 캐싱 (프레임 단위)
         private bool m_cachedGroupBlocked;
         private int m_cachedBlockedGen = -1;
+
+        /// <summary>
+        /// [설명]: 특수 개체 여부 (항시 콜라이더 활성화 대상)
+        /// </summary>
+        private bool m_isSpecialType;
+
+        // [최적화]: 개별 차단 여부 캐싱 (프레임 단위)
+        private bool m_cachedBlocked;
+        private int m_lastBlockedFrame = -1;
         #endregion
 
         #region 프로퍼티
@@ -34,11 +72,17 @@ namespace TowerBreakers.Enemy.Logic
         /// [설명]: 대열 간격 설정입니다.
         /// </summary>
         public float TrainSpacing { get; set; } = 1.5f;
+        
 
         /// <summary>
         /// [설명]: 현재 추적 중인 플레이어 밀림 수신 객체입니다.
         /// </summary>
         public PlayerPushReceiver PlayerReceiver => m_target;
+
+        /// <summary>
+        /// [설명]: 내 앞에 있는 적 유닛을 반환합니다.
+        /// </summary>
+        public EnemyPushLogic AheadEnemy => m_aheadEnemy;
         #endregion
 
         #region 초기화 및 바인딩 로직
@@ -47,10 +91,12 @@ namespace TowerBreakers.Enemy.Logic
         /// </summary>
         /// <param name="force">미는 힘의 크기</param>
         /// <param name="target">타겟 플레이어 객체</param>
-        public void Initialize(float force, PlayerPushReceiver target)
+        /// <param name="isSpecial">특수 개체 여부 (항시 콜라이더 활성화)</param>
+        public void Initialize(float force, PlayerPushReceiver target, bool isSpecial)
         {
             m_force = force;
             m_target = target;
+            m_isSpecialType = isSpecial;
             
             // [최적화]: 빈번히 사용되는 참조 캐싱
             m_cachedTransform = transform;
@@ -76,6 +122,7 @@ namespace TowerBreakers.Enemy.Logic
             m_aheadEnemy = null;
             m_followerEnemy = null;
             InvalidateLeaderCache(); // 캐시 무효화
+            m_lastBlockedFrame = -1; // 차단 캐시 무효화
             UpdateCollider();
             enabled = true;
         }
@@ -115,13 +162,14 @@ namespace TowerBreakers.Enemy.Logic
         }
 
         /// <summary>
-        /// [설명]: 맨 앞의 적(리더)일 때만 콜라이더를 켜서 겹침 방지 최적화를 반영합니다.
+        /// [설명]: 일반 개체는 리더일 때만, 특수 개체는 상시 콜라이더를 활성화하여 물리 연산을 최적화합니다.
         /// </summary>
         public void UpdateCollider()
         {
             if (TryGetComponent<Collider2D>(out var col))
             {
-                col.enabled = (m_aheadEnemy == null);
+                // 특수 개체이거나, 내 앞에 아무도 없는 리더일 경우에만 콜라이더 활성화
+                col.enabled = m_isSpecialType || (m_aheadEnemy == null);
             }
         }
 
@@ -180,9 +228,11 @@ namespace TowerBreakers.Enemy.Logic
             float xDist = m_cachedTransform.position.x - m_targetTransform.position.x;
             
             // 유효 사거리 내에 있을 때 힘 전달
+            float effectiveForce = m_force;
+            
             if (xDist >= -1.0f && xDist <= 1.2f)
             {
-                m_target.ApplyPushForce(m_force);
+                m_target.ApplyPushForce(effectiveForce);
             }
         }
 
@@ -246,12 +296,44 @@ namespace TowerBreakers.Enemy.Logic
 
         /// <summary>
         /// [설명]: 개별적으로 전진 가능 여부를 확인합니다.
+        /// 본인이 플레이어와 닿아 있거나, 바로 앞의 적이 막혀 있는 경우 정지합니다.
+        /// [최적화]: 프레임 단위 캐싱을 통해 $O(N^2)$ 재귀 연산을 $O(N)$으로 개선했습니다.
         /// </summary>
         /// <param name="gap">판정 거리</param>
         public bool IsBlocked(float gap)
         {
-            // 기차 대열 방식에서는 그룹 상태와 본인 상태를 동기화하여 부드러운 움직임 유도
-            return IsGroupBlocked(gap);
+            // [최적화]: 현재 프레임에 이미 계산되었다면 캐시된 결과 반환
+            if (m_lastBlockedFrame == Time.frameCount)
+            {
+                return m_cachedBlocked;
+            }
+
+            bool isBlocked = false;
+
+            // 1. 내가 플레이어와 닿아 있고 플레이어가 벽에 있다면 이동 불가
+            if (IsTouchingPlayer(gap))
+            {
+                if (m_target != null && m_target.IsAtWall)
+                {
+                    isBlocked = true;
+                }
+            }
+
+            // 2. 내 앞의 적이 막혀 있고 나 역시 간격이 좁다면 이동 불가 (대열 유지)
+            if (!isBlocked && m_aheadEnemy != null)
+            {
+                // 앞의 적이 논리적으로 막혀 있거나, 현재 위치가 앞의 적보다 너무 전진했다면 정지
+                float distToAhead = m_cachedTransform.position.x - m_aheadEnemy.transform.position.x;
+                if (distToAhead <= TrainSpacing + 0.1f && m_aheadEnemy.IsBlocked(gap))
+                {
+                    isBlocked = true;
+                }
+            }
+
+            // 결과 캐싱 및 반환
+            m_cachedBlocked = isBlocked;
+            m_lastBlockedFrame = Time.frameCount;
+            return isBlocked;
         }
         #endregion
     }

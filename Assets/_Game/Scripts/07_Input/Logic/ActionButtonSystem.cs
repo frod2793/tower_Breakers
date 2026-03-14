@@ -54,11 +54,10 @@ namespace TowerBreakers.Input.Logic
             {
                 m_defendButton.onClick.AddListener(() => 
                 {
-                    Debug.Log("[ActionButtonSystem] 방어 버튼 클릭됨");
                     if (m_actionHandler != null)
+                    {
                         m_actionHandler.ExecuteAction(PlayerActionType.Defend);
-                    else
-                        Debug.LogError("[ActionButtonSystem] PlayerActionHandler가 null입니다!");
+                    }
                 });
             }
         }

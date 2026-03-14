@@ -19,8 +19,7 @@ MonoBehaviour:
   m_leftShoulderSprite: {fileID: -1120026500337400717, guid: 1810f09d324df46289d58e432045bcd1, type: 3}
   m_rightShoulderSprite: {fileID: -1554369935797715747, guid: 1810f09d324df46289d58e432045bcd1, type: 3}
   m_helmetSprite: {fileID: 0}
-  m_damagedClip: {fileID: 0}
-  m_deathClip: {fileID: 0}
   m_lifeBonus: 1
+  m_healAmount: 1
   m_pushResistance: 0.25
   m_moveSpeedModifier: 1

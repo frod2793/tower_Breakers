@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using TowerBreakers.Core.Events;
 using TowerBreakers.Environment.View;
 using TowerBreakers.Tower.Logic;
+using TowerBreakers.Interactions.View;
+using TowerBreakers.Player.Data.SO;
 using UnityEngine;
 using VContainer;
 
@@ -14,8 +16,8 @@ namespace TowerBreakers.Environment.Logic
     public class EnvironmentManager : MonoBehaviour
     {
         #region 에디터 설정
-        [Header("프리팹 및 부모 설정")]
-        [SerializeField, Tooltip("사용할 맵 세그먼트 프리팹(기본 틀)")]
+
+        [Header("프리팹 및 부모 설정")] [SerializeField, Tooltip("사용할 맵 세그먼트 프리팹(기본 틀)")]
         private MapSegment m_segmentPrefab;
 
         [SerializeField, Tooltip("초기 생성 세그먼트 개수")]
@@ -27,8 +29,51 @@ namespace TowerBreakers.Environment.Logic
         [SerializeField, Tooltip("스폰된 적들이 배치될 부모 오브젝트")]
         private Transform m_enemyParent;
 
-        [Header("좌표 설정")]
-        [SerializeField, Tooltip("플레이어의 기본 착지(전투 시) Y 좌표 (화면 중심 기준)")]
+        [Header("보상 상자 설정")] [SerializeField, Tooltip("스폰할 보상 상자 프리팹")]
+        private RewardChestView m_rewardChestPrefab;
+
+        // 층별 보상 상자 스폰 오프셋(게임 플레이 중마다 다를 수 있는 경우 사용)
+        #region 내부 로직 — FloorRewardSpawnConfig
+        [System.Serializable]
+        public class FloorRewardSpawnConfig
+        {
+            public int FloorIndex;
+            public float OffsetX;
+            public float OffsetY;
+            public bool Enabled = true;
+        }
+        #endregion
+
+        // Public API: Floor-specific reward spawn offset (runtime configurability)
+        /// <summary>
+        /// [설명]: 특정 층의 보상 상자 스폰 오프셋을 설정합니다. Inspector에서 관리하기 어려운 경우 런타임에 업데이트 가능합니다.
+        /// </summary>
+        public void SetRewardSpawnOffsetForFloor(int floorIndex, Vector2 offset)
+        {
+            if (m_floorRewardSpawnConfigs == null) m_floorRewardSpawnConfigs = new List<FloorRewardSpawnConfig>();
+            var cfg = m_floorRewardSpawnConfigs.Find(c => c != null && c.FloorIndex == floorIndex);
+            if (cfg != null)
+            {
+                cfg.OffsetX = offset.x;
+                cfg.OffsetY = offset.y;
+                cfg.Enabled = true;
+            }
+            else
+            {
+                m_floorRewardSpawnConfigs.Add(new FloorRewardSpawnConfig
+                {
+                    FloorIndex = floorIndex,
+                    OffsetX = offset.x,
+                    OffsetY = offset.y,
+                    Enabled = true
+                });
+            }
+        }
+
+        [SerializeField, Tooltip("층별 보상 상자 스폰 오프셋 구성 (비어 있으면 기본 오프셋 사용)")]
+        private List<FloorRewardSpawnConfig> m_floorRewardSpawnConfigs = new List<FloorRewardSpawnConfig>();
+
+        [Header("좌표 설정")] [SerializeField, Tooltip("플레이어의 기본 착지(전투 시) Y 좌표 (화면 중심 기준)")]
         private float m_defaultLandingY = -1.3f;
 
         [SerializeField, Tooltip("플레이어 대시 시작 X 오프셋")]
@@ -42,9 +87,19 @@ namespace TowerBreakers.Environment.Logic
 
         [SerializeField, Tooltip("적 스폰 X 오프셋")]
         private float m_enemySpawnOffsetX = 9.0f;
+
+        [Header("보상 상자 오프셋")] [SerializeField, Tooltip("보상 상자의 기본 X 오프셋 (세그먼트 원점 기준)")]
+        private float m_rewardChestOffsetX = 0f;
+
+        [SerializeField, Tooltip("보상 상자의 기본 Y 오프셋 (세그먼트 원점 기준)")]
+        private float m_rewardChestOffsetY = 0f;
+
         #endregion
 
+        // 공개 API: 보상 상자 층별 offset 설정은 아래 영역으로 이동했습니다.
+
         #region 내부 필드
+
         private IEventBus m_eventBus;
         private TowerManager m_towerManager;
         private Player.Logic.PlayerPushReceiver m_playerReceiver;
@@ -53,9 +108,11 @@ namespace TowerBreakers.Environment.Logic
         private readonly List<MapSegment> m_activeSegments = new List<MapSegment>();
         private float m_currentOffset = 0f;
         private int m_spawnedSegmentCount = 0;
+
         #endregion
 
         #region 프로퍼티
+
         /// <summary>
         /// [설명]: 현재 사용 중인 세그먼트 프리팹의 높이를 반환합니다.
         /// </summary>
@@ -70,31 +127,33 @@ namespace TowerBreakers.Environment.Logic
         /// [설명]: 플레이어의 기본 착지 Y 좌표를 반환합니다.
         /// </summary>
         public float DefaultLandingY => m_defaultLandingY;
+
         #endregion
 
         #region 초기화 및 바인딩 로직
+
         /// <summary>
         /// [설명]: 의존성을 주입받고 이벤트를 구독합니다.
         /// </summary>
         [Inject]
         public void Construct(
-            IEventBus eventBus, 
-            TowerManager towerManager, 
-            Player.Logic.PlayerPushReceiver playerReceiver, 
+            IEventBus eventBus,
+            TowerManager towerManager,
+            Player.Logic.PlayerPushReceiver playerReceiver,
             Enemy.Logic.EnemySpawner enemySpawner)
         {
             m_eventBus = eventBus;
             m_towerManager = towerManager;
             m_playerReceiver = playerReceiver;
             m_enemySpawner = enemySpawner;
-            
+
             if (m_enemySpawner != null)
             {
                 m_enemySpawner.SetEnemyParent(m_enemyParent);
             }
 
             m_eventBus.Subscribe<OnFloorCleared>(OnFloorCleared);
-            
+
             InitializeMap();
         }
 
@@ -111,9 +170,11 @@ namespace TowerBreakers.Environment.Logic
 
             UpdatePlayerBoundary();
         }
+
         #endregion
 
         #region 비즈니스 로직
+
         /// <summary>
         /// [설명]: 층 클리어 이벤트 핸들러입니다. 새로운 세그먼트를 생성하고 이전 세그먼트를 정리합니다.
         /// </summary>
@@ -145,7 +206,7 @@ namespace TowerBreakers.Environment.Logic
             if (currentSegment != null)
             {
                 m_playerReceiver.SetMapLimit(currentSegment.LeftBoundaryX);
-                
+
                 // 세그먼트 위치를 기준으로 백플립 기준점 X 좌표 계산
                 float backflipWorldX = currentSegment.transform.position.x + m_backflipThresholdOffsetX;
                 m_playerReceiver.SetBackflipThreshold(backflipWorldX);
@@ -161,16 +222,18 @@ namespace TowerBreakers.Environment.Logic
 
             Transform parent = (m_segmentParent != null) ? m_segmentParent : transform;
             MapSegment newSegment = Instantiate(m_segmentPrefab, parent);
-            
+
             newSegment.SetPosition(new Vector2(0f, m_currentOffset));
             m_activeSegments.Add(newSegment);
-            
+
             m_currentOffset += newSegment.SegmentHeight;
             m_spawnedSegmentCount++;
         }
+
         #endregion
 
         #region 공개 API
+
         /// <summary>
         /// [설명]: 특정 층의 플레이어 스폰(대시 시작) 위치를 반환합니다.
         /// </summary>
@@ -178,7 +241,7 @@ namespace TowerBreakers.Environment.Logic
         {
             var segment = GetSegmentForFloor(floorIndex);
             if (segment == null) return new Vector2(m_playerSpawnOffsetX, m_defaultLandingY);
-            
+
             Vector3 segPos = segment.transform.position;
             return new Vector2(segPos.x + m_playerSpawnOffsetX, segPos.y + m_defaultLandingY);
         }
@@ -215,9 +278,64 @@ namespace TowerBreakers.Environment.Logic
             Vector3 segPos = segment.transform.position;
             return new Vector2(segPos.x + m_enemySpawnOffsetX, segPos.y + m_defaultLandingY);
         }
+
+        #endregion
+
+        #region 공개 API (보상 상자)
+
+        /// <summary>
+        /// [설명]: 특정 층에 보상 상자를 스폰합니다.
+        /// </summary>
+        /// <param name="floorIndex">스폰할 층 인덱스</param>
+        /// <param name="rewardTable">사용할 보상 테이블</param>
+        public void SpawnRewardChest(int floorIndex, RewardTableData rewardTable)
+        {
+            if (m_rewardChestPrefab == null)
+            {
+                Debug.LogWarning("[EnvironmentManager] 보상 상자 프리팹이 설정되지 않았습니다.");
+                return;
+            }
+
+            if (rewardTable == null)
+            {
+                Debug.LogWarning("[EnvironmentManager] 보상 테이블이 설정되지 않았습니다. 층 " + floorIndex + "에 보상 상자를 스폰하지 않습니다.");
+                return;
+            }
+
+            // 세그먼트 위치 가져오기
+            var segment = GetSegmentForFloor(floorIndex);
+            if (segment == null)
+            {
+                Debug.LogWarning("[EnvironmentManager] 층 " + floorIndex + "에 해당하는 세그먼트를 찾을 수 없습니다.");
+                return;
+            }
+
+            // 보상 상자 스폰 위치 계산 (세그먼트 기준)
+            Vector2 perFloorOffset = GetRewardSpawnOffsetForFloor(floorIndex);
+            Vector3 spawnPosition = new Vector3(
+                segment.transform.position.x + perFloorOffset.x,
+                segment.transform.position.y + perFloorOffset.y,
+                0f
+            );
+
+            // 보상 상자 인스턴스 생성 (세그먼트를 부모로 설정하여 맵 이동 시 함께 하강)
+            RewardChestView chestInstance =
+                Instantiate(m_rewardChestPrefab, spawnPosition, Quaternion.identity, segment.transform);
+            chestInstance.name = $"RewardChest_Floor{floorIndex}";
+
+            // 보상 테이블 및 기본 정보 설정
+            chestInstance.SetRewardTable(rewardTable);
+            chestInstance.Initialize(m_eventBus);
+            chestInstance.Setup(floorIndex);
+
+            // 개발 단계 확인용 로그 (필요 시 유지)
+            // Debug.Log($"[EnvironmentManager] 층 {floorIndex} 보상 상자 생성");
+        }
+
         #endregion
 
         #region 내부 로직
+
         /// <summary>
         /// [설명]: 층 인덱스에 해당하는 세그먼트를 리스트에서 찾아 반환합니다.
         /// 인덱스 범위를 벗어나면 자동으로 세그먼트를 추가 생성하여 가용성을 보장합니다.
@@ -230,7 +348,7 @@ namespace TowerBreakers.Environment.Logic
             int targetIndex = floorIndex - firstSegmentFloorIndex;
 
             if (targetIndex < 0) targetIndex = 0;
-            
+
             // 부족한 세그먼트 자동 생성 로직 (Batching 방지 위해 최소 필요한 만큼만)
             while (targetIndex >= m_activeSegments.Count && m_spawnedSegmentCount < floorIndex + 2)
             {
@@ -244,9 +362,29 @@ namespace TowerBreakers.Environment.Logic
 
             return m_activeSegments[targetIndex];
         }
+
+        /// <summary>
+        /// [설명]: 층별 커스텀 보상 상자 스폰 오프셋을 반환합니다. 설정이 없으면 기본 오프셋을 사용합니다.
+        /// </summary>
+        private Vector2 GetRewardSpawnOffsetForFloor(int floorIndex)
+        {
+            if (m_floorRewardSpawnConfigs == null) return new Vector2(m_rewardChestOffsetX, m_rewardChestOffsetY);
+
+            foreach (var cfg in m_floorRewardSpawnConfigs)
+            {
+                if (cfg != null && cfg.Enabled && cfg.FloorIndex == floorIndex)
+                {
+                    return new Vector2(cfg.OffsetX, cfg.OffsetY);
+                }
+            }
+
+            return new Vector2(m_rewardChestOffsetX, m_rewardChestOffsetY);
+        }
+
         #endregion
 
         #region 유니티 생명주기
+
         private void OnDestroy()
         {
             if (m_eventBus != null)
@@ -254,6 +392,7 @@ namespace TowerBreakers.Environment.Logic
                 m_eventBus.Unsubscribe<OnFloorCleared>(OnFloorCleared);
             }
         }
+
         #endregion
     }
 }

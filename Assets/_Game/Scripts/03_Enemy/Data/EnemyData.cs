@@ -47,6 +47,15 @@ namespace TowerBreakers.Enemy.Data
         [SerializeField, Tooltip("버프 HP 회복량")]
         private int m_buffHealAmount = 10;
 
+        [Header("패링 저항 설정")]
+        [SerializeField, Tooltip("패링(방어) 시 밀림에 대한 저항 계수 (0 ~ 1). 예: 0.25면 밀림력이 25% 감소합니다.")]
+        private float m_parryResistance = 0f;
+
+        /// <summary>
+        /// [설명]: 플레이어의 패링에 대한 적의 저항 계수 (0~1).
+        /// </summary>
+        public float ParryResistance => m_parryResistance;
+
         [SerializeField, Tooltip("투사체 프리팹")]
         private GameObject m_projectilePrefab;
 

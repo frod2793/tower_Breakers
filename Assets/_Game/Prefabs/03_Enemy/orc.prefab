@@ -5454,7 +5454,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64513172cf01546c8816059ecc4c3d75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Logic.EnemyPushLogic
-  m_pushDistance: 1
 --- !u!70 &8085166074728724548
 CapsuleCollider2D:
   m_ObjectHideFlags: 0

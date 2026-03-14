@@ -21,6 +21,7 @@ MonoBehaviour:
     PreSpawnEnemies: 1
     TrainSpacing: 0.5
     SpawnPackets: []
+    RewardTable: {fileID: 11400000, guid: dfcbf88023e6a4c919d35c0de41e28ec, type: 2}
   - EnemyPrefabData: {fileID: 11400000, guid: 6dc6402dcc1494ae7a87d4c8c31816bb, type: 2}
     EnemyCount: 5
     SpawnInterval: 0
@@ -33,6 +34,7 @@ MonoBehaviour:
     - EnemyPrefabData: {fileID: 11400000, guid: 6dc6402dcc1494ae7a87d4c8c31816bb, type: 2}
       EnemyCount: 5
       SpawnInterval: 0
+    RewardTable: {fileID: 11400000, guid: dfcbf88023e6a4c919d35c0de41e28ec, type: 2}
   - EnemyPrefabData: {fileID: 11400000, guid: 6dc6402dcc1494ae7a87d4c8c31816bb, type: 2}
     EnemyCount: 5
     SpawnInterval: 0
@@ -45,6 +47,7 @@ MonoBehaviour:
     - EnemyPrefabData: {fileID: 11400000, guid: d96aaf060a915473e9a359f64fe3f700, type: 2}
       EnemyCount: 1
       SpawnInterval: 0
+    RewardTable: {fileID: 0}
   - EnemyPrefabData: {fileID: 11400000, guid: 6dc6402dcc1494ae7a87d4c8c31816bb, type: 2}
     EnemyCount: 5
     SpawnInterval: 0
@@ -63,3 +66,4 @@ MonoBehaviour:
     - EnemyPrefabData: {fileID: 11400000, guid: 6dc6402dcc1494ae7a87d4c8c31816bb, type: 2}
       EnemyCount: 5
       SpawnInterval: 0
+    RewardTable: {fileID: 11400000, guid: dfcbf88023e6a4c919d35c0de41e28ec, type: 2}

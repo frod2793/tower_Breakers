@@ -60,6 +60,30 @@ namespace TowerBreakers.Player.Data.SO
 
             return m_rewardEntries[m_rewardEntries.Count - 1];
         }
+
+        /// <summary>
+        /// [설명]: 보상 이름(Key)을 기반으로 해당하는 아이콘 스프라이트를 찾아 반환합니다.
+        /// </summary>
+        /// <param name="rewardKey">찾으려는 보상의 이름</param>
+        /// <returns>찾은 스프라이트. 없으면 null 반환.</returns>
+        public Sprite GetSprite(string rewardKey)
+        {
+            if (string.IsNullOrEmpty(rewardKey) || m_rewardEntries == null) return null;
+
+            foreach (var entry in m_rewardEntries)
+            {
+                if (entry.IsWeapon && entry.Weapon.WeaponName == rewardKey)
+                {
+                    return entry.Weapon.Icon;
+                }
+                if (entry.IsArmor && entry.Armor.ArmorName == rewardKey)
+                {
+                    return entry.Armor.Icon;
+                }
+            }
+
+            return null;
+        }
         #endregion
     }
 }

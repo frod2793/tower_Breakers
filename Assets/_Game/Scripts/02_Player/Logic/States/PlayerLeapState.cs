@@ -1,6 +1,6 @@
 using UnityEngine;
 using DG.Tweening;
-using TowerBreakers.Enemy.Logic;
+using TowerBreakers.Core.Interfaces;
 using TowerBreakers.Player.Data.SO;
 using TowerBreakers.Player.Data.Models;
 using TowerBreakers.Player.View;
@@ -18,8 +18,21 @@ namespace TowerBreakers.Player.Logic
         private readonly PlayerData m_data;
         private readonly PlayerStateMachine m_stateMachine;
 
-        // [최적화]: GC 할당을 방지하기 위한 정적 히트 버퍼
+        private PlayerPushReceiver m_pushReceiver;
+
+        // [최적화]: GC 할당 및 문자열 파싱 방지를 위한 정적 캐싱 필드들
         private static readonly Collider2D[] s_hitBuffer = new Collider2D[32];
+        private static readonly int s_targetLayer = LayerMask.GetMask("Enemy", "Object");
+        private static readonly ContactFilter2D s_hitFilter = CreateHitFilter();
+
+        private static ContactFilter2D CreateHitFilter()
+        {
+            ContactFilter2D filter = new ContactFilter2D();
+            filter.SetLayerMask(s_targetLayer);
+            filter.useLayerMask = true;
+            filter.useTriggers = true;
+            return filter;
+        }
         #endregion
 
         public PlayerLeapState(PlayerView view, PlayerModel model, PlayerData m_data, PlayerStateMachine stateMachine)
@@ -32,10 +45,19 @@ namespace TowerBreakers.Player.Logic
 
         public void OnEnter()
         {
+            // 도약 사용 중 벽 압착 판정 방지를 위해 밀림 수신 비활성화
+            if (m_pushReceiver == null && m_view != null) m_view.TryGetComponent(out m_pushReceiver);
+            if (m_pushReceiver != null) m_pushReceiver.IsClampingEnabled = false;
+
+            if (m_view != null) m_view.SetAfterImage(true);
             ExecuteLeap();
         }
 
-        public void OnExit() { }
+        public void OnExit() 
+        {
+            if (m_pushReceiver != null) m_pushReceiver.IsClampingEnabled = true;
+            if (m_view != null) m_view.SetAfterImage(false);
+        }
 
         public void OnTick() { }
 
@@ -44,37 +66,47 @@ namespace TowerBreakers.Player.Logic
             // 1. 전방의 가장 가까운 적 탐색 (사거리 약 10m)
             float detectionRange = 10f;
             Vector2 origin = m_view.transform.position;
-            int enemyLayer = LayerMask.GetMask("Enemy");
+            // [최적화]: 캐싱된 레이어 마스크와 필터를 사용하여 할당 제거
+            int hitCount = Physics2D.OverlapBox(origin + Vector2.right * (detectionRange * 0.5f), new Vector2(detectionRange, 2f), 0f, s_hitFilter, s_hitBuffer);
             
-            // 레이어가 정의되지 않았을 경우를 대비한 폴백 (모든 레이어 탐색)
-            if (enemyLayer == 0) enemyLayer = -1;
-
-            int hitCount = Physics2D.OverlapBoxNonAlloc(origin + Vector2.right * (detectionRange * 0.5f), new Vector2(detectionRange, 2f), 0f, s_hitBuffer, enemyLayer);
-            
-            float targetX = origin.x + m_data.LeapDistance; // 기본값
+            float targetX = origin.x + m_data.LeapDistance; // 기본값 (타겟 없을 시)
             float minDistance = float.MaxValue;
-            bool foundEnemy = false;
+            bool foundTarget = false;
 
             for (int i = 0; i < hitCount; i++)
             {
                 var col = s_hitBuffer[i];
-                var controller = col.GetComponent<EnemyController>();
-                if (controller != null && !controller.IsDead)
+                if (col == null) continue;
+
+                var damageable = col.GetComponent<IDamageable>();
+                if (damageable == null)
                 {
-                    float dist = col.transform.position.x - origin.x;
-                    if (dist > 0.5f && dist < minDistance) // 플레이어 바로 앞은 제외
+                    damageable = col.GetComponentInParent<IDamageable>();
+                }
+
+                if (damageable != null && !damageable.IsDead)
+                {
+                    // [수정]: 타겟의 중심점이 아닌 왼쪽 경계(Bounds.min)를 기준으로 거리 계산하여 거대 오브젝트 통과 방지
+                    float targetLeftEdge = col.bounds.min.x;
+                    float distToEdge = targetLeftEdge - origin.x;
+
+                    // 플레이어 전방에 있는 타겟 중 가장 가까운 것 선택
+                    if (distToEdge > 0.1f && distToEdge < minDistance)
                     {
-                        minDistance = dist;
-                        // 적의 위치에서 약 1.2m 앞 (공격 사거리 즈음)까지만 이동
-                        targetX = col.transform.position.x - 1.2f;
-                        foundEnemy = true;
+                        minDistance = distToEdge;
+                        
+                        // 타켓의 왼쪽 경계에서 충분한 거리 앞까지만 이동하여 오버슛 방지
+                        float stopOffset = m_data.LeapStopOffset;
+                        targetX = targetLeftEdge - stopOffset;
+                        foundTarget = true;
                     }
                 }
             }
 
-            if (foundEnemy)
+            if (foundTarget)
             {
-                // 적 발견 시의 로그는 필요 시 남기거나 제거 가능 (현재는 제거)
+                // 타겟 발견 시 타겟팅된 위치가 현재 위치보다 뒤로 가지 않도록 방지
+                targetX = Mathf.Max(origin.x, targetX);
             }
 
             // 2. 수평 대시 연출 (DOJump -> DOMoveX)

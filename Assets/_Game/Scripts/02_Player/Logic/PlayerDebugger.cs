@@ -1,4 +1,5 @@
-using UnityEngine;
+ using UnityEngine;
+ using TowerBreakers.Core.Performance;
 using VContainer;
 using TowerBreakers.Player.Data.Models;
 using TowerBreakers.Player.Data.SO;
@@ -10,8 +11,10 @@ namespace TowerBreakers.Player.Logic
     /// [설명]: 에디터 상에서 플레이어의 런타임 데이터(스탯, 장비)를 디버깅하고 테스트하기 위한 컴포넌트입니다.
     /// VContainer를 통해 주요 모델들을 주입받습니다.
     /// </summary>
-    public class PlayerDebugger : MonoBehaviour
-    {
+public class PlayerDebugger : MonoBehaviour
+{
+        [SerializeField]
+        private bool m_enableFrameDropLogs = false;
         #region 내부 변수
         private PlayerModel m_playerModel;
         private InventoryModel m_inventoryModel;
@@ -43,6 +46,21 @@ namespace TowerBreakers.Player.Logic
             m_playerView = playerView;
 
             Debug.Log("[PlayerDebugger] Dependencies Injected.");
+            // 런타임 로그 활성화 상태 동기화
+            FrameDropMonitor.SetLoggingEnabled(m_enableFrameDropLogs);
+        }
+
+        /// <summary>
+        /// [설명]: Inspector에서 설정한 Frame Drop 로깅 활성 여부를 런타임에 반영합니다.
+        /// </summary>
+        public bool FrameDropLogsEnabled
+        {
+            get => m_enableFrameDropLogs;
+            set
+            {
+                m_enableFrameDropLogs = value;
+                FrameDropMonitor.SetLoggingEnabled(value);
+            }
         }
         #endregion
 

@@ -162,7 +162,9 @@ namespace TowerBreakers.Core.GameState
             m_playerTransform.position = new Vector3(spawnPos.x, spawnPos.y, 0f);
             m_playerModel.Position = spawnPos;
 
-            m_playerView.PlayAnimation(global::PlayerState.MOVE, 1);
+            // [수정]: 애니메이션 인덱스 안전 검사 (인덱스 1이 없을 경우 0으로 폴백하여 경고 로그 방지)
+            int moveAnimIndex = (m_playerView.SpumPrefabs != null && m_playerView.SpumPrefabs.MOVE_List.Count > 1) ? 1 : 0;
+            m_playerView.PlayAnimation(global::PlayerState.MOVE, moveAnimIndex);
 
             await m_playerTransform.DOMove(landingPos, 0.4f)
                 .SetEase(Ease.OutQuad)
@@ -180,17 +182,25 @@ namespace TowerBreakers.Core.GameState
 
         /// <summary>
         /// [설명]: 다음 층에 등장할 적군을 미리 생성(POOLING)합니다.
+        /// 또한 보상 테이블이 존재하면 보상 상자를 스폰합니다.
         /// </summary>
         private async UniTask PrepareNextFloor(int nextFloorIndex)
         {
             var floors = m_towerManager.GetFloorsList();
             if (nextFloorIndex >= floors.Count) return;
-
+            
             var floorData = floors[nextFloorIndex];
             Vector2 spawnPos = m_envManager.GetSpawnPosition(nextFloorIndex);
             Transform floorParent = m_envManager.GetSegmentTransform(nextFloorIndex);
-
+            
+            // 적 스폰
             await m_enemySpawner.SpawnFloorEnemiesAsync(floorData, spawnPos, nextFloorIndex, floorParent, true);
+            
+            // 보상 테이블이 존재하면 보상 상자 스폰
+            if (floorData.RewardTable != null)
+            {
+                m_envManager.SpawnRewardChest(nextFloorIndex, floorData.RewardTable);
+            }
         }
 
         private void HandleFloorReadyForNext(OnFloorReadyForNext evt)

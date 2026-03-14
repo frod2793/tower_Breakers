@@ -49,7 +49,6 @@ namespace TowerBreakers.Core
             m_camera.orthographicSize = m_fixedOrthoSize;
             
             // 해상도에 따른 종횡비 고정 로직 필요 시 추가 가능 (Letterbox 등)
-            Debug.Log($"[PortraitCameraSetting] 카메라 종횡비 설정 준수: {m_targetAspectRatio.x}:{m_targetAspectRatio.y}");
         }
         #endregion
     }

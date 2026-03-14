@@ -1,5 +1,6 @@
 using UnityEngine;
 using TowerBreakers.Enemy.Data;
+using TowerBreakers.Player.Data.SO;
 using System.Collections.Generic;
 
 namespace TowerBreakers.Tower.Data
@@ -46,6 +47,10 @@ namespace TowerBreakers.Tower.Data
         [Header("고급 스폰 설정 (여러 종류/웨이브)")]
         [Tooltip("순차적으로 소환될 적 패킷 목록 (입력 시 위 단순 설정은 무시됨)")]
         public List<EnemySpawnPacket> SpawnPackets = new List<EnemySpawnPacket>();
+
+        [Header("보상 상자 설정")]
+        [Tooltip("이 층에 생성될 보상 상자의 보상 테이블")]
+        public RewardTableData RewardTable;
     }
 
     /// <summary>

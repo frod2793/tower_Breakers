@@ -12,6 +12,7 @@ using TowerBreakers.Enemy.Logic;
 using TowerBreakers.Tower.Logic;
 using Cysharp.Threading.Tasks;
 using TowerBreakers.Combat.Logic;
+using TowerBreakers.Core.Events;
 
 namespace TowerBreakers.Core.DI
 {
@@ -24,6 +25,8 @@ namespace TowerBreakers.Core.DI
         private readonly GameStateMachine m_stateMachine;
         private readonly LoadingState m_loadingState;
         private readonly PlayingState m_playingState;
+        private readonly GameOverState m_gameOverState;
+        private readonly IEventBus m_eventBus;
 
         // Player 관련
         private readonly PlayerModel m_playerModel;
@@ -49,6 +52,8 @@ namespace TowerBreakers.Core.DI
             GameStateMachine stateMachine,
             LoadingState loadingState,
             PlayingState playingState,
+            GameOverState gameOverState,
+            IEventBus eventBus,
             PlayerModel playerModel,
             InventoryModel inventoryModel,
             PlayerStateMachine playerStateMachine,
@@ -66,6 +71,8 @@ namespace TowerBreakers.Core.DI
             m_stateMachine = stateMachine;
             m_loadingState = loadingState;
             m_playingState = playingState;
+            m_gameOverState = gameOverState;
+            m_eventBus = eventBus;
             
             m_playerModel = playerModel;
             m_inventoryModel = inventoryModel;
@@ -99,7 +106,9 @@ namespace TowerBreakers.Core.DI
         /// </summary>
         private async UniTaskVoid InitializeAsync()
         {
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log("[GameController] 시작: 시스템 초기화");
+            #endif
 
             // 플레이어 모델 초기화 (스탯 및 기본 무기)
             if (m_playerModel != null && m_playerData != null)
@@ -116,6 +125,10 @@ namespace TowerBreakers.Core.DI
             // 상태 등록
             m_stateMachine.AddState(m_loadingState);
             m_stateMachine.AddState(m_playingState);
+            m_stateMachine.AddState(m_gameOverState);
+
+            // 이벤트 구독
+            m_eventBus?.Subscribe<Core.Events.OnGameOver>(HandleGameOver);
 
             // 플레이어 상태 등록
             m_playerStateMachine.AddState(m_playerIdleState);
@@ -149,6 +162,13 @@ namespace TowerBreakers.Core.DI
         }
         #endregion
 
+        #region 상태 제어 및 이벤트 핸들러
+        private void HandleGameOver(Core.Events.OnGameOver evt)
+        {
+            m_stateMachine?.ChangeState<GameOverState>().Forget();
+        }
+        #endregion
+
         #region 유니티 라이프사이클 (ITickable)
         public void Tick()
         {
@@ -162,6 +182,7 @@ namespace TowerBreakers.Core.DI
         #region 해제
         public void Dispose()
         {
+            m_eventBus?.Unsubscribe<Core.Events.OnGameOver>(HandleGameOver);
             m_stateMachine?.Dispose();
             m_combatSystem?.Dispose();
         }

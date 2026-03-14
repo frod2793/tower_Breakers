@@ -224,9 +224,6 @@ namespace TowerBreakers.Player.Logic
         {
             if (m_view == null || m_view.SpumPrefabs == null || bodyArmor == null) return;
 
-            var spum = m_view.SpumPrefabs;
-            bool needsRebind = false;
-
             // 흉갑 스프라이트 갱신
             if (m_bodyArmorRenderer != null) 
                 m_bodyArmorRenderer.sprite = bodyArmor.BodyArmorSprite;
@@ -237,21 +234,6 @@ namespace TowerBreakers.Player.Logic
 
             if (m_rightShoulderRenderer != null)
                 m_rightShoulderRenderer.sprite = bodyArmor.RightShoulderSprite;
-
-            // 애니메이션 클립 교체
-            if (spum.DAMAGED_List != null && spum.DAMAGED_List.Count > 0 && bodyArmor.DamagedClip != null)
-            {
-                spum.DAMAGED_List[0] = bodyArmor.DamagedClip;
-                needsRebind = true;
-            }
-
-            if (spum.DEATH_List != null && spum.DEATH_List.Count > 0 && bodyArmor.DeathClip != null)
-            {
-                spum.DEATH_List[0] = bodyArmor.DeathClip;
-                needsRebind = true;
-            }
-
-            if (needsRebind) spum.OverrideControllerInit();
             
             Debug.Log($"[PlayerEquipment] 흉갑 교체 완료: {bodyArmor.ArmorName}");
         }

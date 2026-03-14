@@ -36,14 +36,25 @@ namespace TowerBreakers.Enemy.Logic
         public void OnEnter()
         {
             m_timer = 0f;
-            // 기절 애니메이션 (SPUM의 IDLE 사용)
-            m_view.PlayAnimation(global::PlayerState.IDLE);
-            Debug.Log("[EnemyStunnedState] 적 기절 시작");
+            // [수정]: 기절 애니메이션 동기화 - 이미 재생 중이더라도 강제로 첫 프레임부터 재생
+            if (m_view != null)
+            {
+                // SPUM의 PlayAnimation은 내부적으로 트리거를 사용할 수 있으므로, 
+                // 군집 동기화를 위해 Animator에 직접 접근하여 상태를 강제 재생하거나 트리거를 초기화하는 방안 검토
+                m_view.PlayAnimation(global::PlayerState.DAMAGED, 0);
+
+                var animator = m_view.CachedAnimator;
+                if (animator != null)
+                {
+                    // DAMAGED 상태의 해시값을 사용하여 즉시 강제 재생 (동기화 핵심)
+                    animator.Play("DAMAGED", 0, 0f);
+                }
+            }
         }
 
         public void OnExit()
         {
-            Debug.Log("[EnemyStunnedState] 적 기절 종료");
+            // Debug.Log("[EnemyStunnedState] 적 기절 종료"); // 로그 제거
         }
 
         public void OnTick()

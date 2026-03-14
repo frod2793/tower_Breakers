@@ -44,7 +44,7 @@ namespace TowerBreakers.Enemy.Logic
                 m_projectileFactory.Create(m_data.ProjectilePrefab, spawnPos, 5.0f, m_data.ProjectilePushDistance, m_playerTarget);
             }
             
-            Debug.Log($"[EnemyShootState] {m_view.name} 투사체 발사");
+            // Debug.Log($"[EnemyShootState] {m_view.name} 투사체 발사"); // [로그 제거]: 콘솔 노이즈 방지
         }
 
         public void OnExit() { }

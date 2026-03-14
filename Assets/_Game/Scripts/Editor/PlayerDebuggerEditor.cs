@@ -51,6 +51,13 @@ namespace TowerBreakers.Editor
             }
 
             DrawStatsSection();
+            // 프레임 드롭 로깅 토글: Inspector에서 활성화/비활성화 가능
+            bool current = m_target.FrameDropLogsEnabled;
+            bool next = EditorGUILayout.Toggle("Frame Drop Logs Enabled", current);
+            if (next != current)
+            {
+                m_target.FrameDropLogsEnabled = next;
+            }
             DrawInventorySection();
             DrawAssetBrowserSection();
 

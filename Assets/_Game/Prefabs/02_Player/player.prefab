@@ -1444,6 +1444,7 @@ GameObject:
   - component: {fileID: 918849703062042101}
   - component: {fileID: 903858773943774178}
   - component: {fileID: 2031667019663759636}
+  - component: {fileID: 7967872249301983497}
   m_Layer: 6
   m_Name: player
   m_TagString: Player
@@ -4595,6 +4596,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.View.PlayerView
   m_spumPrefabs: {fileID: 92938023494105849}
+  m_afterImage: {fileID: 7967872249301983497}
 --- !u!114 &918849703062042101
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4607,7 +4609,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4bce0f510d5c454b8b04eaf608e40f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Logic.PlayerPushReceiver
+  m_useCameraBounds: 1
   m_leftWallXThreshold: -2.5
+  m_screenEdgeOffset: 0.5
+  m_backflipThresholdX: 4
+  m_isClampingEnabled: 1
 --- !u!70 &903858773943774178
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -4657,6 +4663,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af8511c0212c14d94abeeca5870de3f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Logic.PlayerEquipment
+--- !u!114 &7967872249301983497
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2259016813592298886}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6cdbf75ed65e461abb2cea2b3196fcf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.View.PlayerAfterImage
+  m_ghostInterval: 0.05
+  m_ghostLifetime: 0.3
+  m_ghostColor: {r: 1, g: 1, b: 1, a: 0.5}
 --- !u!1 &2333811413061753725
 GameObject:
   m_ObjectHideFlags: 0
@@ -5178,7 +5199,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 25
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1120026500337400717, guid: 1810f09d324df46289d58e432045bcd1, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -5186,7 +5207,7 @@ SpriteRenderer:
   m_Size: {x: 0.15625, y: 0.15625}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!1 &3717676521123717263
 GameObject:
@@ -5926,7 +5947,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -3992137426342128158, guid: 1810f09d324df46289d58e432045bcd1, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -5934,7 +5955,7 @@ SpriteRenderer:
   m_Size: {x: 0.375, y: 0.28125}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!1 &6427248805644808930
 GameObject:
@@ -7992,7 +8013,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: -15
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1554369935797715747, guid: 1810f09d324df46289d58e432045bcd1, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -8000,7 +8021,7 @@ SpriteRenderer:
   m_Size: {x: 0.15625, y: 0.15625}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!1 &8922868232705278349
 GameObject:

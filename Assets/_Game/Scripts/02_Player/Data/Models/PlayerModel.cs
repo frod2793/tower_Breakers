@@ -120,15 +120,21 @@ namespace TowerBreakers.Player.Data.Models
             
             CurrentLifeCount = m_maxLifeCount;
             
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[PlayerModel] 초기화 완료 (Life: {m_maxLifeCount})");
+            #endif
             if (data.DefaultWeapon != null)
             {
+                #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"[PlayerModel] 기본 무기 장착: {data.DefaultWeapon.WeaponName}");
+                #endif
                 SetWeapon(data.DefaultWeapon);
             }
             else
             {
+                #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.LogWarning("[PlayerModel] PlayerData에 기본 무기가 설정되어 있지 않습니다.");
+                #endif
             }
         }
 
@@ -149,7 +155,9 @@ namespace TowerBreakers.Player.Data.Models
             // 방어력(Defense) 대신 밀기 저항 등이 위치 유지에 도움을 줍니다.
             if (damage > 0)
             {
-                Debug.Log($"[PlayerModel] TakeDamage 수령: 현재 생명={CurrentLifeCount}, 입힌 데미지={damage}");
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[PlayerModel] TakeDamage 수령: 현재 생명={CurrentLifeCount}, 입힌 데미지={damage}");
+            #endif
                 CurrentLifeCount -= damage;
             }
 
@@ -198,7 +206,9 @@ namespace TowerBreakers.Player.Data.Models
         public void SetWeapon(WeaponData weapon)
         {
             m_currentWeapon = weapon;
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[PlayerModel] 무기 장착: {(weapon != null ? weapon.WeaponName : "없음")}");
+            #endif
             OnWeaponChanged?.Invoke(weapon);
         }
 
@@ -242,17 +252,23 @@ namespace TowerBreakers.Player.Data.Models
             int previousMax = m_maxLifeCount;
             m_maxLifeCount = m_baseMaxLife + FinalLifeBonus;
 
-            // 최대 생명력이 늘어났을 때 현재 생명력 보정 (선택 사항: 비율 유지 또는 현재 값 유지)
-            // 여기서는 최대치가 줄어들었을 경우만 현재 생명력을 깎습니다.
+            // 최대 생명력이 늘어났을 때 그 차이만큼 현재 생명력 즉시 회복
+            int diff = m_maxLifeCount - previousMax;
+            if (diff > 0)
+            {
+                m_currentLifeCount += diff;
+            }
+
+            // 최대 생명력이 줄어들었을 경우 현재 생명력을 상한선에 맞게 조정
             if (m_currentLifeCount > m_maxLifeCount)
             {
-                CurrentLifeCount = m_maxLifeCount;
+                m_currentLifeCount = m_maxLifeCount;
             }
             
-            // 프로퍼티 세터를 통해 UI 등에 변경 사항 전파 (값 변화가 없더라도 강제 갱신 필요 시 호출)
+            // 변경 사항 전파
             OnLifeCountChanged?.Invoke(m_currentLifeCount, m_maxLifeCount);
             
-            Debug.Log($"[PlayerModel] MaxLife 업데이트: {previousMax} -> {m_maxLifeCount} (Bonus: {FinalLifeBonus})");
+            Debug.Log($"[PlayerModel] MaxLife 업데이트: {previousMax} -> {m_maxLifeCount} (증가분: {diff}, 현재 생명력: {m_currentLifeCount})");
         }
         #endregion
     }

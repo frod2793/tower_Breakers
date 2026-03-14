@@ -88,6 +88,9 @@ namespace TowerBreakers.Combat.Logic
             // 사망 판정
             if (m_playerModel.IsDead)
             {
+                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.LogWarning("[CombatSystem] 플레이어 사망 감지: OnGameOver 발행");
+                #endif
                 m_eventBus.Publish(new OnGameOver());
             }
         }

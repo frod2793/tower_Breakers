@@ -21,6 +21,7 @@ MonoBehaviour:
   m_rewardPoints: 50
   m_abilityCooldown: 5
   m_buffHealAmount: 10
+  m_parryResistance: 0.25
   m_projectilePrefab: {fileID: 0}
   m_projectilePushDistance: 8
   m_abilityDuration: 0.5

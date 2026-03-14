@@ -13,6 +13,9 @@ namespace TowerBreakers.Player.View
         #region 에디터 설정
         [SerializeField, Tooltip("SPUM 프리팹 참조")]
         private SPUM_Prefabs m_spumPrefabs;
+
+        [SerializeField, Tooltip("잔상 효과 관리 컴포넌트")]
+        private PlayerAfterImage m_afterImage;
         #endregion
 
         #region 내부 변수
@@ -39,6 +42,12 @@ namespace TowerBreakers.Player.View
             {
                 Debug.LogError("[PlayerView] SPUM_Prefabs가 설정되지 않았습니다.");
             }
+
+            // [추가]: 잔상 컴포넌트 초기화
+            if (m_afterImage != null)
+            {
+                m_afterImage.Initialize(this);
+            }
         }
         #endregion
 
@@ -51,6 +60,23 @@ namespace TowerBreakers.Player.View
             if (m_spumPrefabs != null)
             {
                 m_spumPrefabs.PlayAnimation(state, index);
+            }
+        }
+
+        /// <summary>
+        /// [설명]: 잔상 효과를 시작하거나 중지합니다.
+        /// </summary>
+        public void SetAfterImage(bool active)
+        {
+            if (m_afterImage == null)
+            {
+                m_afterImage = GetComponent<PlayerAfterImage>();
+            }
+
+            if (m_afterImage != null)
+            {
+                if (active) m_afterImage.StartEffect();
+                else m_afterImage.StopEffect();
             }
         }
         #endregion
@@ -66,6 +92,11 @@ namespace TowerBreakers.Player.View
                 {
                     Debug.Log("[PlayerView] SPUM_Prefabs를 자식 오브젝트에서 자동 할당했습니다.");
                 }
+            }
+
+            if (m_afterImage == null)
+            {
+                m_afterImage = GetComponent<PlayerAfterImage>();
             }
         }
 

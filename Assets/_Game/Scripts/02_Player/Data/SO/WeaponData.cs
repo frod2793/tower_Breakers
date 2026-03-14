@@ -24,6 +24,9 @@ namespace TowerBreakers.Player.Data.SO
         [SerializeField, Tooltip("SPUM _weaponList[0]에 할당할 스프라이트")]
         private Sprite m_weaponSprite;
 
+        [SerializeField, Tooltip("UI 및 상자 연출에 사용할 아이콘 스프라이트")]
+        private Sprite m_icon;
+
         [Header("애니메이션 설정")]
         [SerializeField, Tooltip("전용 공격 애니메이션 클립 (ATTACK_List[0] 교체용)")]
         private AnimationClip m_attackClip;
@@ -50,6 +53,7 @@ namespace TowerBreakers.Player.Data.SO
         public string WeaponName => m_weaponName;
         public WeaponType Type => m_type;
         public Sprite WeaponSprite => m_weaponSprite;
+        public Sprite Icon => m_icon != null ? m_icon : m_weaponSprite;
         public AnimationClip AttackClip => m_attackClip;
         public float AttackPowerModifier => m_attackPowerModifier;
         public float AttackRangeModifier => m_attackRangeModifier;

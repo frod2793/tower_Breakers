@@ -15,13 +15,13 @@ MonoBehaviour:
   m_maxLifeCount: 3
   m_attackPower: 10
   m_attackRange: 1.5
-  m_attackSpeed: 1
+  m_attackSpeed: 0.2
+  m_moveSpeed: 3
   m_pushResistance: 0.2
   m_leapDistance: 5
-  m_skill1Multiplier: 1.5
-  m_skill2Multiplier: 3.5
-  m_skill3Multiplier: 1.2
-  m_defendRange: 2.5
+  m_leapStopOffset: 0.7
+  m_skillData: {fileID: 11400000, guid: e0b29d89b043c4cd68274e2e9ec6abf9, type: 2}
+  m_defendRange: 1
   m_defendPushbackDistance: 1
   m_wallCrushDamageMultiplier: 10
   m_defaultWeapon: {fileID: 11400000, guid: 9323f696b6008425d8de16c56d618e12, type: 2}

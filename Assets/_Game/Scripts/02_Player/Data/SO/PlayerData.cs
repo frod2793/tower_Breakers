@@ -33,15 +33,12 @@ namespace TowerBreakers.Player.Data.SO
         [SerializeField, Tooltip("도약 거리")]
         private float m_leapDistance = 5.0f;
 
+        [SerializeField, Tooltip("도약 시 타겟 앞 정지 거리")]
+        private float m_leapStopOffset = 1.5f;
+
         [Header("스킬 설정")]
-        [SerializeField, Tooltip("스킬 1 (원거리/범위) 데미지 배율")]
-        private float m_skill1Multiplier = 1.5f;
-
-        [SerializeField, Tooltip("스킬 2 (강타) 데미지 배율")]
-        private float m_skill2Multiplier = 3.5f;
-
-        [SerializeField, Tooltip("스킬 3 (배시) 데미지 배율")]
-        private float m_skill3Multiplier = 1.2f;
+        [SerializeField, Tooltip("플레이어 스킬 데이터 세트")]
+        private PlayerSkillData m_skillData;
 
         [Header("방어 설정")]
         [SerializeField, Tooltip("방어 가능 거리 (이 범위 내의 적만 스턴에 걸림)")]
@@ -49,6 +46,9 @@ namespace TowerBreakers.Player.Data.SO
 
         [SerializeField, Tooltip("방어 시 적 행렬 밀어내기 거리")]
         private float m_defendPushbackDistance = 3.0f;
+
+        [SerializeField, Tooltip("방어 시 기절 지속 시간")]
+        private float m_defendStunDuration = 2.0f;
 
         [SerializeField, Tooltip("벽 압착 데미지 배율 (밀린 거리 × 배율 = 데미지)")]
         private float m_wallCrushDamageMultiplier = 10f;
@@ -77,11 +77,11 @@ namespace TowerBreakers.Player.Data.SO
         public float MoveSpeed => m_moveSpeed;
         public float PushResistance => m_pushResistance;
         public float LeapDistance => m_leapDistance;
-        public float Skill1Multiplier => m_skill1Multiplier;
-        public float Skill2Multiplier => m_skill2Multiplier;
-        public float Skill3Multiplier => m_skill3Multiplier;
+        public float LeapStopOffset => m_leapStopOffset;
+        public PlayerSkillData SkillData => m_skillData;
         public float DefendRange => m_defendRange;
         public float DefendPushbackDistance => m_defendPushbackDistance;
+        public float DefendStunDuration => m_defendStunDuration;
         public float WallCrushDamageMultiplier => m_wallCrushDamageMultiplier;
         public WeaponData DefaultWeapon => m_defaultWeapon;
         #endregion

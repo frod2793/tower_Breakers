@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Pool;
 using VContainer;
 using VContainer.Unity;
 using TowerBreakers.Enemy.View;
@@ -6,11 +7,13 @@ using TowerBreakers.Enemy.Data;
 using TowerBreakers.Player.Logic;
 using System.Collections.Generic;
 using TowerBreakers.Enemy.Logic;
+using TowerBreakers.Tower.Logic;
 
 namespace TowerBreakers.Enemy.Factory
 {
     /// <summary>
     /// [설명]: 적 개체를 생성하고 오브젝트 풀링을 관리하는 팩토리 클래스입니다.
+    /// UnityEngine.Pool API를 사용하여 메모리 할당을 줄이고 객체 생명주기를 관리합니다.
     /// </summary>
     public class EnemyFactory
     {
@@ -18,16 +21,18 @@ namespace TowerBreakers.Enemy.Factory
         private readonly IObjectResolver m_resolver;
         private readonly Core.Events.IEventBus m_eventBus;
         private readonly ProjectileFactory m_projectileFactory;
-        private readonly Dictionary<string, Stack<EnemyView>> m_pools = new Dictionary<string, Stack<EnemyView>>();
+        private readonly TowerManager m_towerManager;
+        private readonly Dictionary<string, IObjectPool<EnemyView>> m_pools = new();
         private PlayerPushReceiver m_playerReceiver;
         #endregion
 
         [Inject]
-        public EnemyFactory(IObjectResolver resolver, Core.Events.IEventBus eventBus, ProjectileFactory projectileFactory)
+        public EnemyFactory(IObjectResolver resolver, Core.Events.IEventBus eventBus, ProjectileFactory projectileFactory, TowerManager towerManager)
         {
             m_resolver = resolver;
             m_eventBus = eventBus;
             m_projectileFactory = projectileFactory;
+            m_towerManager = towerManager;
         }
 
         #region 초기화
@@ -45,7 +50,7 @@ namespace TowerBreakers.Enemy.Factory
         /// <summary>
         /// [설명]: 적 데이터를 기반으로 적을 생성하거나 풀에서 가져옵니다.
         /// </summary>
-        public EnemyView Create(EnemyData data, Vector2 position, Transform parent = null)
+        public EnemyView Create(EnemyData data, Vector2 position, int floorIndex, Transform parent = null)
         {
             if (data.EnemyPrefab == null)
             {
@@ -53,54 +58,49 @@ namespace TowerBreakers.Enemy.Factory
                 return null;
             }
 
-            EnemyView view = null;
             string poolKey = data.EnemyName;
 
-            // 1. 풀에서 사용 가능한 오브젝트가 있는지 확인
-            if (m_pools.TryGetValue(poolKey, out var stack) && stack.Count > 0)
+            // [최적화]: 프리팹별 풀이 없으면 생성
+            if (!m_pools.TryGetValue(poolKey, out var pool))
             {
-                view = stack.Pop();
-                if (view != null)
-                {
-                    view.transform.position = position;
-                    view.transform.SetParent(parent);
-                    view.gameObject.SetActive(true);
-                }
+                pool = new ObjectPool<EnemyView>(
+                    createFunc: () => OnCreateEnemy(data),
+                    actionOnGet: (v) => v.gameObject.SetActive(true),
+                    actionOnRelease: (v) => v.gameObject.SetActive(false),
+                    actionOnDestroy: (v) => Object.Destroy(v.gameObject),
+                    collectionCheck: true,
+                    defaultCapacity: 5,
+                    maxSize: 30
+                );
+                m_pools[poolKey] = pool;
             }
 
-            // 2. 풀에 없으면 새로 생성
-            if (view == null)
+            EnemyView view = pool.Get();
+            if (view != null)
             {
-                GameObject go = Object.Instantiate(data.EnemyPrefab, position, Quaternion.identity, parent);
-                m_resolver.Inject(go);
-                go.name = data.EnemyName;
-
-                // 기차 대열 감지를 위해 레이어 설정 (TagManager에 'Enemy' 레이어가 있어야 합니다)
-                int enemyLayer = LayerMask.NameToLayer("Enemy");
-                if (enemyLayer != -1)
-                {
-                    go.layer = enemyLayer;
-                }
-
-                view = go.GetComponent<EnemyView>();
-                if (view == null) view = go.AddComponent<EnemyView>();
+                view.transform.position = position;
+                view.transform.SetParent(parent);
             }
 
             // 뷰 초기화 (애니메이션 시스템 등)
             view.Initialize();
+            view.ResetState();
 
-            // 3. 로직 초기화 (보스 여부 등 스탯 적용)
+            // 3. 로직 초기화 (특수 개체 판별 및 스탯 적용)
             var pushLogic = view.GetComponent<Logic.EnemyPushLogic>();
             if (pushLogic != null)
             {
                 if (m_playerReceiver != null)
                 {
+                    // [최적화]: Normal 타입을 제외한 모든 타입은 특수 개체로 분류 (항시 콜라이더 활성화)
+                    bool isSpecial = (data.Type != EnemyType.Normal);
+                    
                     float effectiveForce = (data.Type == EnemyType.Boss || data.Type == EnemyType.Tank) ? data.PushForce * 0.5f : data.PushForce;
-                    pushLogic.Initialize(effectiveForce, m_playerReceiver);
+                    pushLogic.Initialize(effectiveForce, m_playerReceiver, isSpecial);
                 }
                 else
                 {
-                    Debug.LogError($"[EnemyFactory] 경고! PlayerPushReceiver가 NULL입니다. {data.EnemyName}이(가) 플레이어를 관통할 수 있습니다. GameLifetimeScope의 Inspector를 확인하세요.");
+                    Debug.LogError($"[EnemyFactory] 경고! PlayerPushReceiver가 NULL입니다. {data.EnemyName}이(가) 플레이어를 관통할 수 있습니다.");
                 }
             }
 
@@ -110,31 +110,45 @@ namespace TowerBreakers.Enemy.Factory
             
             if (controller != null && pushLogic != null)
             {
-                // Reclaim 콜백을 넘겨주어 사망 시 스스로 풀로 복귀하게 함
-                controller.Initialize(data, view, pushLogic, m_eventBus, m_projectileFactory, Reclaim);
+                // Reclaim 대신 pool.Release를 사용하여 반환하도록 콜백 전달
+                controller.Initialize(data, view, pushLogic, m_eventBus, m_towerManager, floorIndex, m_projectileFactory, (v, name) => pool.Release(v));
             }
 
             return view;
         }
 
         /// <summary>
-        /// [설명]: 사용이 끝난 적 오브젝트를 풀에 반환합니다.
+        /// [설명]: 사용이 끝난 적 오브젝트를 풀에 반환합니다. (외부 호출용 브릿지)
         /// </summary>
-        /// <param name="view">반환할 적 뷰 컴포넌트</param>
-        /// <param name="enemyName">해당 적의 데이터 이름 (풀 키)</param>
         public void Reclaim(EnemyView view, string enemyName)
         {
             if (view == null) return;
-
-            view.gameObject.SetActive(false);
-
-            if (!m_pools.TryGetValue(enemyName, out var stack))
+            if (m_pools.TryGetValue(enemyName, out var pool))
             {
-                stack = new Stack<EnemyView>();
-                m_pools[enemyName] = stack;
+                pool.Release(view);
             }
+            else
+            {
+                view.gameObject.SetActive(false);
+            }
+        }
+        #endregion
 
-            stack.Push(view);
+        #region 풀 콜백
+        private EnemyView OnCreateEnemy(EnemyData data)
+        {
+            GameObject go = Object.Instantiate(data.EnemyPrefab);
+            m_resolver.Inject(go);
+            go.name = data.EnemyName;
+
+            // 레이어 설정
+            int enemyLayer = LayerMask.NameToLayer("Enemy");
+            if (enemyLayer != -1) go.layer = enemyLayer;
+
+            var view = go.GetComponent<EnemyView>();
+            if (view == null) view = go.AddComponent<EnemyView>();
+
+            return view;
         }
         #endregion
     }

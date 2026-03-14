@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using TowerBreakers.Core.Events;
 using TowerBreakers.Tower.Data;
@@ -18,9 +19,13 @@ namespace TowerBreakers.Tower.Logic
         private int m_currentFloorIndex = 0;
         
         /// <summary>
-        /// [설명]: 층별로 현재 활성화된(살아있는) 적의 수를 추적합니다.
+        /// [설명]: 층별로 현재 활성화된(살아있는) 적의 타입 리스트를 추적합니다.
         /// </summary>
-        private readonly Dictionary<int, int> m_activeEnemiesPerFloor = new Dictionary<int, int>();
+        private readonly Dictionary<int, List<TowerBreakers.Enemy.Data.EnemyType>> m_activeEnemiesPerFloor = new();
+        /// <summary>
+        /// [설명]: 층별로 존재하는 보상 상자의 수를 추적합니다.
+        /// </summary>
+        private readonly Dictionary<int, int> m_activeChestsPerFloor = new Dictionary<int, int>();
         #endregion
 
         #region 프로퍼티
@@ -28,6 +33,19 @@ namespace TowerBreakers.Tower.Logic
         /// [설명]: 현재 플레이어가 위치한 층의 인덱스입니다.
         /// </summary>
         public int CurrentFloorIndex => m_currentFloorIndex;
+
+        /// <summary>
+        /// [설명]: 현재 층에서 살아있는 적의 타입 목록을 반환합니다.
+        /// </summary>
+        public IReadOnlyList<TowerBreakers.Enemy.Data.EnemyType> CurrentFloorEnemies
+        {
+            get
+            {
+                if (m_activeEnemiesPerFloor.TryGetValue(m_currentFloorIndex, out var list))
+                    return list;
+                return Array.Empty<TowerBreakers.Enemy.Data.EnemyType>();
+            }
+        }
 
         /// <summary>
         /// [설명]: 현재 층의 데이터를 반환합니다.
@@ -55,10 +73,21 @@ namespace TowerBreakers.Tower.Logic
             if (m_eventBus != null)
             {
                 m_eventBus.Subscribe<OnEnemyKilled>(HandleEnemyKilled);
+                m_eventBus.Subscribe<OnRewardChestRegistered>(HandleChestRegistered);
+                m_eventBus.Subscribe<OnRewardChestOpened>(HandleChestOpened);
             }
 
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[TowerManager] '{towerData?.TowerName}' 데이터로 초기화 완료");
+            #endif
         }
+        #endregion
+
+        #region 이벤트
+        /// <summary>
+        /// [설명]: 적 또는 상자의 상태가 변경되었을 때 발행되는 이벤트입니다.
+        /// </summary>
+        public event Action OnDataChanged;
         #endregion
 
         #region 공개 메서드
@@ -70,23 +99,27 @@ namespace TowerBreakers.Tower.Logic
             if (IsFinished) return;
 
             m_currentFloorIndex++;
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[TowerManager] {m_currentFloorIndex}층 진행");
+            #endif
             m_eventBus.Publish(new OnFloorCleared(m_currentFloorIndex));
+            OnDataChanged?.Invoke();
         }
 
         /// <summary>
         /// [설명]: 특정 층에 스폰된 적의 수를 등록하여 클리어 조건을 관리합니다.
         /// </summary>
         /// <param name="floorIndex">적군이 위치한 층 인덱스</param>
-        /// <param name="count">스폰된 적 수</param>
-        public void RegisterEnemies(int floorIndex, int count)
+        /// <param name="type">스폰된 적 타입</param>
+        public void RegisterEnemies(int floorIndex, TowerBreakers.Enemy.Data.EnemyType type)
         {
             if (!m_activeEnemiesPerFloor.ContainsKey(floorIndex))
             {
-                m_activeEnemiesPerFloor[floorIndex] = 0;
+                m_activeEnemiesPerFloor[floorIndex] = new List<TowerBreakers.Enemy.Data.EnemyType>();
             }
             
-            m_activeEnemiesPerFloor[floorIndex] += count;
+            m_activeEnemiesPerFloor[floorIndex].Add(type);
+            OnDataChanged?.Invoke();
         }
 
         /// <summary>
@@ -105,15 +138,63 @@ namespace TowerBreakers.Tower.Logic
         /// </summary>
         private void HandleEnemyKilled(OnEnemyKilled evt)
         {
-            if (m_activeEnemiesPerFloor.ContainsKey(evt.FloorIndex))
+            if (m_activeEnemiesPerFloor.TryGetValue(evt.FloorIndex, out var enemyList))
             {
-                m_activeEnemiesPerFloor[evt.FloorIndex]--;
+                // 해당 타입의 적을 리스트에서 하나 제거
+                enemyList.Remove(evt.EnemyType);
+                OnDataChanged?.Invoke();
 
-                if (evt.FloorIndex == m_currentFloorIndex && m_activeEnemiesPerFloor[evt.FloorIndex] <= 0)
+                if (evt.FloorIndex == m_currentFloorIndex && enemyList.Count <= 0)
                 {
-                    // [추가]: 층 클리어 시 즉시 이벤트 발행 (보상 상자 스폰 등 활용)
-                    m_eventBus.Publish(new OnFloorCleared(m_currentFloorIndex));
-                    
+                    // 적은 다 죽였지만 상자가 남아있는지 확인
+                    m_activeChestsPerFloor.TryGetValue(evt.FloorIndex, out int remainingChests);
+
+                    if (remainingChests <= 0)
+                    {
+                        // 모든 조건 충족 시 'GO' UI 활성화 유도
+                        HandleFloorClearedDelayedAsync().Forget();
+                    }
+                    else
+                    {
+                        // 상자가 있으면 '적 처치 완료'만 알리고 상자 활성화를 유도
+                        m_eventBus.Publish(new OnFloorEnemiesCleared(m_currentFloorIndex));
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// [설명]: 상자가 존재함을 등록합니다.
+        /// </summary>
+        private void HandleChestRegistered(OnRewardChestRegistered evt)
+        {
+            if (!m_activeChestsPerFloor.TryGetValue(evt.FloorIndex, out int count))
+            {
+                count = 0;
+            }
+            
+            m_activeChestsPerFloor[evt.FloorIndex] = count + 1;
+            OnDataChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// [설명]: 상자 개방 시 카운트를 줄이고 클리어 여부를 체크합니다.
+        /// </summary>
+        private void HandleChestOpened(OnRewardChestOpened evt)
+        {
+            if (m_activeChestsPerFloor.TryGetValue(evt.FloorIndex, out int remainingChests))
+            {
+                remainingChests--;
+                m_activeChestsPerFloor[evt.FloorIndex] = remainingChests;
+                OnDataChanged?.Invoke();
+
+                // 적이 이미 다 죽은 상태에서 마지막 상자를 열었다면 클리어 처리 준비
+                m_activeEnemiesPerFloor.TryGetValue(evt.FloorIndex, out var remainingEnemies);
+
+                bool allEnemiesDead = remainingEnemies == null || remainingEnemies.Count <= 0;
+
+                if (evt.FloorIndex == m_currentFloorIndex && allEnemiesDead && remainingChests <= 0)
+                {
                     HandleFloorClearedDelayedAsync().Forget();
                 }
             }
@@ -124,8 +205,9 @@ namespace TowerBreakers.Tower.Logic
         /// </summary>
         private async UniTaskVoid HandleFloorClearedDelayedAsync()
         {
-            // 적 처치 시마다 로그를 찍는 대신, 층 클리어 시점에만 한 번 출력
-            Debug.Log($"[TowerManager] {m_currentFloorIndex}층 모든 적 처치 완료");
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[TowerManager] {m_currentFloorIndex}층 모든 목표 클리어 (준비 완료)");
+            #endif
             
             await UniTask.Delay(1000);
             

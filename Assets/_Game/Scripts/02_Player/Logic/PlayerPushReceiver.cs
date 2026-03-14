@@ -236,8 +236,20 @@ namespace TowerBreakers.Player.Logic
         /// </summary>
         private void ApplyPositionWithLimit(Vector2 newPosition, float moveDelta)
         {
+            // Clamping이 비활성화된 상태라면 이벤트 발행 및 위치 누적을 수행하지 않음
+            if (!m_isClampingEnabled)
+            {
+                m_model.Position = newPosition;
+                
+                var tp = m_cachedTransform.position;
+                tp.x = newPosition.x;
+                tp.y = newPosition.y;
+                m_cachedTransform.position = tp;
+                return;
+            }
+
             bool isHittingWall = newPosition.x <= m_leftWallXThreshold + 0.01f;
-            if (isHittingWall)
+            if (isHittingWall && moveDelta > 0.001f)
             {
                 if (newPosition.x < m_leftWallXThreshold)
                     newPosition.x = m_leftWallXThreshold;

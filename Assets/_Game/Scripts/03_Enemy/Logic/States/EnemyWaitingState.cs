@@ -23,16 +23,11 @@ namespace TowerBreakers.Enemy.Logic
             if (m_view != null)
             {
                 m_view.PlayAnimation(global::PlayerState.IDLE);
-                Debug.Log($"[EnemyWaitingState] {m_view.name} 대기 시작");
             }
         }
 
         public void OnExit()
         {
-            if (m_view != null)
-            {
-                Debug.Log($"[EnemyWaitingState] {m_view.name} 대기 종료 (진격 개시)");
-            }
         }
 
         public void OnTick()

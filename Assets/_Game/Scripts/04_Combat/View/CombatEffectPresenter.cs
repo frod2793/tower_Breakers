@@ -23,6 +23,7 @@ namespace TowerBreakers.Combat.View
         private Tweener m_shakeTweener;
         private Vector3 m_originalCameraPos;
         private CancellationTokenSource m_hitStopCts;
+        private TweenCallback m_onShakeComplete; // [최적화]: 람다 할당 방지용 캐싱
         #endregion
 
         #region 초기화
@@ -44,6 +45,9 @@ namespace TowerBreakers.Combat.View
             {
                 m_originalCameraPos = m_mainCamera.transform.localPosition;
             }
+
+            // [최적화]: 콜백 미리 캐싱
+            m_onShakeComplete = ResetCameraPosition;
         }
         #endregion
 
@@ -71,22 +75,41 @@ namespace TowerBreakers.Combat.View
             }
             m_mainCamera.transform.localPosition = m_originalCameraPos;
 
-            // DOTween Shake 사용
+            // [최적화]: OnComplete에 캐싱된 메서드 전달 (람다 할당 제거)
             m_shakeTweener = m_mainCamera.transform.DOShakePosition(duration, intensity, 10, 90, false, true)
-                .OnComplete(() => m_mainCamera.transform.localPosition = m_originalCameraPos);
+                .OnComplete(m_onShakeComplete);
+        }
+
+        private void ResetCameraPosition()
+        {
+            if (m_mainCamera != null)
+            {
+                m_mainCamera.transform.localPosition = m_originalCameraPos;
+            }
         }
 
         /// <summary>
-        /// [설명]: 역경직(Hit Stop) 연출을 적용합니다. 중복 호출 시 이전 것을 취소하고 timeScale을 안전하게 복원합니다.
+        /// [설명]: 역경직(Hit Stop) 연출을 적용합니다. 
+        /// 연타 시 발생하는 부하를 방지하기 위해 쓰로틀링 및 CTS 관리를 최적화합니다.
         /// </summary>
         private async UniTaskVoid ApplyHitStop(float duration)
         {
             if (duration <= 0) return;
 
-            // 이전 Hit Stop이 진행 중이면 취소하고 timeScale 복원
-            m_hitStopCts?.Cancel();
-            m_hitStopCts?.Dispose();
-            m_hitStopCts = new CancellationTokenSource();
+            // [최적화]: 역경직이 이미 진행 중이면 새 요청 무시 (쓰로틀링)
+            if (Time.timeScale < 1.0f && m_hitStopCts != null) return;
+
+            // [최적화]: CTS 재사용 패턴 적용
+            if (m_hitStopCts == null)
+            {
+                m_hitStopCts = new CancellationTokenSource();
+            }
+            else
+            {
+                m_hitStopCts.Cancel();
+                m_hitStopCts.Dispose();
+                m_hitStopCts = new CancellationTokenSource();
+            }
 
             Time.timeScale = 0.05f;
             try
@@ -95,10 +118,15 @@ namespace TowerBreakers.Combat.View
             }
             catch (System.OperationCanceledException)
             {
-                // 새로운 Hit Stop에 의해 취소됨 — timeScale은 새 호출이 관리
                 return;
             }
-            Time.timeScale = 1.0f;
+            finally
+            {
+                if (m_hitStopCts != null && !m_hitStopCts.IsCancellationRequested)
+                {
+                    Time.timeScale = 1.0f;
+                }
+            }
         }
         #endregion
 

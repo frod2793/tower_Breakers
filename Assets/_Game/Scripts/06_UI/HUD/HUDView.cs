@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
@@ -11,11 +12,11 @@ namespace TowerBreakers.UI.HUD
     public class HUDView : MonoBehaviour
     {
         #region 에디터 설정
-        [Header("생명 시스템")]
-        [SerializeField, Tooltip("하트 아이콘들을 담을 컨테이너 (Horizontal Layout Group 권장)")]
-        private Transform m_heartContainer;
+        [Header("체력 현황 (하트)")]
+        [SerializeField, Tooltip("하트 아이콘 그룹 컴포넌트")]
+        private TowerBreakers.UI.Common.StatusIconGroup m_heartIconGroup;
 
-        [SerializeField, Tooltip("하트 아이콘 프리팹 (Image 컴포넌트 포함)")]
+        [SerializeField, Tooltip("하트 아이콘 프리팹 (초기화용)")]
         private GameObject m_heartPrefab;
 
         [Header("통계 및 진행")]
@@ -30,11 +31,16 @@ namespace TowerBreakers.UI.HUD
 
         [SerializeField, Tooltip("'GO' 메시지 루트 오브젝트")]
         private GameObject m_goRoot;
+
+        [Header("적 현황 (아이콘)")]
+        [SerializeField, Tooltip("적 처치 현황 아이콘 뷰")]
+        private EnemyStatusView m_enemyStatusView;
         #endregion
 
         #region 내부 필드
         private HUDViewModel m_viewModel;
-        private Vector3 m_originalHeartScale = Vector3.one;
+        private int m_lastFloor = -1;
+        private int m_lastLifeCount = -1;
         #endregion
 
         #region 초기화 및 바인딩
@@ -43,10 +49,11 @@ namespace TowerBreakers.UI.HUD
             m_viewModel = viewModel;
             m_viewModel.OnDataUpdated += UpdateUI;
 
-            // 프리펩의 원본 스케일 캐싱
-            if (m_heartPrefab != null)
+            // 초기 체력 설정
+            m_lastLifeCount = m_viewModel.CurrentLifeCount;
+            if (m_heartIconGroup != null)
             {
-                m_originalHeartScale = m_heartPrefab.transform.localScale;
+                m_heartIconGroup.SetIcons(m_heartPrefab, m_lastLifeCount).Forget();
             }
 
             UpdateUI();
@@ -56,10 +63,24 @@ namespace TowerBreakers.UI.HUD
         {
             if (m_viewModel == null) return;
 
-            // Debug.Log($"[HUDView] UI 데이터 갱신 요청 수신 (Life: {m_viewModel.CurrentLifeCount})");
-
             // 1. 하트 생명 표시 업데이트
             UpdateHearts();
+
+            // 1-2. 적 처치 현황 아이콘 업데이트
+            if (m_enemyStatusView != null)
+            {
+                // 층이 바뀌었으면(지면 하강 연출 시점) 전체 초기화
+                if (m_lastFloor != m_viewModel.CurrentFloor)
+                {
+                    m_lastFloor = m_viewModel.CurrentFloor;
+                    m_enemyStatusView.InitializeFloor(m_viewModel.CurrentFloorEnemies);
+                }
+                else
+                {
+                    // 단순 마릿수/타입 변경(처치 등) 시 부분 업데이트
+                    m_enemyStatusView.UpdateStatus(m_viewModel.CurrentFloorEnemies);
+                }
+            }
 
             // 2. 통계 텍스트 업데이트
             if (m_floorText != null)
@@ -94,53 +115,29 @@ namespace TowerBreakers.UI.HUD
         }
 
         /// <summary>
-        /// [설명]: 모델의 생명 수에 맞춰 하트 아이콘을 동적으로 생성/갱신합니다.
+        /// [설명]: 모델의 생명 수에 맞춰 하트 아이콘을 공통 그룹 컴포넌트로 갱신합니다.
         /// </summary>
         private void UpdateHearts()
         {
-            if (m_heartContainer == null || m_heartPrefab == null) return;
+            if (m_heartIconGroup == null) return;
 
-            // 현재 자식 수와 필요한 하트 수 비교
-            int currentChildCount = m_heartContainer.childCount;
-            int targetLife = m_viewModel.CurrentLifeCount;
-
-            // 부족하면 생성
-            if (currentChildCount < targetLife)
-            {
-                for (int i = 0; i < targetLife - currentChildCount; i++)
-                {
-                    Instantiate(m_heartPrefab, m_heartContainer);
-                }
-            }
+            int currentLife = m_viewModel.CurrentLifeCount;
             
-            // 모든 하트 순회하며 활성화 여부 결정 (또는 단순 개수 맞춤)
-            for (int i = 0; i < m_heartContainer.childCount; i++)
+            // 감소 시에만 연출
+            if (currentLife < m_lastLifeCount)
             {
-                var heartChild = m_heartContainer.GetChild(i).gameObject;
-                bool shouldBeActive = i < targetLife;
-                
-                // [개선]: 활성화되어야 한다면 현재 상태에 관계없이 무조건 강제 적용 및 트윈 중단 (원본 스케일 유지)
-                if (shouldBeActive)
+                for (int i = 0; i < m_lastLifeCount - currentLife; i++)
                 {
-                    heartChild.transform.DOKill();
-                    heartChild.SetActive(true);
-                    heartChild.transform.localScale = m_originalHeartScale; 
-                }
-                else if (heartChild.activeSelf) // 비활성화되어야 하는데 현재 켜져 있다면 연출 시작
-                {
-                    heartChild.transform.DOKill();
-                    
-                    // 파괴 연출: 원본 대비 1.3배 커졌다가 빠르게 사라짐
-                    heartChild.transform.DOScale(m_originalHeartScale * 1.3f, 0.1f).SetEase(Ease.OutQuad)
-                        .OnComplete(() => {
-                            heartChild.transform.DOScale(Vector3.zero, 0.15f).SetEase(Ease.InQuad)
-                                .OnComplete(() => {
-                                    // 연출 완료 후에도 여전히 비활성 상태여야 할 때만 SetActive(false)
-                                    heartChild.SetActive(false);
-                                });
-                        });
+                    m_heartIconGroup.RemoveLast();
                 }
             }
+            else if (currentLife > m_lastLifeCount)
+            {
+                // 회복 또는 초기화 시
+                m_heartIconGroup.SetIcons(m_heartPrefab, currentLife).Forget();
+            }
+
+            m_lastLifeCount = currentLife;
         }
         #endregion
 

@@ -23,6 +23,19 @@ namespace TowerBreakers.Player.Logic
         private readonly Core.Events.IEventBus m_eventBus;
         private readonly PlayerData m_playerData;
         private readonly Tower.Logic.TowerManager m_towerManager;
+
+        // [최적화]: 사거리 내 적 체크를 위한 캐싱 필드
+        private static readonly int s_enemyLayer = LayerMask.GetMask("Enemy");
+        private static readonly Collider2D[] s_overlapBuffer = new Collider2D[1];
+        private static readonly ContactFilter2D s_enemyFilter = CreateEnemyFilter();
+
+        private static ContactFilter2D CreateEnemyFilter()
+        {
+            ContactFilter2D filter = new ContactFilter2D();
+            filter.SetLayerMask(s_enemyLayer);
+            filter.useLayerMask = true;
+            return filter;
+        }
         #endregion
 
         public PlayerDefendState(
@@ -45,40 +58,55 @@ namespace TowerBreakers.Player.Logic
 
         public void OnEnter()
         {
-            Debug.Log("[PlayerParry] 패링(기절+밀어내기+벽복귀) 실행");
-            
+            // [추가]: 방어 사거리 내에 물리적인 적이 있는지 선행 체크
+            float defendRange = m_playerData != null ? m_playerData.DefendRange : 2.5f;
+            bool hasEnemy = IsEnemyInRange(defendRange);
+
+            if (!hasEnemy)
+            {
+                m_stateMachine.ChangeState<PlayerIdleState>();
+                return;
+            }
+
             // 1. 적군에 대한 패링 이벤트 전파
             float pushbackDistance = m_playerData != null ? m_playerData.DefendPushbackDistance : 3.0f;
+            float stunDuration = m_playerData != null ? m_playerData.DefendStunDuration : 2.0f;
+
             if (m_eventBus != null)
             {
                 int currentFloor = m_towerManager != null ? m_towerManager.CurrentFloorIndex : 0;
-                float defendRange = m_playerData != null ? m_playerData.DefendRange : 2.5f;
-                m_eventBus.Publish(new OnDefendActionTriggered(2.0f, pushbackDistance, defendRange, currentFloor));
+                m_eventBus.Publish(new OnDefendActionTriggered(stunDuration, pushbackDistance, defendRange, currentFloor, m_view.transform.position));
             }
 
             // 2. 플레이어의 현재 위치 및 벽 거리 계산
             if (m_model != null && m_pushReceiver != null)
             {
                 float wallX = m_pushReceiver.LeftWallThreshold;
-                // [수정]: 플레이어의 계층 구조가 환경과 다를 수 있으므로, 항상 월드 좌표(transform.position)를 기준으로 비교합니다.
                 float currentX = m_view.transform.position.x;
                 float thresholdX = m_pushReceiver.BackflipThresholdX;
                 
-                // 지정된 기점(thresholdX)을 기준으로 연출 분기
                 if (currentX >= thresholdX)
                 {
-                    // [백플립 패링]
                     ExecuteBackflip(wallX);
                 }
                 else
                 {
-                    // [일반 슬라이딩 패링]
                     m_view.PlayAnimation(global::PlayerState.OTHER, 1);
+                    
+                    // 경계 제한 해제 (연출 중 벽 압착 판정 방지)
+                    m_pushReceiver.IsClampingEnabled = false;
                     
                     m_view.transform.DOMoveX(wallX, 0.3f)
                         .SetEase(Ease.OutBack)
                         .OnUpdate(() => m_model.Position = m_view.transform.position)
-                        .OnComplete(() => m_stateMachine.ChangeState<PlayerIdleState>());
+                        .OnComplete(() => 
+                        {
+                            // 상태 확인 후 안전하게 복귀
+                            if (m_stateMachine != null && m_stateMachine.IsCurrentState<PlayerDefendState>())
+                            {
+                                m_stateMachine.ChangeState<PlayerIdleState>();
+                            }
+                        });
                 }
             }
         }
@@ -127,10 +155,14 @@ namespace TowerBreakers.Player.Logic
                     
                     if (m_model != null) m_model.Position = m_view.transform.position;
                     
-                    m_stateMachine.ChangeState<PlayerIdleState>();
+                    // 상태 확인 후 안전하게 복귀
+                    if (m_stateMachine != null && m_stateMachine.IsCurrentState<PlayerDefendState>())
+                    {
+                        m_stateMachine.ChangeState<PlayerIdleState>();
+                    }
                 });
 
-            Debug.Log($"[PlayerParry] 백플립 연출 시작 (TargetX: {targetX:F2})");
+
         }
 
         private async Cysharp.Threading.Tasks.UniTaskVoid ReturnToIdleAfterDelay()
@@ -138,9 +170,40 @@ namespace TowerBreakers.Player.Logic
             await Cysharp.Threading.Tasks.UniTask.Delay(500);
             m_stateMachine.ChangeState<PlayerIdleState>();
         }
+
+        /// <summary>
+        /// [설명]: 방어 사거리 내에 적이 존재하는지 물리적으로 검사합니다.
+        /// </summary>
+        /// <param name="defendRange">검사 반경</param>
+        private bool IsEnemyInRange(float defendRange)
+        {
+            if (m_view == null) return false;
+            
+            // [최적화]: Deprecated된 NonAlloc 대신 ContactFilter2D 기반의 OverlapCircle 사용 (GC 할당 없음)
+            int count = Physics2D.OverlapCircle(
+                m_view.transform.position, 
+                defendRange, 
+                s_enemyFilter, 
+                s_overlapBuffer);
+                
+            return count > 0;
+        }
         #endregion
 
-        public void OnExit() { }
+        public void OnExit()
+        {
+            // 진행 중인 트윈 제거 (잔존 연출 방지)
+            if (m_view != null)
+            {
+                m_view.transform.DOKill();
+            }
+            
+            // 상태 복구
+            if (m_pushReceiver != null)
+            {
+                m_pushReceiver.IsClampingEnabled = true;
+            }
+        }
 
         public void OnTick() { }
     }

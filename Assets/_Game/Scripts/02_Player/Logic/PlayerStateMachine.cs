@@ -43,7 +43,11 @@ namespace TowerBreakers.Player.Logic
             m_currentState = nextState;
             m_currentState.OnEnter();
             
+#if UNITY_EDITOR
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[PlayerStateMachine] 상태 전환: {type.Name}");
+            #endif
+#endif
         }
 
         public void Tick()

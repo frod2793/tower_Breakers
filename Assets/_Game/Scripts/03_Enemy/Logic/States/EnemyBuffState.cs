@@ -51,7 +51,7 @@ namespace TowerBreakers.Enemy.Logic
             // 버프 요청 이벤트 발행
             m_eventBus?.Publish(new OnEnemyBuffRequested(m_floorIndex, m_data.BuffHealAmount));
             
-            Debug.Log($"[EnemyBuffState] {m_view.name} (Floor {m_floorIndex}) 버프 시전: HealAmount={m_data.BuffHealAmount}");
+            // [로그 제거]: 콘솔 노이즈 방지
         }
 
         public void OnExit() { }

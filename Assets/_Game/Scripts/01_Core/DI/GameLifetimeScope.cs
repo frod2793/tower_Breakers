@@ -31,17 +31,16 @@ namespace TowerBreakers.Core.DI
     public class GameLifetimeScope : LifetimeScope
     {
         #region 에디터 설정
-        [Header("ScriptableObject 데이터")]
-        [SerializeField, Tooltip("플레이어 기본 스탯 데이터 (ScriptableObject)")]
+
+        [Header("ScriptableObject 데이터")] [SerializeField, Tooltip("플레이어 기본 스탯 데이터 (ScriptableObject)")]
         private PlayerData m_playerData;
 
         [SerializeField, Tooltip("타워 구성 데이터 (ScriptableObject)")]
         private TowerData m_towerData;
 
         [SerializeField] private PlayerDebugger m_playerDebugger;
-        
-        [Header("씬 컴포넌트 참조")]
-        [SerializeField, Tooltip("플레이어 뷰 (씬에 배치 필수)")]
+
+        [Header("씬 컴포넌트 참조")] [SerializeField, Tooltip("플레이어 뷰 (씬에 배치 필수)")]
         private PlayerView m_playerView;
 
         [SerializeField, Tooltip("플레이어 장비 컴포넌트")]
@@ -50,31 +49,32 @@ namespace TowerBreakers.Core.DI
         [SerializeField, Tooltip("플레이어 밀림 수신자")]
         private PlayerPushReceiver m_playerPushReceiver;
 
-        [SerializeField, Tooltip("환경 매니저")]
-        private EnvironmentManager m_environmentManager;
+        [SerializeField, Tooltip("환경 매니저")] private EnvironmentManager m_environmentManager;
 
         [SerializeField, Tooltip("전투 연출 프리젠터")]
         private CombatEffectPresenter m_combatEffectPresenter;
 
-        [SerializeField, Tooltip("장비 UI 뷰")]
-        private TowerBreakers.UI.Equipment.EquipmentView m_equipmentView;
+        [SerializeField, Tooltip("플레이어 이펙트 뷰 (하트/타격 연출 등)")]
+        private PlayerEffectView m_playerEffectView;
 
-        [SerializeField, Tooltip("HUD UI 뷰")]
-        private HUDView m_hudView;
+        [SerializeField, Tooltip("장비 UI 뷰")] private TowerBreakers.UI.Equipment.EquipmentView m_equipmentView;
+
+        [SerializeField, Tooltip("HUD UI 뷰")] private HUDView m_hudView;
+
+        [SerializeField, Tooltip("게임 오버 UI 뷰")] private GameOverView m_gameOverView;
 
         [SerializeField, Tooltip("층 전환 연출 프리젠터")]
         private TowerBreakers.Tower.View.TowerTransitionPresenter m_towerTransitionPresenter;
 
-        [Header("데미지 텍스트 설정")]
-        [SerializeField, Tooltip("데미지 텍스트 프리팹 (DamageTextView)")]
+        [Header("데미지 텍스트 설정")] [SerializeField, Tooltip("데미지 텍스트 프리팹 (DamageTextView)")]
         private DamageTextView m_damageTextPrefab;
 
         [SerializeField, Tooltip("데미지 텍스트가 생성될 부모 트랜스폼 (World Space Canvas 등)")]
         private Transform m_damageTextParent;
 
-        [Header("보물상자 시스템 설정")]
-        [SerializeField, Tooltip("보상 지급 매니저")]
-        private RewardApplier m_rewardApplier;
+        [Header("보물상자 시스템 설정")] [SerializeField, Tooltip("기본 보상 테이블")]
+        private RewardTableData m_rewardTable;
+
         #endregion
 
         protected override void Configure(IContainerBuilder builder)
@@ -83,12 +83,13 @@ namespace TowerBreakers.Core.DI
             builder.Register<EventBus>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
             builder.Register<GameStateMachine>(Lifetime.Singleton);
             builder.Register<CooldownSystem>(Lifetime.Singleton);
-            
+
             // ── 씬 컴포넌트 등록 (인스펙터에서 할당) ──
             RegisterSceneComponent(builder, m_environmentManager, "EnvironmentManager");
             RegisterSceneComponent(builder, m_playerView, "PlayerView", isRequired: true);
             RegisterSceneComponent(builder, m_playerEquipment, "PlayerEquipment");
             RegisterSceneComponent(builder, m_combatEffectPresenter, "CombatEffectPresenter");
+            RegisterSceneComponent(builder, m_playerEffectView, "PlayerEffectView");
             RegisterSceneComponent(builder, m_towerTransitionPresenter, "TowerTransitionPresenter");
             RegisterSceneComponent(builder, m_playerDebugger, "PlayerDebugger");
 
@@ -106,7 +107,7 @@ namespace TowerBreakers.Core.DI
                     var model = resolver.Resolve<PlayerModel>();
                     var eventBus = resolver.Resolve<Core.Events.IEventBus>();
                     m_playerPushReceiver.Initialize(model, eventBus);
-                    
+
                     Debug.Log("[GameLifetimeScope] PlayerPushReceiver 초기화 완료");
                 });
             }
@@ -149,7 +150,15 @@ namespace TowerBreakers.Core.DI
             builder.Register<TowerManager>(Lifetime.Singleton);
 
             // ── Object/Reward 시스템 등록 ──
-            RegisterSceneComponent(builder, m_rewardApplier, "RewardApplier");
+            if (m_rewardTable != null)
+            {
+                builder.Register<RewardApplier>(Lifetime.Singleton).AsImplementedInterfaces()
+                    .WithParameter(m_rewardTable);
+            }
+            else
+            {
+                Debug.LogError("[GameLifetimeScope] RewardTableData가 설정되지 않았습니다.");
+            }
 
             // ── Combat 시스템 등록 ──
             builder.Register<CombatSystem>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
@@ -199,6 +208,23 @@ namespace TowerBreakers.Core.DI
                 Debug.LogWarning("[GameLifetimeScope] HUDView가 인스펙터에 설정되지 않았습니다.");
             }
 
+            // GameOverView 등록 및 ViewModel 연결
+            if (m_gameOverView != null)
+            {
+                builder.RegisterComponent(m_gameOverView);
+                var cachedGameOverView = m_gameOverView;
+                builder.RegisterBuildCallback(resolver =>
+                {
+                    var vm = resolver.Resolve<GameOverViewModel>();
+                    cachedGameOverView.Initialize(vm);
+                    Debug.Log("[GameLifetimeScope] GameOverView 초기화 완료");
+                });
+            }
+            else
+            {
+                Debug.LogWarning("[GameLifetimeScope] GameOverView가 인스펙터에 설정되지 않았습니다.");
+            }
+
             // ── Player States 등록 ──
             builder.Register<PlayerIdleState>(Lifetime.Singleton);
             builder.Register<PlayerAttackState>(Lifetime.Singleton);
@@ -209,12 +235,14 @@ namespace TowerBreakers.Core.DI
             // ── Game States 등록 ──
             builder.Register<LoadingState>(Lifetime.Singleton);
             builder.Register<PlayingState>(Lifetime.Singleton);
+            builder.Register<GameOverState>(Lifetime.Singleton);
 
             // ── Entry Point ──
             builder.RegisterEntryPoint<GameController>();
         }
 
         #region 내부 메서드
+
         /// <summary>
         /// [설명]: 씬 컴포넌트를 방어적으로 등록합니다. null이면 경고 또는 에러를 출력합니다.
         /// </summary>
@@ -222,7 +250,8 @@ namespace TowerBreakers.Core.DI
         /// <param name="component">등록할 컴포넌트</param>
         /// <param name="name">컴포넌트 이름 (로그용)</param>
         /// <param name="isRequired">필수 컴포넌트 여부</param>
-        private void RegisterSceneComponent<T>(IContainerBuilder builder, T component, string name, bool isRequired = false) where T : MonoBehaviour
+        private void RegisterSceneComponent<T>(IContainerBuilder builder, T component, string name,
+            bool isRequired = false) where T : MonoBehaviour
         {
             if (component != null)
             {
@@ -237,6 +266,7 @@ namespace TowerBreakers.Core.DI
                 Debug.LogWarning($"[GameLifetimeScope] {name}이(가) 설정되지 않았습니다.");
             }
         }
+
         #endregion
     }
 }

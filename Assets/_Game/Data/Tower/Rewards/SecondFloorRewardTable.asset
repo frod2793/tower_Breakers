@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Data.RewardTableData
   m_rewardEntries:
   - Weight: 0
-    Weapon: {fileID: 0}
+    Weapon: {fileID: 11400000, guid: 846a2e48d315843d5963a152435bf8df, type: 2}
     Armor: {fileID: 0}
