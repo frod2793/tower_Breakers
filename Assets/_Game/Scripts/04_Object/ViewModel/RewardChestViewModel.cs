@@ -127,12 +127,18 @@ namespace TowerBreakers.Interactions.ViewModel
             if (m_isOpened) return;
             
             m_isOpened = true;
+            Debug.Log($"[CHEST_DIAGNOSTIC] ViewModel.Open(): Floor={m_floorIndex}, Pos={m_position}");
             OnOpened?.Invoke();
             
             // 핵심 비즈니스 로직: 보상 개방 이벤트 발행
             if (m_eventBus != null)
             {
+                Debug.Log($"[CHEST_DIAGNOSTIC] 발행: OnRewardChestOpened(Floor={m_floorIndex}, Pos={m_position}, Table={m_rewardTable?.name ?? "NULL"})");
                 m_eventBus.Publish(new OnRewardChestOpened(m_position, m_floorIndex, m_rewardTable));
+            }
+            else
+            {
+                Debug.LogError("[CHEST_DIAGNOSTIC] EventBus가 null입니다! OnRewardChestOpened 이벤트를 발행할 수 없습니다.");
             }
         }
         #endregion
@@ -147,17 +153,6 @@ namespace TowerBreakers.Interactions.ViewModel
             if (evt.FloorIndex == m_floorIndex && !m_isActivated)
             {
                 Activate();
-            }
-        }
-        
-        /// <summary>
-        /// [설명]: 보상 상자가 등록되었음을 알립니다. (TowerManager용)
-        /// </summary>
-        public void Register()
-        {
-            if (m_eventBus != null)
-            {
-                m_eventBus.Publish(new OnRewardChestRegistered(m_floorIndex));
             }
         }
         #endregion

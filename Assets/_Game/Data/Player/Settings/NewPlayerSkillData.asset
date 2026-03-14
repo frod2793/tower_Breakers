@@ -15,13 +15,29 @@ MonoBehaviour:
   m_skill1Multiplier: 1.5
   m_skill2Multiplier: 3.5
   m_skill3Multiplier: 1.2
-  m_skill1Cooldown: 3
-  m_skill2Cooldown: 4
-  m_skill3Cooldown: 3.5
-  m_skill1NormalKillLimit: 3
+  m_skill1Cooldown: 1
+  m_skill2Cooldown: 1
+  m_skill3Cooldown: 1
+  m_skill1NormalHitLimit: 3
   m_skill1DashEnabled: 1
   m_skill1DashMaxDistance: 6
   m_skill1DashSpeed: 18
   m_skill1CameraZoomDelta: 0.8
   m_skill1CameraZoomDuration: 0.25
   m_skill1TimeScaleDuringDash: 0.5
+  m_skill2MissileCount: 3
+  m_skill2MissileSpeed: 8
+  m_skill2MissileTurnSpeed: 180
+  m_skill2MissileWaveAmplitude: 0.5
+  m_skill2MissileWaveFrequency: 2
+  m_skill2MissileAfterimageInterval: 0.1
+  m_skill2ExplosionPrefab: {fileID: 2045634820210532026, guid: 35b3a5ec887ad4c258496aa57e6e6471, type: 3}
+  m_skill2MissilePrefab: {fileID: 373265422045135363, guid: ce00adfea02dd46348f5422a03f7d0b5, type: 3}
+  m_skill2MissileLifetime: 5
+  m_skill3SlashSpeed: 15
+  m_skill3SlashDistance: 10
+  m_skill3SlowMultiplier: 0.5
+  m_skill3SlowDuration: 2
+  m_skill3SlashPrefab: {fileID: 8539932027478713632, guid: a428824ed6b87443f9ba4b5a897c9e05, type: 3}
+  m_skill3HitEffectPrefab: {fileID: 1604227354005263177, guid: f486ed62361f14bc98f1dc4d42d496b7, type: 3}
+  m_skill3SlashLifetime: 1

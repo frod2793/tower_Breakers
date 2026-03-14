@@ -19,3 +19,4 @@ MonoBehaviour:
   bookmarkedScenePaths:
   - Assets/_Game/Scenes/inGame.unity
   - Assets/SPUM/Scene/SPUM_Scene.unity
+  - Assets/_Game/Scenes/OutGame.unity

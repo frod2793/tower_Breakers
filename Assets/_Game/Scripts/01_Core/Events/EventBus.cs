@@ -24,9 +24,19 @@ namespace TowerBreakers.Core.Events
         public void Publish<T>(T message) where T : struct
         {
             var type = typeof(T);
-            if (m_handlers.TryGetValue(type, out var handler))
+            if (m_handlers.TryGetValue(type, out var handler) && handler != null)
             {
-                ((Action<T>)handler)?.Invoke(message);
+                foreach (var d in ((Action<T>)handler).GetInvocationList())
+                {
+                    try
+                    {
+                        ((Action<T>)d)?.Invoke(message);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[EventBus] 예외 발생: {ex}");
+                    }
+                }
             }
         }
 
@@ -56,9 +66,9 @@ namespace TowerBreakers.Core.Events
         public void Unsubscribe<T>(Action<T> action) where T : struct
         {
             var type = typeof(T);
-            if (m_handlers.ContainsKey(type))
+            if (m_handlers.TryGetValue(type, out var handler) && handler != null)
             {
-                m_handlers[type] = (Action<T>)m_handlers[type] - action;
+                m_handlers[type] = (Action<T>)handler - action;
             }
         }
         #endregion

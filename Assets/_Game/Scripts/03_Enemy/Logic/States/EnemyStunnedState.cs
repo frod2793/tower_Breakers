@@ -16,12 +16,12 @@ namespace TowerBreakers.Enemy.Logic
         private float m_timer;
         #endregion
 
-        public EnemyStunnedState(EnemyView view, EnemyStateMachine stateMachine, System.Type returnStateType, float duration = 1.0f)
+        public EnemyStunnedState(EnemyView view, EnemyStateMachine stateMachine, System.Type returnStateType)
         {
             m_view = view;
             m_stateMachine = stateMachine;
             m_returnStateType = returnStateType;
-            m_duration = duration;
+            m_duration = 1.0f;
         }
 
         /// <summary>

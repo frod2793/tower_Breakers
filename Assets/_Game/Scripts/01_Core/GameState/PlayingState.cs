@@ -67,8 +67,22 @@ namespace TowerBreakers.Core.GameState
             // 0. 초기 층 적 선스폰 및 등장 연출
             await PrepareNextFloor(currentFloor);
             await PlayPlayerEnterAsync(currentFloor, m_cts.Token);
+            
+            // [추가] 초기 층이 보스면 등장 연출 실행
+            if (IsBossFloor(currentFloor))
+            {
+                await PlayBossIntroAsync(currentFloor, m_cts.Token);
+            }
 
             // 1. 적 진격 트리거 및 다음 층 준비
+            if (IsBossFloor(currentFloor))
+            {
+                var bossController = m_enemySpawner.GetBossController(currentFloor);
+                if (bossController != null && bossController.BossPhaseState is TowerBreakers.Enemy.Boss.AI.FSM.BossFSM fsm)
+                {
+                    fsm.Resume();
+                }
+            }
             m_eventBus.Publish(new OnFloorStarted(currentFloor));
             await PrepareNextFloor(currentFloor + 1);
 
@@ -109,6 +123,14 @@ namespace TowerBreakers.Core.GameState
         {
             int nextFloorIndex = m_towerManager.CurrentFloorIndex + 1;
 
+            // [안전 검사]: 다음 층이 존재하지 않으면 전환 중단
+            var floors = m_towerManager.GetFloorsList();
+            if (nextFloorIndex >= floors.Count)
+            {
+                Debug.LogWarning($"[PlayingState] 다음 층({nextFloorIndex})이 존재하지 않습니다. 전환 중단.");
+                return;
+            }
+
             // 1. 플레이어 퇴장 및 지면 하강
             await PlayPlayerExitAsync(ct);
             m_towerManager.NextFloor(); 
@@ -127,8 +149,23 @@ namespace TowerBreakers.Core.GameState
 
             // 3. 다음 층 등장 및 적 활성화
             await PlayPlayerEnterAsync(nextFloorIndex, ct);
+            
+            // [추가] 보스 층이면 등장 연출 실행
+            if (IsBossFloor(nextFloorIndex))
+            {
+                await PlayBossIntroAsync(nextFloorIndex, ct);
+            }
+
             await UniTask.Delay(1000, cancellationToken: ct);
             
+            if (IsBossFloor(nextFloorIndex))
+            {
+                var bossController = m_enemySpawner.GetBossController(nextFloorIndex);
+                if (bossController != null && bossController.BossPhaseState is TowerBreakers.Enemy.Boss.AI.FSM.BossFSM fsm)
+                {
+                    fsm.Resume();
+                }
+            }
             m_eventBus.Publish(new OnFloorStarted(nextFloorIndex));
             await PrepareNextFloor(nextFloorIndex + 1);
         }
@@ -206,6 +243,53 @@ namespace TowerBreakers.Core.GameState
         private void HandleFloorReadyForNext(OnFloorReadyForNext evt)
         {
             m_isWaitingForNextTouch = true;
+        }
+
+        private bool IsBossFloor(int floorIndex)
+        {
+            var floors = m_towerManager.GetFloorsList();
+            if (floorIndex >= floors.Count) return false;
+
+            var floorData = floors[floorIndex];
+            // FloorData의 EnemyPrefabData 또는 SpawnPackets에서 Boss 타입 확인
+            if (floorData.EnemyPrefabData != null && floorData.EnemyPrefabData.Type == EnemyType.Boss)
+            {
+                return true;
+            }
+            if (floorData.SpawnPackets != null)
+            {
+                foreach (var packet in floorData.SpawnPackets)
+                {
+                    if (packet.EnemyPrefabData != null && packet.EnemyPrefabData.Type == EnemyType.Boss)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private async UniTask PlayBossIntroAsync(int floorIndex, System.Threading.CancellationToken ct)
+        {
+            // 해당 층에 스폰된 보스에서 BossIntroCutscene 컴포넌트 탐색
+            var bossIntro = m_enemySpawner.GetBossIntroCutscene(floorIndex);
+            if (bossIntro == null)
+            {
+                Debug.Log($"[PlayingState] 보스 등장연출 없음 (층: {floorIndex})");
+                return;
+            }
+
+            // EventBus 주입 (DI 미적용 컴포넌트이므로)
+            bossIntro.SetEventBus(m_eventBus);
+
+            Debug.Log($"[PlayingState] 보스 등장연출 시작 (층: {floorIndex})");
+
+            // 등장연출 실행 및 완료 대기
+            var tcs = new UniTaskCompletionSource();
+            bossIntro.PlayIntroAsync(() => tcs.TrySetResult()).Forget();
+            await tcs.Task;
+
+            Debug.Log($"[PlayingState] 보스 등장연출 완료 (층: {floorIndex})");
         }
         #endregion
     }

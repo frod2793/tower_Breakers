@@ -1,0 +1,147 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: LatentMonkfish
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: 5f17d8e483d90c646bd58ebbb196afce, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - 9a2c960158aafea4b947fe58867a7008: 21300000
+    - 9a6b3753bdea85046bacde4cc53cb182: 21300000
+    - 3cdaf3930f986934b8bcc86558d98e08: 21300000
+    - 22a464c33f16f2a419c4a3d375bbad3a: 21300000
+    - 368f7b0499b98634ca12bc273d02550f: 21300000
+    - 432b2b24f490c30429231aff61301000: 21300000
+    - acb307548d954c84d819c6a268d8330c: 21300000
+    - df52476401f06a445bde157855844c6e: 21300000
+    - 778e88d43b6b99047ae95f3b353ed452: 21300000
+    - 0ed06e06b2a051a429916e2d70f6ee57: 21300000
+    - fa116716965bce54bb382f0f7e41b0da: 21300000
+    - e6e36196ae76a0148820e59f6e4c03cb: 21300000
+    - e593eac6d8e2da843807e8f7db93b7a4: 21300000
+    - 54369de63172df6439a3cbd15926883f: 21300000
+    - 17d9c7479fa3beb46a403118a212ad0d: 21300000
+    - 60ae0ed7832f7b74fbb08c159ef8d835: 21300000
+    - 6a795f281cb4d974bb56bc7f72a84f38: 21300000
+    - 9a8e2a389f099454aa8ef56f08553f11: 21300000
+    - 6f391f78d3ddcc74ab466543a6dc2476: 21300000
+    - 5145a819b23069d4f9c6424c78f6c042: 21300000
+    - cd3181d90b7cb65429f156c5a257c0c1: 21300000
+    - 0554757a654ef8f4492a3e40fcdc80f3: 21300000
+    - d571ed7adc0af1d429dc7a02aef3faa7: 21300000
+    - 5a69e6ea3cf66ae45a78017485d2de51: 21300000
+    - 47f0deeade4702f44885e9d586580e60: 21300000
+    - 4dcfdbbb373a20a44be30f761d480b02: 21300000
+    - 7997aaeb45f77854382b825c878b5034: 21300000
+    - f54dc49d0acb11249a74ce8ca8a4a210: 21300000
+    - da7022bd78e53944c8e026fb875d4e30: 21300000
+    - 19aec9cdb1fcbfb4daccf6fa1ca2aed5: 21300000
+    - 62aae1fdc0844df43a6e5f0cb9641f15: 21300000
+    - c6bab0ae16329844898c4946003678c1: 21300000
+    - da449dfe323b70d4f891e6147968aa2c: 21300000
+    - b24ba4df81f20b6489b9b6127256e719: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 9a2c960158aafea4b947fe58867a7008, type: 3}
+  - {fileID: 21300000, guid: 9a6b3753bdea85046bacde4cc53cb182, type: 3}
+  - {fileID: 21300000, guid: 3cdaf3930f986934b8bcc86558d98e08, type: 3}
+  - {fileID: 21300000, guid: 22a464c33f16f2a419c4a3d375bbad3a, type: 3}
+  - {fileID: 21300000, guid: 368f7b0499b98634ca12bc273d02550f, type: 3}
+  - {fileID: 21300000, guid: 432b2b24f490c30429231aff61301000, type: 3}
+  - {fileID: 21300000, guid: acb307548d954c84d819c6a268d8330c, type: 3}
+  - {fileID: 21300000, guid: df52476401f06a445bde157855844c6e, type: 3}
+  - {fileID: 21300000, guid: 778e88d43b6b99047ae95f3b353ed452, type: 3}
+  - {fileID: 21300000, guid: 0ed06e06b2a051a429916e2d70f6ee57, type: 3}
+  - {fileID: 21300000, guid: fa116716965bce54bb382f0f7e41b0da, type: 3}
+  - {fileID: 21300000, guid: e6e36196ae76a0148820e59f6e4c03cb, type: 3}
+  - {fileID: 21300000, guid: e593eac6d8e2da843807e8f7db93b7a4, type: 3}
+  - {fileID: 21300000, guid: 54369de63172df6439a3cbd15926883f, type: 3}
+  - {fileID: 21300000, guid: 17d9c7479fa3beb46a403118a212ad0d, type: 3}
+  - {fileID: 21300000, guid: 60ae0ed7832f7b74fbb08c159ef8d835, type: 3}
+  - {fileID: 21300000, guid: 6a795f281cb4d974bb56bc7f72a84f38, type: 3}
+  - {fileID: 21300000, guid: 9a8e2a389f099454aa8ef56f08553f11, type: 3}
+  - {fileID: 21300000, guid: 6f391f78d3ddcc74ab466543a6dc2476, type: 3}
+  - {fileID: 21300000, guid: 5145a819b23069d4f9c6424c78f6c042, type: 3}
+  - {fileID: 21300000, guid: cd3181d90b7cb65429f156c5a257c0c1, type: 3}
+  - {fileID: 21300000, guid: 0554757a654ef8f4492a3e40fcdc80f3, type: 3}
+  - {fileID: 21300000, guid: d571ed7adc0af1d429dc7a02aef3faa7, type: 3}
+  - {fileID: 21300000, guid: 5a69e6ea3cf66ae45a78017485d2de51, type: 3}
+  - {fileID: 21300000, guid: 47f0deeade4702f44885e9d586580e60, type: 3}
+  - {fileID: 21300000, guid: 4dcfdbbb373a20a44be30f761d480b02, type: 3}
+  - {fileID: 21300000, guid: 7997aaeb45f77854382b825c878b5034, type: 3}
+  - {fileID: 21300000, guid: f54dc49d0acb11249a74ce8ca8a4a210, type: 3}
+  - {fileID: 21300000, guid: da7022bd78e53944c8e026fb875d4e30, type: 3}
+  - {fileID: 21300000, guid: 19aec9cdb1fcbfb4daccf6fa1ca2aed5, type: 3}
+  - {fileID: 21300000, guid: 62aae1fdc0844df43a6e5f0cb9641f15, type: 3}
+  - {fileID: 21300000, guid: c6bab0ae16329844898c4946003678c1, type: 3}
+  - {fileID: 21300000, guid: da449dfe323b70d4f891e6147968aa2c, type: 3}
+  - {fileID: 21300000, guid: b24ba4df81f20b6489b9b6127256e719, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - MonkFish-Attack-8
+  - MonkFish-Die-1
+  - MonkFish-Move-4
+  - MonkFish-Attack-5
+  - MonkFish-Idle-5
+  - MonkFish-Attack-9
+  - MonkFish-Attack-3
+  - MonkFish-Attack-7
+  - MonkFish-Burrow
+  - MonkFish-Move-1
+  - MonkFish-Idle-2
+  - MonkFish-Move-3
+  - MonkFish-Move-7
+  - MonkFish-Attack-6
+  - MonkFish-Idle-4
+  - MonkFish-Protrusion-3
+  - MonkFish-Protrusion-2
+  - MonkFish-Idle-6
+  - MonkFish-Protrusion-1
+  - MonkFish-Attack-1
+  - MonkFish-Attack-2
+  - MonkFish-Move-6
+  - MonkFish-Move-2
+  - MonkFish-Protrusion-6
+  - MonkFish-Die-2
+  - MonkFish-Attack-4
+  - MonkFish-Move-5
+  - MonkFish-Damage
+  - MonkFish-Idle-1
+  - MonkFish-Protrusion-4
+  - MonkFish-Idle-3
+  - MonkFish-Protrusion-5
+  - MonkFish-Protrusion-7
+  - MonkFish-Attack-10
+  m_RenderDataMap: {}
+  m_Tag: LatentMonkfish
+  m_IsVariant: 0

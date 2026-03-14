@@ -28,7 +28,6 @@ namespace TowerBreakers.Player.Logic
         private readonly IEventBus m_eventBus;
         private readonly PlayerData m_playerData;
         private readonly PlayerModel m_playerModel;
-        private float m_lastAttackTime = -10.0f; // [최적화]: 초기값을 음수로 설정하여 즉시 첫 공격 가능
         #endregion
 
         public PlayerActionHandler(PlayerStateMachine stateMachine, PlayerData playerData, PlayerModel playerModel, IEventBus eventBus)
@@ -37,6 +36,7 @@ namespace TowerBreakers.Player.Logic
             m_playerData = playerData;
             m_playerModel = playerModel;
             m_eventBus = eventBus;
+            m_stateMachine.SetActionHandler(this);
         }
 
         #region 공개 메서드
@@ -99,6 +99,18 @@ namespace TowerBreakers.Player.Logic
                     UnityEngine.Debug.LogWarning($"[PlayerActionHandler] 미구현 액션: {actionType}");
 #endif
                     break;
+            }
+        }
+
+        /// <summary>
+        /// [설명]: 매프레임 쿨다운을 감소시킵니다.
+        /// </summary>
+        public void Tick()
+        {
+            var skillState = m_stateMachine.GetState<PlayerSkillState>();
+            if (skillState != null)
+            {
+                skillState.TickCooldowns();
             }
         }
         #endregion

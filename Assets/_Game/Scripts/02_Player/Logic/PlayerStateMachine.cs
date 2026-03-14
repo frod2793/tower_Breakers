@@ -12,9 +12,15 @@ namespace TowerBreakers.Player.Logic
         #region 내부 변수
         private readonly Dictionary<Type, IPlayerState> m_states = new Dictionary<Type, IPlayerState>();
         private IPlayerState m_currentState;
+        private PlayerActionHandler m_actionHandler;
         #endregion
 
         #region 공개 메서드
+        public void SetActionHandler(PlayerActionHandler handler)
+        {
+            m_actionHandler = handler;
+        }
+
         public void AddState<T>(T state) where T : IPlayerState
         {
             m_states[typeof(T)] = state;
@@ -53,6 +59,7 @@ namespace TowerBreakers.Player.Logic
         public void Tick()
         {
             m_currentState?.OnTick();
+            m_actionHandler?.Tick();
         }
 
         public bool IsCurrentState<T>() where T : IPlayerState

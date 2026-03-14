@@ -1,0 +1,139 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Goblin_Assassin
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 4
+      m_BuildTarget: DefaultTexturePlatform
+      m_MaxTextureSize: 4096
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: -1
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 0
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: bf0be98dfde48ce4aaf6e70203261f4b, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - dd7e34f07ab6607468e03895d63ccde9: 21300000
+    - 98a10bf07424d1b408d328a258cfd496: 21300000
+    - edb97311ec9afee4cb7bec278b655dad: 21300000
+    - ef943022ce8c75e4b80a0d5036712cc9: 21300000
+    - e910bd03f93af9245b4600e11f0e7613: 21300000
+    - b5c0bda37550b4740ab51e955577eae0: 21300000
+    - 19bdbdb4ce6953e40a0431438f2db720: 21300000
+    - 7d99d385d4fa0b54f8f5093c8cc1aec9: 21300000
+    - cee100e51a95122448544c16f37aaf6a: 21300000
+    - 169aa496e8cc88742b323fb86c35073f: 21300000
+    - 48811847ff8f6ce4ca129f8ad3504b66: 21300000
+    - a007c9671b48e324fa765a36191c8f08: 21300000
+    - ec441f77fbe5bda4e9c5921e0a233e29: 21300000
+    - 87d2b8b7a987d4041a485a7ff5356730: 21300000
+    - c7b75738c7b0cad498dee7947d50ef8c: 21300000
+    - 0971a938a6c061b40bd4c8b9cd19c7ba: 21300000
+    - e75194b9ed6b5ee42980d1de232818e2: 21300000
+    - 8f6e4b1adbb92b04081bc19c0c0889ea: 21300000
+    - 2cfb942a043616943a0240572f38d737: 21300000
+    - 8634154af12660347855451550db6c9d: 21300000
+    - 9383ba6ba3a086145818eb06525b0155: 21300000
+    - 5966067b4e040794f94803860042b644: 21300000
+    - 4f69d30e4b2083e4885ecaf0ca8e0eb9: 21300000
+    - e5f9cb7e374e73b4ca957680272b3b5a: 21300000
+    - 48f5041f2f1fb55449f87bccb23bffed: 21300000
+    - bb610e7f1558fb844a79fd7b8817eb94: 21300000
+    - d18b729fedfa2564ab7b978f8e74e0c2: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: dd7e34f07ab6607468e03895d63ccde9, type: 3}
+  - {fileID: 21300000, guid: 98a10bf07424d1b408d328a258cfd496, type: 3}
+  - {fileID: 21300000, guid: edb97311ec9afee4cb7bec278b655dad, type: 3}
+  - {fileID: 21300000, guid: ef943022ce8c75e4b80a0d5036712cc9, type: 3}
+  - {fileID: 21300000, guid: e910bd03f93af9245b4600e11f0e7613, type: 3}
+  - {fileID: 21300000, guid: b5c0bda37550b4740ab51e955577eae0, type: 3}
+  - {fileID: 21300000, guid: 19bdbdb4ce6953e40a0431438f2db720, type: 3}
+  - {fileID: 21300000, guid: 7d99d385d4fa0b54f8f5093c8cc1aec9, type: 3}
+  - {fileID: 21300000, guid: cee100e51a95122448544c16f37aaf6a, type: 3}
+  - {fileID: 21300000, guid: 169aa496e8cc88742b323fb86c35073f, type: 3}
+  - {fileID: 21300000, guid: 48811847ff8f6ce4ca129f8ad3504b66, type: 3}
+  - {fileID: 21300000, guid: a007c9671b48e324fa765a36191c8f08, type: 3}
+  - {fileID: 21300000, guid: ec441f77fbe5bda4e9c5921e0a233e29, type: 3}
+  - {fileID: 21300000, guid: 87d2b8b7a987d4041a485a7ff5356730, type: 3}
+  - {fileID: 21300000, guid: c7b75738c7b0cad498dee7947d50ef8c, type: 3}
+  - {fileID: 21300000, guid: 0971a938a6c061b40bd4c8b9cd19c7ba, type: 3}
+  - {fileID: 21300000, guid: e75194b9ed6b5ee42980d1de232818e2, type: 3}
+  - {fileID: 21300000, guid: 8f6e4b1adbb92b04081bc19c0c0889ea, type: 3}
+  - {fileID: 21300000, guid: 2cfb942a043616943a0240572f38d737, type: 3}
+  - {fileID: 21300000, guid: 8634154af12660347855451550db6c9d, type: 3}
+  - {fileID: 21300000, guid: 9383ba6ba3a086145818eb06525b0155, type: 3}
+  - {fileID: 21300000, guid: 5966067b4e040794f94803860042b644, type: 3}
+  - {fileID: 21300000, guid: 4f69d30e4b2083e4885ecaf0ca8e0eb9, type: 3}
+  - {fileID: 21300000, guid: e5f9cb7e374e73b4ca957680272b3b5a, type: 3}
+  - {fileID: 21300000, guid: 48f5041f2f1fb55449f87bccb23bffed, type: 3}
+  - {fileID: 21300000, guid: bb610e7f1558fb844a79fd7b8817eb94, type: 3}
+  - {fileID: 21300000, guid: d18b729fedfa2564ab7b978f8e74e0c2, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - Assassin-Goblin-Attack-4
+  - Assassin-Goblin-Die-2
+  - Assassin-Goblin-Attack-(Dash)
+  - Assassin-Goblin-Damage-1
+  - Assassin-Goblin-Move-4
+  - Assassin-Goblin-Die-3
+  - Assassin-Goblin-Damage-2
+  - Assassin-Goblin-Move-6
+  - Assassin-Goblin-Idle-6
+  - Assassin-Goblin-Attack-3
+  - Assassin-Goblin-Idle-1
+  - Assassin-Goblin-Idle-3
+  - Assassin-Goblin-Move-2
+  - Goblin_Assassin
+  - Dash-Attack-3
+  - Assassin-Goblin-Attack-2
+  - Dash-Attack-2
+  - Assassin-Goblin-Attack-1
+  - Assassin-Goblin-Move-1
+  - Assassin-Goblin-Attack-5
+  - Assassin-Goblin-Idle-2
+  - Assassin-Goblin-Idle-5
+  - Assassin-Goblin-Move-3
+  - Assassin-Goblin-Idle-4
+  - Dash-Attack-1
+  - Assassin-Goblin-Move-5
+  - Assassin-Goblin-Die-1
+  m_RenderDataMap: {}
+  m_Tag: Goblin_Assassin
+  m_IsVariant: 0

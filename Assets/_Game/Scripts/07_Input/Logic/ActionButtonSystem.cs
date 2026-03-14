@@ -23,47 +23,72 @@ namespace TowerBreakers.Input.Logic
 
         #region 내부 변수
         private PlayerActionHandler m_actionHandler;
+        private TowerBreakers.Core.Events.IEventBus m_eventBus;
+        private bool m_isInputLocked = false;
         #endregion
 
         #region 초기화
         [Inject]
-        public void Construct(PlayerActionHandler actionHandler)
+        public void Construct(PlayerActionHandler actionHandler, TowerBreakers.Core.Events.IEventBus eventBus)
         {
             m_actionHandler = actionHandler;
+            m_eventBus = eventBus;
             BindButtons();
         }
 
         private void BindButtons()
         {
             if (m_attackButton != null)
-                m_attackButton.onClick.AddListener(() => m_actionHandler.ExecuteAction(PlayerActionType.Attack));
+                m_attackButton.onClick.AddListener(() => TryExecuteAction(PlayerActionType.Attack));
 
             if (m_skill1Button != null)
-                m_skill1Button.onClick.AddListener(() => m_actionHandler.ExecuteAction(PlayerActionType.Skill1));
+                m_skill1Button.onClick.AddListener(() => TryExecuteAction(PlayerActionType.Skill1));
 
             if (m_skill2Button != null)
-                m_skill2Button.onClick.AddListener(() => m_actionHandler.ExecuteAction(PlayerActionType.Skill2));
+                m_skill2Button.onClick.AddListener(() => TryExecuteAction(PlayerActionType.Skill2));
 
             if (m_skill3Button != null)
-                m_skill3Button.onClick.AddListener(() => m_actionHandler.ExecuteAction(PlayerActionType.Skill3));
+                m_skill3Button.onClick.AddListener(() => TryExecuteAction(PlayerActionType.Skill3));
 
             if (m_leapButton != null)
-                m_leapButton.onClick.AddListener(() => m_actionHandler.ExecuteAction(PlayerActionType.Leap));
+                m_leapButton.onClick.AddListener(() => TryExecuteAction(PlayerActionType.Leap));
 
             if (m_defendButton != null)
             {
-                m_defendButton.onClick.AddListener(() => 
-                {
-                    if (m_actionHandler != null)
-                    {
-                        m_actionHandler.ExecuteAction(PlayerActionType.Defend);
-                    }
-                });
+                m_defendButton.onClick.AddListener(() => TryExecuteAction(PlayerActionType.Defend));
             }
+        }
+        
+        private void TryExecuteAction(PlayerActionType actionType)
+        {
+            if (m_isInputLocked || m_actionHandler == null) return;
+            m_actionHandler.ExecuteAction(actionType);
         }
         #endregion
 
         #region 유니티 생명주기
+        private void OnEnable()
+        {
+            m_eventBus?.Subscribe<TowerBreakers.Core.Events.OnBossIntroStarted>(OnBossIntroStarted);
+            m_eventBus?.Subscribe<TowerBreakers.Core.Events.OnBossIntroEnded>(OnBossIntroEnded);
+            m_eventBus?.Subscribe<TowerBreakers.Core.Events.OnGamePause>(OnGamePause);
+            m_eventBus?.Subscribe<TowerBreakers.Core.Events.OnGameResume>(OnGameResume);
+        }
+
+        private void OnDisable()
+        {
+            m_eventBus?.Unsubscribe<TowerBreakers.Core.Events.OnBossIntroStarted>(OnBossIntroStarted);
+            m_eventBus?.Unsubscribe<TowerBreakers.Core.Events.OnBossIntroEnded>(OnBossIntroEnded);
+            m_eventBus?.Unsubscribe<TowerBreakers.Core.Events.OnGamePause>(OnGamePause);
+            m_eventBus?.Unsubscribe<TowerBreakers.Core.Events.OnGameResume>(OnGameResume);
+        }
+
+        private void OnBossIntroStarted(TowerBreakers.Core.Events.OnBossIntroStarted evt) { m_isInputLocked = true; }
+        private void OnBossIntroEnded(TowerBreakers.Core.Events.OnBossIntroEnded evt) { m_isInputLocked = false; }
+        
+        private void OnGamePause(TowerBreakers.Core.Events.OnGamePause evt) { m_isInputLocked = true; }
+        private void OnGameResume(TowerBreakers.Core.Events.OnGameResume evt) { m_isInputLocked = false; }
+
         private void OnDestroy()
         {
             if (m_attackButton != null) m_attackButton.onClick.RemoveAllListeners();

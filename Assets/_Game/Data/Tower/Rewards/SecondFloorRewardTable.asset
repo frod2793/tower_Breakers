@@ -13,6 +13,21 @@ MonoBehaviour:
   m_Name: SecondFloorRewardTable
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Data.RewardTableData
   m_rewardEntries:
-  - Weight: 0
+  - Weight: 100
     Weapon: {fileID: 11400000, guid: 846a2e48d315843d5963a152435bf8df, type: 2}
     Armor: {fileID: 0}
+  - Weight: 100
+    Weapon: {fileID: 11400000, guid: 9323f696b6008425d8de16c56d618e12, type: 2}
+    Armor: {fileID: 0}
+  - Weight: 100
+    Weapon: {fileID: 0}
+    Armor: {fileID: 11400000, guid: ca722318c12ef434ca519d38f1fa7734, type: 2}
+  - Weight: 100
+    Weapon: {fileID: 0}
+    Armor: {fileID: 11400000, guid: 66a28ecbff939450c90b3eea9ff9f14f, type: 2}
+  - Weight: 100
+    Weapon: {fileID: 0}
+    Armor: {fileID: 11400000, guid: 99c0c193dec94474bad91fdd1aaf11ef, type: 2}
+  - Weight: 100
+    Weapon: {fileID: 0}
+    Armor: {fileID: 11400000, guid: adb116af32c5a4bb490036405bc622b8, type: 2}

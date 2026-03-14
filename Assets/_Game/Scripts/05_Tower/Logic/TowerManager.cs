@@ -11,12 +11,13 @@ namespace TowerBreakers.Tower.Logic
     /// [설명]: 타워의 진행 상태(현재 층, 적 처치 수 등)를 관리하는 매니저 클래스입니다.
     /// POCO 클래스로 작성되어 순수 로직을 담당합니다.
     /// </summary>
-    public class TowerManager
+    public class TowerManager : IDisposable
     {
         #region 내부 필드
         private readonly IEventBus m_eventBus;
         private TowerData m_currentTower;
         private int m_currentFloorIndex = 0;
+        private bool m_isDisposed = false;
         
         /// <summary>
         /// [설명]: 층별로 현재 활성화된(살아있는) 적의 타입 리스트를 추적합니다.
@@ -61,6 +62,11 @@ namespace TowerBreakers.Tower.Logic
         /// [설명]: 타워의 모든 층을 클리어했는지 여부입니다.
         /// </summary>
         public bool IsFinished => m_currentTower != null && m_currentFloorIndex >= m_currentTower.TotalFloors;
+
+        /// <summary>
+        /// [설명]: 현재 층이 타워의 마지막 층인지 여부입니다.
+        /// </summary>
+        public bool IsLastFloor => m_currentTower != null && m_currentFloorIndex >= m_currentTower.TotalFloors - 1;
         #endregion
 
         #region 초기화
@@ -98,10 +104,12 @@ namespace TowerBreakers.Tower.Logic
         {
             if (IsFinished) return;
 
+            int clearedFloorIndex = m_currentFloorIndex;
             m_currentFloorIndex++;
             #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log($"[TowerManager] {m_currentFloorIndex}층 진행");
+            Debug.Log($"[TowerManager] {clearedFloorIndex}층 클리어 → {m_currentFloorIndex}층 진행");
             #endif
+            // [수정]: 다음 층의 월드 위치를 계산할 수 있도록 증가된 현재 인덱스를 전달
             m_eventBus.Publish(new OnFloorCleared(m_currentFloorIndex));
             OnDataChanged?.Invoke();
         }
@@ -151,8 +159,16 @@ namespace TowerBreakers.Tower.Logic
 
                     if (remainingChests <= 0)
                     {
-                        // 모든 조건 충족 시 'GO' UI 활성화 유도
-                        HandleFloorClearedDelayedAsync().Forget();
+                        // [수정]: 마지막 층이면 타워 클리어(승리) 처리
+                        if (IsLastFloor)
+                        {
+                            HandleTowerClearedAsync().Forget();
+                        }
+                        else
+                        {
+                            // 모든 조건 충족 시 'GO' UI 활성화 유도
+                            HandleFloorClearedDelayedAsync().Forget();
+                        }
                     }
                     else
                     {
@@ -195,7 +211,15 @@ namespace TowerBreakers.Tower.Logic
 
                 if (evt.FloorIndex == m_currentFloorIndex && allEnemiesDead && remainingChests <= 0)
                 {
-                    HandleFloorClearedDelayedAsync().Forget();
+                    // [수정]: 마지막 층이면 타워 클리어(승리) 처리
+                    if (IsLastFloor)
+                    {
+                        HandleTowerClearedAsync().Forget();
+                    }
+                    else
+                    {
+                        HandleFloorClearedDelayedAsync().Forget();
+                    }
                 }
             }
         }
@@ -208,10 +232,37 @@ namespace TowerBreakers.Tower.Logic
             #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[TowerManager] {m_currentFloorIndex}층 모든 목표 클리어 (준비 완료)");
             #endif
-            
+
             await UniTask.Delay(1000);
-            
+
             m_eventBus.Publish(new OnFloorReadyForNext());
+        }
+
+        /// <summary>
+        /// [설명]: 타워의 마지막 층을 클리어했을 때 승리 처리를 수행합니다.
+        /// </summary>
+        private async UniTaskVoid HandleTowerClearedAsync()
+        {
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[TowerManager] 타워 클리어! 마지막 층({m_currentFloorIndex}) 모든 목표 완료");
+            #endif
+
+            await UniTask.Delay(1500);
+
+            m_eventBus.Publish(new OnTowerCleared());
+        }
+
+        public void Dispose()
+        {
+            if (m_isDisposed) return;
+            m_isDisposed = true;
+
+            if (m_eventBus != null)
+            {
+                m_eventBus.Unsubscribe<OnEnemyKilled>(HandleEnemyKilled);
+                m_eventBus.Unsubscribe<OnRewardChestRegistered>(HandleChestRegistered);
+                m_eventBus.Unsubscribe<OnRewardChestOpened>(HandleChestOpened);
+            }
         }
         #endregion
     }

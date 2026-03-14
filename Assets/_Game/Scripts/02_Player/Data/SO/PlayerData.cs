@@ -26,6 +26,8 @@ namespace TowerBreakers.Player.Data.SO
         [SerializeField, Tooltip("기본 이동 속도")]
         private float m_moveSpeed = 3.0f;
 
+
+
         [Header("전투 설정")]
         [SerializeField, Tooltip("밀림 저항 (0.0 ~ 1.0)")]
         private float m_pushResistance = 0.2f;
@@ -53,23 +55,18 @@ namespace TowerBreakers.Player.Data.SO
         [SerializeField, Tooltip("벽 압착 데미지 배율 (밀린 거리 × 배율 = 데미지)")]
         private float m_wallCrushDamageMultiplier = 10f;
 
+        [SerializeField, Tooltip("백플립 후퇴 거리")]
+        private float m_backflipDistance = 4.0f;
+
+        [SerializeField, Tooltip("백플립 점프 높이/힘")]
+        private float m_backflipJumpPower = 3.5f;
+
         [Header("장비 설정")]
         [SerializeField, Tooltip("게임 시작 시 기본으로 장착될 무기")]
         private WeaponData m_defaultWeapon;
         #endregion
 
-        #region 프로퍼티
-        // Note: The TakeDamage method and related properties (IsDead, CurrentLifeCount) typically belong to a runtime PlayerModel class,
-        // not a ScriptableObject PlayerData. This implementation is based on the provided instruction.
-        public bool IsDead { get; private set; } // Placeholder for IsDead, assuming it exists in the context where TakeDamage is used
-        public int CurrentLifeCount { get; private set; } // Placeholder for CurrentLifeCount, assuming it exists in the context where TakeDamage is used
-
-        public void TakeDamage(int damage)
-        {
-            if (IsDead) return;
-            // [변경]: 데미지 수치와 상관없이 1회 피격 시 생명 1 감소
-            CurrentLifeCount -= 1;
-        }
+        # region 프로퍼티
         public int MaxLifeCount => m_maxLifeCount;
         public int AttackPower => m_attackPower;
         public float AttackRange => m_attackRange;
@@ -83,7 +80,9 @@ namespace TowerBreakers.Player.Data.SO
         public float DefendPushbackDistance => m_defendPushbackDistance;
         public float DefendStunDuration => m_defendStunDuration;
         public float WallCrushDamageMultiplier => m_wallCrushDamageMultiplier;
+        public float BackflipDistance => m_backflipDistance;
+        public float BackflipJumpPower => m_backflipJumpPower;
         public WeaponData DefaultWeapon => m_defaultWeapon;
-        #endregion
+        # endregion
     }
 }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using DG.Tweening;
 using TowerBreakers.Core.Events;
+using TowerBreakers.Effects;
 using VContainer;
 using Cysharp.Threading.Tasks;
 using System.Threading;
@@ -14,16 +15,12 @@ namespace TowerBreakers.Combat.View
     public class CombatEffectPresenter : MonoBehaviour
     {
         #region 에디터 설정
-        [SerializeField, Tooltip("메인 카메라 참조 (쉐이크 연출용)")]
-        private Camera m_mainCamera;
         #endregion
 
         #region 내부 필드
         private IEventBus m_eventBus;
-        private Tweener m_shakeTweener;
-        private Vector3 m_originalCameraPos;
+        private EffectManager m_effectManager;
         private CancellationTokenSource m_hitStopCts;
-        private TweenCallback m_onShakeComplete; // [최적화]: 람다 할당 방지용 캐싱
         #endregion
 
         #region 초기화
@@ -31,23 +28,11 @@ namespace TowerBreakers.Combat.View
         /// [설명]: 의존성을 주입받아 이벤트를 구독하고 카메라를 설정합니다.
         /// </summary>
         [Inject]
-        public void Initialize(IEventBus eventBus)
+        public void Initialize(IEventBus eventBus, EffectManager effectManager)
         {
             m_eventBus = eventBus;
+            m_effectManager = effectManager;
             m_eventBus.Subscribe<OnHitEffectRequested>(OnHitEffectRequested);
-
-            if (m_mainCamera == null)
-            {
-                m_mainCamera = Camera.main;
-            }
-
-            if (m_mainCamera != null)
-            {
-                m_originalCameraPos = m_mainCamera.transform.localPosition;
-            }
-
-            // [최적화]: 콜백 미리 캐싱
-            m_onShakeComplete = ResetCameraPosition;
         }
         #endregion
 
@@ -57,36 +42,43 @@ namespace TowerBreakers.Combat.View
         /// </summary>
         private void OnHitEffectRequested(OnHitEffectRequested evt)
         {
-            ApplyCameraShake(evt.ShakeIntensity, evt.ShakeDuration);
-            ApplyHitStop(evt.HitStopDuration).Forget();
-        }
+            float intensity = evt.ShakeIntensity;
+            float duration = evt.ShakeDuration;
+            float hitStop = evt.HitStopDuration;
 
-        /// <summary>
-        /// [설명]: 카메라 쉐이크 연출을 적용합니다.
-        /// </summary>
-        private void ApplyCameraShake(float intensity, float duration)
-        {
-            if (m_mainCamera == null) return;
-
-            // 기존 쉐이크 중지 후 초기화
-            if (m_shakeTweener != null && m_shakeTweener.IsActive())
+            // [추가]: 이벤트 수치가 기본값(-1.0f)인 경우 EffectManager에서 중앙 설정값 획득
+            if (m_effectManager != null && (intensity < 0f || duration < 0f))
             {
-                m_shakeTweener.Kill(true);
+                if (m_effectManager.GetHitFeedbackSettings(evt.HitEffectType, out var defIntensity, out var defDuration, out var defHitStop))
+                {
+                    if (intensity < 0f) intensity = defIntensity;
+                    if (duration < 0f) duration = defDuration;
+                    if (hitStop < 0f) hitStop = defHitStop;
+                }
             }
-            m_mainCamera.transform.localPosition = m_originalCameraPos;
 
-            // [최적화]: OnComplete에 캐싱된 메서드 전달 (람다 할당 제거)
-            m_shakeTweener = m_mainCamera.transform.DOShakePosition(duration, intensity, 10, 90, false, true)
-                .OnComplete(m_onShakeComplete);
-        }
-
-        private void ResetCameraPosition()
-        {
-            if (m_mainCamera != null)
+            // 1. 카메라 쉐이크
+            if (m_effectManager != null && intensity > 0f)
             {
-                m_mainCamera.transform.localPosition = m_originalCameraPos;
+                m_effectManager.ShakeCamera(intensity, duration);
             }
+
+            // 2. 역경직 발동
+            if (hitStop > 0f)
+            {
+                ApplyHitStop(hitStop).Forget();
+            }
+ 
+            // 3. 시각적 타격 이펙트 재생
+            if (m_effectManager != null && evt.HitEffectType != EffectType.None)
+            {
+                m_effectManager.PlayEffect(evt.HitEffectType, evt.Position);
+            }
+
+            // 4. 타격 사운드 재생
+            m_eventBus?.Publish(new OnSoundRequested("Hit"));
         }
+
 
         /// <summary>
         /// [설명]: 역경직(Hit Stop) 연출을 적용합니다. 
@@ -138,16 +130,11 @@ namespace TowerBreakers.Combat.View
                 m_eventBus.Unsubscribe<OnHitEffectRequested>(OnHitEffectRequested);
             }
 
-            if (m_shakeTweener != null)
-            {
-                m_shakeTweener.Kill();
-            }
-
             // Hit Stop CTS 정리
             m_hitStopCts?.Cancel();
             m_hitStopCts?.Dispose();
             m_hitStopCts = null;
-
+ 
             // 타임 스케일 정규화 (파괴 시 안전장치)
             if (Time.timeScale < 1.0f)
             {

@@ -17,18 +17,20 @@ namespace TowerBreakers.Enemy.Logic
         private readonly EnemyPushLogic m_pushLogic;
         private readonly EnemyStateMachine m_stateMachine;
         private readonly Type m_actionStateType;
+        private readonly EnemyController m_controller;
 
         private float m_cooldownTimer;
         private bool m_isMoving = false;
         #endregion
 
-        public EnemySupportPushState(EnemyView view, EnemyData data, EnemyPushLogic pushLogic, EnemyStateMachine stateMachine, Type actionStateType)
+        public EnemySupportPushState(EnemyView view, EnemyData data, EnemyPushLogic pushLogic, EnemyStateMachine stateMachine, Type actionStateType, EnemyController controller)
         {
             m_view = view;
             m_data = data;
             m_pushLogic = pushLogic;
             m_stateMachine = stateMachine;
             m_actionStateType = actionStateType;
+            m_controller = controller;
         }
 
         public void OnEnter()
@@ -52,7 +54,7 @@ namespace TowerBreakers.Enemy.Logic
             }
 
             // 2. [성능/리팩토링]: 중복 전진 로직을 헬퍼로 통합하고 최적화 적용
-            EnemyMovementHelper.ExecuteMovement(m_view, m_data, m_pushLogic, ref m_isMoving);
+            EnemyMovementHelper.ExecuteMovement(m_view, m_data, m_pushLogic, ref m_isMoving, m_controller);
         }
     }
 }

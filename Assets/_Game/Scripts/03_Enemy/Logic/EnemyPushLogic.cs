@@ -10,31 +10,64 @@ namespace TowerBreakers.Enemy.Logic
     /// </summary>
     public class EnemyPushLogic : MonoBehaviour
     {
-        // [최적화] 군집의 Collider 활성화 정책: 스킬 사용 시 전체 활성화, 종료 시 리더만 활성화
+        // [최적화]: 활성 적 컬렉션 (FindObjectsOfType 대체)
+        private static readonly System.Collections.Generic.List<EnemyPushLogic> s_activeEnemies = new();
+
+        // [최적화]: 군집의 Collider 활성화 정책: 스킬 사용 시 전체 활성화, 종료 시 리더만 활성화
+        public static System.Collections.Generic.IReadOnlyList<EnemyPushLogic> ActiveEnemies => s_activeEnemies;
+
+        public static void RegisterEnemy(EnemyPushLogic enemy)
+        {
+            if (enemy != null && !s_activeEnemies.Contains(enemy))
+            {
+                s_activeEnemies.Add(enemy);
+            }
+        }
+
+        public static void UnregisterEnemy(EnemyPushLogic enemy)
+        {
+            s_activeEnemies.Remove(enemy);
+        }
+
+        /// <summary>
+        /// [설명]: 스킬 판정을 위해 모든 활성 적의 콜라이더를 일시적으로 활성화합니다.
+        /// </summary>
         public static void EnableAllGroupCollidersForSkill()
         {
-            foreach (var ep in FindObjectsOfType<EnemyPushLogic>())
+            for (int i = s_activeEnemies.Count - 1; i >= 0; i--)
             {
+                var ep = s_activeEnemies[i];
+                if (ep == null)
+                {
+                    s_activeEnemies.RemoveAt(i);
+                    continue;
+                }
+                if (!ep.gameObject.activeInHierarchy) continue;
                 var c = ep.GetComponent<Collider2D>();
                 if (c != null) c.enabled = true;
             }
         }
 
+        /// <summary>
+        /// [설명]: 스킬 판정 종료 후 콜라이더를 원래 상태(리더만 활성)로 복원합니다.
+        /// </summary>
         public static void DisableAllGroupCollidersForSkill()
         {
-            foreach (var ep in FindObjectsOfType<EnemyPushLogic>())
+            for (int i = s_activeEnemies.Count - 1; i >= 0; i--)
             {
+                var ep = s_activeEnemies[i];
+                if (ep == null)
+                {
+                    s_activeEnemies.RemoveAt(i);
+                    continue;
+                }
+                if (!ep.gameObject.activeInHierarchy) continue;
                 var c = ep.GetComponent<Collider2D>();
-                if (c != null) c.enabled = (ep.GetLeader() == ep);
-            }
-        }
-
-        public static void EnableAllCollidersForSkill()
-        {
-            foreach (var ep in FindObjectsOfType<EnemyPushLogic>())
-            {
-                var c = ep.GetComponent<Collider2D>();
-                if (c != null) c.enabled = true;
+                if (c != null)
+                {
+                    // [설명]: 리더이거나 특수 개체만 콜라이더 활성 유지
+                    c.enabled = ep.m_isSpecialType || (ep.GetLeader() == ep);
+                }
             }
         }
         #region 내부 필드
@@ -85,6 +118,19 @@ namespace TowerBreakers.Enemy.Logic
         public EnemyPushLogic AheadEnemy => m_aheadEnemy;
         #endregion
 
+      
+        #region 유니티 생명주기
+        private void OnEnable()
+        {
+            RegisterEnemy(this);
+        }
+
+        private void OnDisable()
+        {
+            UnregisterEnemy(this);
+        }
+        #endregion
+
         #region 초기화 및 바인딩 로직
         /// <summary>
         /// [설명]: 미는 힘과 타겟을 설정하여 로직을 초기화합니다.
@@ -125,6 +171,7 @@ namespace TowerBreakers.Enemy.Logic
             m_lastBlockedFrame = -1; // 차단 캐시 무효화
             UpdateCollider();
             enabled = true;
+            // RegisterEnemy(this); // OnEnable에서 처리함
         }
 
         /// <summary>
@@ -176,6 +223,9 @@ namespace TowerBreakers.Enemy.Logic
         /// <summary>
         /// [설명]: 적 파괴 시 앞뒤 대열을 다시 연결해줍니다.
         /// </summary>
+        /// <summary>
+        /// [설명]: 사망 시 대열에서 이탈하고 등록을 해제합니다.
+        /// </summary>
         public void HandleDeath()
         {
             if (m_followerEnemy != null)
@@ -191,6 +241,8 @@ namespace TowerBreakers.Enemy.Logic
             m_followerEnemy = null;
             InvalidateLeaderCache();
             UpdateCollider();
+            // UnregisterEnemy(this); // OnDisable에서 처리함
+            enabled = false;
         }
 
         /// <summary>

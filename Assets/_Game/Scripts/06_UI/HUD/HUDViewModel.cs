@@ -19,6 +19,7 @@ namespace TowerBreakers.UI.HUD
         private readonly TowerManager m_towerManager;
         private readonly CooldownSystem m_cooldownSystem;
         private readonly IEventBus m_eventBus;
+        private readonly Screens.InGameMenuViewModel m_menuViewModel;
         #endregion
 
         #region 프로퍼티 (View가 구독할 데이터)
@@ -39,12 +40,13 @@ namespace TowerBreakers.UI.HUD
         public event Action OnDataUpdated;
         #endregion
 
-        public HUDViewModel(PlayerModel playerModel, TowerManager towerManager, CooldownSystem cooldownSystem, IEventBus eventBus)
+        public HUDViewModel(PlayerModel playerModel, TowerManager towerManager, CooldownSystem cooldownSystem, IEventBus eventBus, Screens.InGameMenuViewModel menuViewModel)
         {
             m_playerModel = playerModel;
             m_towerManager = towerManager;
             m_cooldownSystem = cooldownSystem;
             m_eventBus = eventBus;
+            m_menuViewModel = menuViewModel;
 
             m_playerModel.OnLifeCountChanged += HandleLifeCountChanged;
             m_playerModel.OnKillsChanged += HandleKillsChanged;
@@ -94,6 +96,11 @@ namespace TowerBreakers.UI.HUD
         }
 
         public float GetCooldownProgress(string actionName) => m_cooldownSystem.GetNormalizedProgress(actionName);
+
+        /// <summary>
+        /// [설명]: 일시정지 메뉴 표시를 요청합니다.
+        /// </summary>
+        public void RequestPause() => m_menuViewModel?.Pause();
 
         public void Dispose()
         {

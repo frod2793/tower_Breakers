@@ -3,9 +3,11 @@ using TowerBreakers.Core.Events;
 using TowerBreakers.Environment.View;
 using TowerBreakers.Tower.Logic;
 using TowerBreakers.Interactions.View;
+using TowerBreakers.Interactions.ViewModel;
 using TowerBreakers.Player.Data.SO;
 using UnityEngine;
 using VContainer;
+using VContainer.Unity;
 
 namespace TowerBreakers.Environment.Logic
 {
@@ -94,6 +96,14 @@ namespace TowerBreakers.Environment.Logic
         [SerializeField, Tooltip("보상 상자의 기본 Y 오프셋 (세그먼트 원점 기준)")]
         private float m_rewardChestOffsetY = 0f;
 
+        [Header("크라켄 소환 설정")]
+        [SerializeField, Tooltip("소환할 촉수 프리팹 (장애물)")]
+        private GameObject m_tentaclePrefab;
+        [SerializeField, Tooltip("낙하 촉수 프리팹 (공격)")]
+        private GameObject m_fallingTentaclePrefab;
+        [SerializeField, Tooltip("강타 촉수 프리팹 (공격)")]
+        private GameObject m_strikeTentaclePrefab;
+
         #endregion
 
         // 공개 API: 보상 상자 층별 offset 설정은 아래 영역으로 이동했습니다.
@@ -101,11 +111,14 @@ namespace TowerBreakers.Environment.Logic
         #region 내부 필드
 
         private IEventBus m_eventBus;
+        private Effects.EffectManager m_effectManager;
         private TowerManager m_towerManager;
         private Player.Logic.PlayerPushReceiver m_playerReceiver;
         private Enemy.Logic.EnemySpawner m_enemySpawner;
+        private IObjectResolver m_resolver;
 
         private readonly List<MapSegment> m_activeSegments = new List<MapSegment>();
+        private readonly Dictionary<int, MapSegment> m_floorToSegmentMap = new Dictionary<int, MapSegment>();
         private float m_currentOffset = 0f;
         private int m_spawnedSegmentCount = 0;
 
@@ -138,14 +151,18 @@ namespace TowerBreakers.Environment.Logic
         [Inject]
         public void Construct(
             IEventBus eventBus,
+            Effects.EffectManager effectManager,
             TowerManager towerManager,
             Player.Logic.PlayerPushReceiver playerReceiver,
-            Enemy.Logic.EnemySpawner enemySpawner)
+            Enemy.Logic.EnemySpawner enemySpawner,
+            IObjectResolver resolver)
         {
             m_eventBus = eventBus;
+            m_effectManager = effectManager;
             m_towerManager = towerManager;
             m_playerReceiver = playerReceiver;
             m_enemySpawner = enemySpawner;
+            m_resolver = resolver;
 
             if (m_enemySpawner != null)
             {
@@ -153,6 +170,7 @@ namespace TowerBreakers.Environment.Logic
             }
 
             m_eventBus.Subscribe<OnFloorCleared>(OnFloorCleared);
+            m_eventBus.Subscribe<OnKrakenSummonRequested>(HandleKrakenSummonRequested);
 
             InitializeMap();
         }
@@ -162,6 +180,7 @@ namespace TowerBreakers.Environment.Logic
             m_currentOffset = 0f;
             m_spawnedSegmentCount = 0;
             m_activeSegments.Clear();
+            m_floorToSegmentMap.Clear();
 
             for (int i = 0; i < m_initialSegmentCount; i++)
             {
@@ -180,20 +199,135 @@ namespace TowerBreakers.Environment.Logic
         /// </summary>
         private void OnFloorCleared(OnFloorCleared evt)
         {
-            CreateNextSegment();
+            // [수정]: 이미 해당 층의 세그먼트가 존재하면 중복 생성 방지
+            if (!m_floorToSegmentMap.ContainsKey(m_spawnedSegmentCount))
+            {
+                CreateNextSegment();
+            }
+
             UpdatePlayerBoundary();
 
             // 메모리 최적화: 시야에서 완전히 사라진 과거 세그먼트 삭제
-            if (m_activeSegments.Count > m_initialSegmentCount + 2)
+            int oldestFloorToKeep = evt.FloorIndex - m_initialSegmentCount;
+            while (m_activeSegments.Count > m_initialSegmentCount + 2 && m_activeSegments.Count > 0)
             {
                 var oldSegment = m_activeSegments[0];
                 m_activeSegments.RemoveAt(0);
+
+                // Dictionary에서도 해당 세그먼트 제거
+                int floorToRemove = -1;
+                foreach (var kvp in m_floorToSegmentMap)
+                {
+                    if (kvp.Value == oldSegment)
+                    {
+                        floorToRemove = kvp.Key;
+                        break;
+                    }
+                }
+                if (floorToRemove >= 0)
+                {
+                    m_floorToSegmentMap.Remove(floorToRemove);
+                }
+
                 if (oldSegment != null)
                 {
                     Destroy(oldSegment.gameObject);
                 }
+
+                break; // 한 번에 하나만 제거
             }
         }
+
+        /// <summary>
+        /// [설명]: 크라켄 소환 이벤트 핸들러입니다.
+        /// </summary>
+        private void HandleKrakenSummonRequested(OnKrakenSummonRequested evt)
+        {
+            UnityEngine.Debug.Log($"[KRAKEN_DIAGNOSTIC] 3. 이벤트 수신: OnKrakenSummonRequested (Type={evt.Type}, Floor={evt.FloorIndex})");
+
+            switch (evt.Type)
+            {
+                case OnKrakenSummonRequested.SummonType.Tentacle:
+                    SpawnTentacle(evt.FloorIndex, evt.Position); // Original call had position, keeping it for now as SpawnTentacle body is not provided.
+                    break;
+                case OnKrakenSummonRequested.SummonType.FallingTentacle:
+                case OnKrakenSummonRequested.SummonType.StrikeTentacle:
+                    SpawnAttackTentacle(evt.Type, evt.FloorIndex, evt.Position);
+                    break;
+            }
+        }
+
+        private void SpawnTentacle(int floorIndex, Vector3 position)
+        {
+            if (m_tentaclePrefab == null)
+            {
+                UnityEngine.Debug.LogError("[KRAKEN_DIAGNOSTIC] 에러: 'Tentacle' 프리팹이 EnvironmentManager에 할당되지 않았습니다!");
+                return;
+            }
+
+            var segment = GetSegmentForFloor(floorIndex);
+            if (segment == null)
+            {
+                UnityEngine.Debug.LogError($"[KRAKEN_DIAGNOSTIC] 에러: {floorIndex}층의 FloorSegment를 찾을 수 없습니다.");
+                return;
+            }
+
+            UnityEngine.Debug.Log($"[KRAKEN_DIAGNOSTIC] 4. 촉수 인스턴스화 시작: {m_tentaclePrefab.name}, 부모={segment.name}, 타겟 위치={position}");
+            GameObject tentacle = Instantiate(m_tentaclePrefab, segment.transform);
+            tentacle.transform.localPosition = position;
+            UnityEngine.Debug.Log($"[KRAKEN_DIAGNOSTIC] 5. 인스턴스화 완료: 이름={tentacle.name}, 최종 LocalPos={tentacle.transform.localPosition}");
+
+            // [추가]: 촉수 컨트롤러 초기화 (보스로부터의 명령 수신용)
+            if (!tentacle.TryGetComponent<TowerBreakers.Enemy.Logic.KrakenTentacleController>(out var controller))
+            {
+                UnityEngine.Debug.LogError($"[KRAKEN_DIAGNOSTIC] 에러: '{tentacle.name}'에 KrakenTentacleController가 없습니다!");
+                return;
+            }
+            UnityEngine.Debug.Log($"[KRAKEN_DIAGNOSTIC] 6. 컨트롤러 초기화 시도 (Mode=Obstacle)");
+            controller.Initialize(floorIndex, m_eventBus, m_effectManager, TowerBreakers.Enemy.Logic.KrakenTentacleController.ControllerMode.Obstacle);
+
+            // 크라켄 소환물 이벤트 컴포넌트 초기화
+            if (tentacle.TryGetComponent(out Enemy.Boss.KrakenSummonEvents summonEvents))
+            {
+                summonEvents.Initialize(OnKrakenSummonRequested.SummonType.Tentacle, floorIndex, m_eventBus);
+            }
+
+            UnityEngine.Debug.Log($"[KRAKEN_DIAGNOSTIC] 7. 촉수 소환 완료: 층={floorIndex}, 위치={position}");
+        }
+
+        private void SpawnAttackTentacle(OnKrakenSummonRequested.SummonType type, int floorIndex, Vector3 position)
+        {
+            GameObject prefab = (type == OnKrakenSummonRequested.SummonType.FallingTentacle) ? m_fallingTentaclePrefab : m_strikeTentaclePrefab;
+            
+            if (prefab == null)
+            {
+                return;
+            }
+
+            var segment = GetSegmentForFloor(floorIndex);
+            if (segment == null) return;
+
+            GameObject attackTentacle = Instantiate(prefab, segment.transform);
+            
+            // 월드 좌표를 직접 설정하여 플레이어의 X 위치를 정확히 맞춤
+            attackTentacle.transform.position = position;
+
+            if (!attackTentacle.TryGetComponent<TowerBreakers.Enemy.Logic.KrakenTentacleController>(out var controller))
+            {
+                controller = attackTentacle.AddComponent<TowerBreakers.Enemy.Logic.KrakenTentacleController>();
+            }
+
+            var mode = type == OnKrakenSummonRequested.SummonType.FallingTentacle 
+                ? TowerBreakers.Enemy.Logic.KrakenTentacleController.ControllerMode.FallingAttack 
+                : TowerBreakers.Enemy.Logic.KrakenTentacleController.ControllerMode.StrikeAttack;
+
+            controller.Initialize(floorIndex, m_eventBus, m_effectManager, mode);
+
+            controller.StartAttack(position);
+
+            global::UnityEngine.Debug.Log($"[EnvironmentManager] 공격 촉수 소환 및 공격 시작: 타입={type}, 층={floorIndex}, 타겟 위치={position}");
+        }
+
 
         /// <summary>
         /// [설명]: 현재 층에 맞춰 플레이어의 월드 경계(좌측 벽, 백플립 지점)를 갱신합니다.
@@ -215,6 +349,7 @@ namespace TowerBreakers.Environment.Logic
 
         /// <summary>
         /// [설명]: 다음 세그먼트를 생성하고 수직 위치를 설정합니다.
+        /// 세그먼트는 층 인덱스와 1:1로 매핑됩니다.
         /// </summary>
         private void CreateNextSegment()
         {
@@ -225,6 +360,14 @@ namespace TowerBreakers.Environment.Logic
 
             newSegment.SetPosition(new Vector2(0f, m_currentOffset));
             m_activeSegments.Add(newSegment);
+
+            // [수정]: 층 인덱스와 세그먼트를 명시적으로 매핑
+            int floorIndex = m_spawnedSegmentCount;
+            m_floorToSegmentMap[floorIndex] = newSegment;
+
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[EnvironmentManager] 세그먼트 생성: 층={floorIndex}, Y={m_currentOffset}");
+            #endif
 
             m_currentOffset += newSegment.SegmentHeight;
             m_spawnedSegmentCount++;
@@ -292,13 +435,13 @@ namespace TowerBreakers.Environment.Logic
         {
             if (m_rewardChestPrefab == null)
             {
-                Debug.LogWarning("[EnvironmentManager] 보상 상자 프리팹이 설정되지 않았습니다.");
+                global::UnityEngine.Debug.LogWarning("[EnvironmentManager] 보상 상자 프리팹이 설정되지 않았습니다.");
                 return;
             }
 
             if (rewardTable == null)
             {
-                Debug.LogWarning("[EnvironmentManager] 보상 테이블이 설정되지 않았습니다. 층 " + floorIndex + "에 보상 상자를 스폰하지 않습니다.");
+                global::UnityEngine.Debug.LogWarning("[EnvironmentManager] 보상 테이블이 설정되지 않았습니다. 층 " + floorIndex + "에 보상 상자를 스폰하지 않습니다.");
                 return;
             }
 
@@ -306,7 +449,7 @@ namespace TowerBreakers.Environment.Logic
             var segment = GetSegmentForFloor(floorIndex);
             if (segment == null)
             {
-                Debug.LogWarning("[EnvironmentManager] 층 " + floorIndex + "에 해당하는 세그먼트를 찾을 수 없습니다.");
+                global::UnityEngine.Debug.LogWarning("[EnvironmentManager] 층 " + floorIndex + "에 해당하는 세그먼트를 찾을 수 없습니다.");
                 return;
             }
 
@@ -318,14 +461,13 @@ namespace TowerBreakers.Environment.Logic
                 0f
             );
 
-            // 보상 상자 인스턴스 생성 (세그먼트를 부모로 설정하여 맵 이동 시 함께 하강)
+            // 보상 상자 인스턴스 생성 (DI 컨테이너를 통해 개별 ViewModel 주입)
             RewardChestView chestInstance =
-                Instantiate(m_rewardChestPrefab, spawnPosition, Quaternion.identity, segment.transform);
+                m_resolver.Instantiate(m_rewardChestPrefab, spawnPosition, Quaternion.identity, segment.transform);
             chestInstance.name = $"RewardChest_Floor{floorIndex}";
 
             // 보상 테이블 및 기본 정보 설정
             chestInstance.SetRewardTable(rewardTable);
-            chestInstance.Initialize(m_eventBus);
             chestInstance.Setup(floorIndex);
 
             // 개발 단계 확인용 로그 (필요 시 유지)
@@ -337,30 +479,34 @@ namespace TowerBreakers.Environment.Logic
         #region 내부 로직
 
         /// <summary>
-        /// [설명]: 층 인덱스에 해당하는 세그먼트를 리스트에서 찾아 반환합니다.
-        /// 인덱스 범위를 벗어나면 자동으로 세그먼트를 추가 생성하여 가용성을 보장합니다.
+        /// [설명]: 층 인덱스에 해당하는 세그먼트를 Dictionary에서 직접 조회합니다.
+        /// 매핑이 존재하지 않으면 필요한 세그먼트를 자동 생성합니다.
         /// </summary>
+        /// <param name="floorIndex">조회할 층 인덱스</param>
+        /// <returns>해당 층의 MapSegment (null 가능)</returns>
         private MapSegment GetSegmentForFloor(int floorIndex)
         {
-            if (m_activeSegments.Count == 0) return null;
+            // [수정]: Dictionary 기반 직접 조회로 산술 매핑 오류 방지
+            if (m_floorToSegmentMap.TryGetValue(floorIndex, out var segment))
+            {
+                return segment;
+            }
 
-            int firstSegmentFloorIndex = m_spawnedSegmentCount - m_activeSegments.Count;
-            int targetIndex = floorIndex - firstSegmentFloorIndex;
-
-            if (targetIndex < 0) targetIndex = 0;
-
-            // 부족한 세그먼트 자동 생성 로직 (Batching 방지 위해 최소 필요한 만큼만)
-            while (targetIndex >= m_activeSegments.Count && m_spawnedSegmentCount < floorIndex + 2)
+            // 세그먼트가 아직 생성되지 않은 경우 자동 생성
+            while (m_spawnedSegmentCount <= floorIndex)
             {
                 CreateNextSegment();
             }
 
-            if (targetIndex >= m_activeSegments.Count)
+            if (m_floorToSegmentMap.TryGetValue(floorIndex, out segment))
             {
-                targetIndex = m_activeSegments.Count - 1;
+                return segment;
             }
 
-            return m_activeSegments[targetIndex];
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[EnvironmentManager] 층 {floorIndex}에 해당하는 세그먼트를 찾을 수 없습니다.");
+            #endif
+            return null;
         }
 
         /// <summary>

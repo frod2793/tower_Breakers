@@ -19,7 +19,7 @@ namespace TowerBreakers.Enemy.View
         private bool m_isInitialized = false;
         #endregion
 
-        #region 초기화
+        # region 초기화
         /// <summary>
         /// [설명]: 첫 생성 시 1회 호출되어 렌더러 캐싱 및 애니메이터 설정을 수행합니다.
         /// </summary>
@@ -29,7 +29,7 @@ namespace TowerBreakers.Enemy.View
 
             if (m_spumPrefabs != null)
             {
-                // Animator 참조가 없으면 자식에서 자동 탐색
+                // SPUM 시스템 초기화
                 if (m_spumPrefabs._anim == null)
                 {
                     m_spumPrefabs._anim = m_spumPrefabs.GetComponentInChildren<Animator>();
@@ -37,15 +37,18 @@ namespace TowerBreakers.Enemy.View
 
                 if (m_spumPrefabs._anim != null)
                 {
-                    // 애니메이션 상태 및 컨트롤러 초기화 (최초 1회만 수행)
                     m_spumPrefabs.OverrideControllerInit();
                 }
-                else
-                {
-                    Debug.LogError($"[EnemyView] {gameObject.name}: SPUM Animator를 찾을 수 없습니다.");
-                }
-
                 m_cachedAnimator = m_spumPrefabs._anim;
+            }
+            else
+            {
+                // [개선]: 보스처럼 SPUM이 아닌 일반 에니메이터를 사용하는 경우
+                m_cachedAnimator = GetComponentInChildren<Animator>();
+                if (m_cachedAnimator == null)
+                {
+                    Debug.LogWarning($"[EnemyView] {gameObject.name}: 에니메이터를 찾을 수 없습니다.");
+                }
             }
 
             m_renderers = GetComponentsInChildren<SpriteRenderer>(true);
@@ -55,8 +58,7 @@ namespace TowerBreakers.Enemy.View
         }
 
         /// <summary>
-        /// [설명]: 풀링에서 재사용될 때 호출되어 시각적 상태와 애니메이션을 초기화합니다.
-        /// 무거운 OverrideControllerInit 호출을 방지합니다.
+        /// [설명]: 시각적 상태와 애니메이션을 초기화합니다.
         /// </summary>
         public void ResetState()
         {
@@ -66,33 +68,64 @@ namespace TowerBreakers.Enemy.View
             {
                 m_spumPrefabs.PlayAnimation(global::PlayerState.IDLE, 0);
             }
+            else if (m_cachedAnimator != null)
+            {
+                // BossAnimatorController는 AnimState (Int) 파라미터로 상태 전환 (0: IDLE)
+                m_cachedAnimator.SetInteger("AnimState", 0);
+            }
         }
 
+        /// <summary>
+        /// [설명]: 지정된 상태의 애니메이션을 재생합니다.
+        /// SPUM과 일반 Animator를 모두 지원합니다.
+        /// </summary>
         public void PlayAnimation(global::PlayerState state, int index = 0)
         {
-            if (m_spumPrefabs == null) return;
-
-            // StateAnimationPairs가 비어있으면 초기화가 안 된 상태이므로 재초기화 시도
-            if (m_spumPrefabs.StateAnimationPairs == null || m_spumPrefabs.StateAnimationPairs.Count == 0)
+            // 1. SPUM 시스템인 경우
+            if (m_spumPrefabs != null)
             {
-                Debug.LogWarning($"[EnemyView] StateAnimationPairs 미초기화 감지 — OverrideControllerInit 재시도");
-                m_spumPrefabs.OverrideControllerInit();
-            }
+                if (m_spumPrefabs.StateAnimationPairs == null || m_spumPrefabs.StateAnimationPairs.Count == 0)
+                {
+                    m_spumPrefabs.OverrideControllerInit();
+                }
 
-            string key = state.ToString();
-            if (!m_spumPrefabs.StateAnimationPairs.ContainsKey(key))
-            {
-                Debug.LogWarning($"[EnemyView] 애니메이션 키 '{key}' 없음 — 스킵");
+                string key = state.ToString();
+                if (m_spumPrefabs.StateAnimationPairs.ContainsKey(key))
+                {
+                    m_spumPrefabs.PlayAnimation(state, index);
+                }
                 return;
             }
 
-        m_spumPrefabs.PlayAnimation(state, index);
+            // 2. 일반 Animator인 경우 (보스 등) - AnimState 파라미터 사용
+            if (m_cachedAnimator != null)
+            {
+                // Boss AnimatorController는 AnimState (Int) 파라미터로 상태 전환
+                // index 값을 AnimState 파라미터로 설정
+                m_cachedAnimator.SetInteger("AnimState", index);
+            }
+        }
+
+        /// <summary>
+        /// [설명]: 특정 이름의 애니메이션을 직접 재생합니다. (보스 전용 패턴 등에 활용)
+        /// </summary>
+        public void PlayAnimation(string stateName, float crossFade = 0.1f)
+        {
+            if (m_cachedAnimator != null)
+            {
+                m_cachedAnimator.CrossFade(stateName, crossFade);
+            }
         }
 
         /// <summary>
         /// [설명]: 캐싱된 애니메이터를 반환합니다. (성능 최적화용)
         /// </summary>
         public Animator CachedAnimator => m_cachedAnimator;
+
+        /// <summary>
+        /// [설명]: 캐싱된 모든 SpriteRenderer를 반환합니다. (사망 연출 등 연동용)
+        /// </summary>
+        public SpriteRenderer[] Renderers => m_renderers;
         #endregion
 
         #region 피격 효과 (Visual Feedback)

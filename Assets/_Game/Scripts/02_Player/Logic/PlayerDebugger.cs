@@ -4,6 +4,7 @@ using VContainer;
 using TowerBreakers.Player.Data.Models;
 using TowerBreakers.Player.Data.SO;
 using TowerBreakers.Player.View;
+using TowerBreakers.Player.Data;
 
 namespace TowerBreakers.Player.Logic
 {
@@ -20,6 +21,7 @@ public class PlayerDebugger : MonoBehaviour
         private InventoryModel m_inventoryModel;
         private PlayerData m_playerData;
         private PlayerView m_playerView;
+        private UserSessionModel m_sessionModel;
         #endregion
 
         #region 프로퍼티
@@ -38,14 +40,16 @@ public class PlayerDebugger : MonoBehaviour
             PlayerModel playerModel, 
             InventoryModel inventoryModel, 
             PlayerData playerData,
-            PlayerView playerView)
+            PlayerView playerView,
+            UserSessionModel sessionModel)
         {
             m_playerModel = playerModel;
             m_inventoryModel = inventoryModel;
             m_playerData = playerData;
             m_playerView = playerView;
+            m_sessionModel = sessionModel;
 
-            Debug.Log("[PlayerDebugger] Dependencies Injected.");
+            Debug.Log("[PlayerDebugger] Dependencies Injected (SessionModel included).");
             // 런타임 로그 활성화 상태 동기화
             FrameDropMonitor.SetLoggingEnabled(m_enableFrameDropLogs);
         }
@@ -98,6 +102,30 @@ public class PlayerDebugger : MonoBehaviour
             {
                 m_inventoryModel.AddArmor(armor);
             }
+        }
+
+        /// <summary>
+        /// [설명]: 보유 무기 목록을 초기화합니다.
+        /// </summary>
+        public void ResetOwnedWeapons()
+        {
+            if (m_sessionModel != null) m_sessionModel.ClearOwnedWeapons();
+        }
+
+        /// <summary>
+        /// [설명]: 보유 갑주 목록을 초기화합니다.
+        /// </summary>
+        public void ResetOwnedArmors()
+        {
+            if (m_sessionModel != null) m_sessionModel.ClearOwnedArmors();
+        }
+
+        /// <summary>
+        /// [설명]: 모든 세션 데이터를 강제 초기화합니다.
+        /// </summary>
+        public void ResetFullSession()
+        {
+            if (m_sessionModel != null) m_sessionModel.ClearSave();
         }
         #endregion
     }

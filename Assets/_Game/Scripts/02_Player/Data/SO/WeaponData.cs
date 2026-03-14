@@ -44,9 +44,6 @@ namespace TowerBreakers.Player.Data.SO
         [Header("상호작용 연출")]
         [SerializeField, Tooltip("적 타격 시 밀어내는 미세 넉백 거리")]
         private float m_knockbackForce = 0.5f;
-
-        [SerializeField, Tooltip("타격 성공 시 화면 역경직(Hit-Stop) 지속시간")]
-        private float m_hitStopDuration = 0.05f;
         #endregion
 
         #region 프로퍼티
@@ -59,7 +56,6 @@ namespace TowerBreakers.Player.Data.SO
         public float AttackRangeModifier => m_attackRangeModifier;
         public float AttackSpeedModifier => m_attackSpeedModifier;
         public float KnockbackForce => m_knockbackForce;
-        public float HitStopDuration => m_hitStopDuration;
         #endregion
     }
 }

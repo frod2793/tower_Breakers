@@ -4,196 +4,205 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using TowerBreakers.Player.Data.SO;
+using TowerBreakers.Player.View;
 
 namespace TowerBreakers.UI.Equipment
 {
     /// <summary>
     /// [설명]: 장비 인벤토리 화면을 관리하는 메인 뷰 클래스입니다.
-    /// MVVM 패턴을 따르며 ViewModel의 상태를 시각화합니다.
+    /// MVVM 패턴을 따르며 ViewModel 및 UserSessionModel과 연동됩니다.
     /// </summary>
     public class EquipmentView : MonoBehaviour
     {
         #region 에디터 설정
+        [Header("카테고리 탭")]
+        [SerializeField, Tooltip("무기 탭 버튼")]
+        private Button m_weaponTabButton;
+
+        [SerializeField, Tooltip("갑주 탭 버튼")]
+        private Button m_armorTabButton;
+
         [Header("슬롯 설정")]
         [SerializeField, Tooltip("슬롯들이 생성될 부모 컨테이너")]
         private Transform m_slotGrid;
 
-        [SerializeField, Tooltip("무기 슬롯 프리팹")]
+        [SerializeField, Tooltip("장비 슬롯 프리팹")]
         private ItemSlotView m_slotPrefab;
 
-        [Header("정보 패널")]
-        [SerializeField, Tooltip("선택된 무기 이름 텍스트")]
-        private TMP_Text m_weaponNameText;
-
-        [SerializeField, Tooltip("선택된 무기 상세 정보 텍스트")]
-        private TMP_Text m_weaponDetailText;
+        [Header("리소스 설정")]
+        [SerializeField, Tooltip("자동 로드할 슬롯 프리팹 경로")]
+        private string m_slotPrefabPath = "Prefabs/itemSlot";
 
         [Header("버튼")]
-        [SerializeField, Tooltip("장착 버튼")]
-        private Button m_equipButton;
+        [SerializeField, Tooltip("저장 버튼"), UnityEngine.Serialization.FormerlySerializedAs("m_equipButton")]
+        private Button m_saveButton;
 
-        [SerializeField, Tooltip("닫기 버튼")]
-        private Button m_closeButton;
+        [Header("프리뷰")]
+        [SerializeField, Tooltip("프리뷰용 플레이어 뷰")]
+        private PlayerView m_playerPreview;
         #endregion
 
         #region 내부 변수
         private EquipmentViewModel m_viewModel;
         private List<ItemSlotView> m_slots = new List<ItemSlotView>();
-
-        // 이벤트 해제를 위한 캐시된 핸들러
-        private Action<WeaponData> m_handleSelectedChanged;
-        private Action<WeaponData> m_handleEquippedChanged;
         #endregion
 
-        #region 초기화 및 바인딩 로직
+        #region 초기화 및 바인딩
         /// <summary>
-        /// [설명]: 외부에서 주입된 뷰모델을 사용하여 뷰를 초기화합니다.
+        /// [설명]: 리팩토링된 뷰모델을 사용하여 뷰를 초기화합니다.
         /// </summary>
         public void Initialize(EquipmentViewModel viewModel)
         {
-            if (viewModel == null)
+            if (viewModel == null) return;
+            m_viewModel = viewModel;
+
+            if (m_playerPreview == null)
             {
-                Debug.LogError("[EquipmentView] ViewModel이 null입니다!");
-                return;
+                m_playerPreview = FindFirstObjectByType<PlayerView>();
             }
 
-            m_viewModel = viewModel;
             Bind();
-            
-            // 초기 화면 갱신
-            RefreshUI();
+            Refresh();
         }
 
         private void Bind()
         {
             if (m_viewModel == null) return;
 
-            // 이벤트 해제를 위해 핸들러 캐싱
-            m_handleSelectedChanged = _ => RefreshInfoPanel();
-            m_handleEquippedChanged = _ => RefreshUI();
-
-            // 모델 이벤트 바인딩
-            m_viewModel.OnInventoryChanged += RefreshUI;
-            m_viewModel.OnSelectedWeaponChanged += m_handleSelectedChanged;
-            m_viewModel.OnEquippedWeaponChanged += m_handleEquippedChanged;
-
-            // UI 이벤트 바인딩
-            if (m_equipButton != null)
+            m_viewModel.OnDataUpdated += Refresh;
+            m_viewModel.OnCategoryChanged += Refresh;
+            
+            // 실시간 프리뷰 및 슬롯 마크 갱신 연동
+            m_viewModel.OnSelectedWeaponChanged += (weapon) => 
             {
-                m_equipButton.onClick.AddListener(OnEquipButtonClicked);
+                if (m_playerPreview != null) m_playerPreview.SetWeapon(weapon);
+                UpdateSlotMarks();
+            };
+            
+            m_viewModel.OnSelectedArmorChanged += (armor) => 
+            {
+                if (m_playerPreview != null) m_playerPreview.SetArmor(armor);
+                UpdateSlotMarks();
+            };
+
+            if (m_saveButton != null)
+            {
+                m_saveButton.onClick.RemoveAllListeners();
+                m_saveButton.onClick.AddListener(() => m_viewModel.SaveEquipmentSelection());
             }
 
-            if (m_closeButton != null)
+            if (m_weaponTabButton != null)
             {
-                m_closeButton.onClick.AddListener(() => gameObject.SetActive(false));
+                m_weaponTabButton.onClick.RemoveAllListeners();
+                m_weaponTabButton.onClick.AddListener(() => m_viewModel.SetCategory(EquipmentCategory.Weapon));
+            }
+
+            if (m_armorTabButton != null)
+            {
+                m_armorTabButton.onClick.RemoveAllListeners();
+                m_armorTabButton.onClick.AddListener(() => m_viewModel.SetCategory(EquipmentCategory.Armor));
             }
         }
         #endregion
 
-        #region UI 갱신 로직
-        /// <summary>
-        /// [설명]: 전체 슬롯 목록과 정보 패널을 새로 고칩니다.
-        /// </summary>
-        private void RefreshUI()
+        #region 내부 로직
+        private void Refresh()
         {
-            if (m_viewModel == null || m_slotGrid == null || m_slotPrefab == null) return;
+            if (m_viewModel == null) return;
 
-            // 기존 슬롯 제거 (간단한 구현을 위해 전체 재생성)
+            if (m_slotPrefab == null || m_slotGrid == null)
+            {
+                // [방어 코드]: 인스펙터 누락 시 자동 검색 및 로드 시도
+                if (m_slotGrid == null) m_slotGrid = transform.Find("Grid") ?? transform.Find("SlotGrid") ?? transform.Find("Viewport/Content");
+                
+                if (m_slotPrefab == null)
+                {
+                    m_slotPrefab = Resources.Load<ItemSlotView>(m_slotPrefabPath);
+                    if (m_slotPrefab != null) Debug.Log($"[EquipmentView] Resources에서 프리팹 로드 완료: {m_slotPrefabPath}");
+                }
+
+                if (m_slotPrefab == null || m_slotGrid == null)
+                {
+                    Debug.LogError($"[EquipmentView] 필수 컴포넌트가 할당되지 않았습니다!\n" +
+                        $"Prefab: {m_slotPrefab != null}, Grid: {m_slotGrid != null}\n" +
+                        $"해결 방법: 1. 인스펙터에서 직접 할당 | 2. Resources/{m_slotPrefabPath} 위치에 프리팹 배치 | 3. 자식 오브젝트 이름을 'Grid'로 변경");
+                    return;
+                }
+            }
+
+            // 기존 슬롯 제거
             foreach (var slot in m_slots)
             {
                 if (slot != null) Destroy(slot.gameObject);
             }
             m_slots.Clear();
 
-            // 보유 무기 리스트 순회하며 슬롯 생성
-            var ownedWeapons = m_viewModel.OwnedWeapons;
-            foreach (var weapon in ownedWeapons)
+            // 카테고리에 따른 슬롯 생성
+            if (m_viewModel.CurrentCategory == EquipmentCategory.Weapon)
             {
-                var newSlot = Instantiate(m_slotPrefab, m_slotGrid);
-                if (newSlot != null)
+                foreach (var weapon in m_viewModel.OwnedWeapons)
                 {
-                    newSlot.SetSlot(weapon, m_viewModel.SelectWeapon);
-                    m_slots.Add(newSlot);
+                    CreateWeaponSlot(weapon);
                 }
             }
-
-            RefreshInfoPanel();
-            UpdateSlotHighlights();
-        }
-
-        /// <summary>
-        /// [설명]: 선택된 무기의 상세 스탯 정보를 패널에 표시합니다.
-        /// </summary>
-        private void RefreshInfoPanel()
-        {
-            if (m_viewModel == null) return;
-
-            var selected = m_viewModel.SelectedWeapon;
-            if (selected == null)
+            else
             {
-                if (m_weaponNameText != null) m_weaponNameText.text = "선택된 무기 없음";
-                if (m_weaponDetailText != null) m_weaponDetailText.text = "-";
-                if (m_equipButton != null) m_equipButton.interactable = false;
-                return;
+                foreach (var armor in m_viewModel.OwnedArmors)
+                {
+                    CreateArmorSlot(armor);
+                }
             }
-
-            if (m_weaponNameText != null) m_weaponNameText.text = selected.WeaponName;
             
-            if (m_weaponDetailText != null)
-            {
-                m_weaponDetailText.text = $"공격력 보정: x{selected.AttackPowerModifier:F1}\n" +
-                                          $"사거리 보정: x{selected.AttackRangeModifier:F1}\n" +
-                                          $"공격속도 보정: x{selected.AttackSpeedModifier:F1}";
-            }
+            UpdateSlotMarks();
+            UpdateTabVisuals();
 
-            if (m_equipButton != null)
-            {
-                // 이미 장착 중이면 비활성화
-                m_equipButton.interactable = !m_viewModel.IsSelectedWeaponEquipped();
-            }
-
-            UpdateSlotHighlights();
+            Debug.Log($"[EquipmentView] UI 리프레시 완료: {m_slots.Count}개의 슬롯 생성됨 (Category: {m_viewModel.CurrentCategory})");
         }
 
-        /// <summary>
-        /// [설명]: 슬롯들의 선택/장착 하이라이트 상태만 업데이트합니다.
-        /// </summary>
-        private void UpdateSlotHighlights()
+        private void CreateWeaponSlot(WeaponData data)
+        {
+            var slot = Instantiate(m_slotPrefab, m_slotGrid);
+            if (slot != null)
+            {
+                slot.SetWeaponSlot(data, (w) => m_viewModel.SelectWeapon(w));
+                m_slots.Add(slot);
+            }
+        }
+
+        private void CreateArmorSlot(ArmorData data)
+        {
+            var slot = Instantiate(m_slotPrefab, m_slotGrid);
+            if (slot != null)
+            {
+                slot.SetArmorSlot(data, (a) => m_viewModel.SelectArmor(a));
+                m_slots.Add(slot);
+            }
+        }
+
+        private void UpdateSlotMarks()
         {
             if (m_viewModel == null) return;
-
-            var selected = m_viewModel.SelectedWeapon;
-            var equipped = m_viewModel.CurrentlyEquippedWeapon;
 
             foreach (var slot in m_slots)
             {
                 if (slot != null)
                 {
-                    slot.UpdateState(selected, equipped);
+                    slot.UpdateEquippedState(
+                        m_viewModel.EquippedWeapon,
+                        m_viewModel.EquippedHelmet,
+                        m_viewModel.EquippedBodyArmor
+                    );
                 }
             }
         }
-        #endregion
 
-        #region UI 이벤트 핸들러
-        private void OnEquipButtonClicked()
+        private void UpdateTabVisuals()
         {
-            if (m_viewModel != null)
-            {
-                m_viewModel.EquipSelectedWeapon();
-            }
-        }
-        #endregion
+            if (m_viewModel == null) return;
 
-        #region 유니티 생명주기
-        private void OnDestroy()
-        {
-            if (m_viewModel != null)
-            {
-                m_viewModel.OnInventoryChanged -= RefreshUI;
-                m_viewModel.OnSelectedWeaponChanged -= m_handleSelectedChanged;
-                m_viewModel.OnEquippedWeaponChanged -= m_handleEquippedChanged;
-            }
+            bool isWeapon = m_viewModel.CurrentCategory == EquipmentCategory.Weapon;
+            if (m_weaponTabButton != null) m_weaponTabButton.interactable = !isWeapon;
+            if (m_armorTabButton != null) m_armorTabButton.interactable = isWeapon;
         }
         #endregion
     }

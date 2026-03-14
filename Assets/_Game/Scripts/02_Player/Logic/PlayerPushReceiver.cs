@@ -34,6 +34,10 @@ namespace TowerBreakers.Player.Logic
         private Camera m_mainCamera;
         private Transform m_cachedTransform;
 
+        // [최적화]: 카메라 위치 캐싱 (변경 시에만 재계산)
+        private Vector3 m_cachedCameraPosition;
+        private bool m_isCameraThresholdValid;
+
         private float m_mapLeftLimit = -100f; // 맵의 물리적 하한선
         #endregion
 
@@ -71,7 +75,22 @@ namespace TowerBreakers.Player.Logic
 
             if (m_useCameraBounds)
             {
-                UpdateLeftWallThresholdFromCamera();
+                if (m_mainCamera == null)
+                {
+                    m_mainCamera = Camera.main;
+                }
+
+                // [최적화]: 카메라 위치가 변경되었을 때만 임계값 재계산
+                if (m_mainCamera != null)
+                {
+                    Vector3 currentCamPos = m_mainCamera.transform.position;
+                    if (!m_isCameraThresholdValid || Vector3.Distance(m_cachedCameraPosition, currentCamPos) > 0.01f)
+                    {
+                        m_cachedCameraPosition = currentCamPos;
+                        m_isCameraThresholdValid = true;
+                        UpdateLeftWallThresholdFromCamera();
+                    }
+                }
             }
 
             // 플레이어가 현재 벽 임계값을 벗어났다면 위치 보정

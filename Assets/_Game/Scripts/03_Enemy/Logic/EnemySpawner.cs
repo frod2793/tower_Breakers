@@ -4,6 +4,7 @@ using TowerBreakers.Enemy.Data;
 using TowerBreakers.Tower.Data;
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using TowerBreakers.Enemy.View;
 using TowerBreakers.Tower.Logic;
 
 namespace TowerBreakers.Enemy.Logic
@@ -18,19 +19,25 @@ namespace TowerBreakers.Enemy.Logic
         private readonly TowerManager m_towerManager;
         private readonly Core.Events.IEventBus m_eventBus;
         private readonly ProjectileFactory m_projectileFactory;
+        private readonly EnemyDeathEffect m_deathEffect;
         private CancellationTokenSource m_cts;
         private Transform m_enemyParent;
 
         // [최적화]: GC 할당 방지를 위한 스폰용 풀 리스트
         private readonly System.Collections.Generic.List<(EnemyData data, float interval)> m_spawnMixedPool = new();
+
+        // [최적화]: 활성 적 컬렉션 (FindObjectsOfType 대체)
+        private readonly System.Collections.Generic.List<EnemyPushLogic> m_activeEnemies = new();
+        public System.Collections.Generic.IReadOnlyList<EnemyPushLogic> ActiveEnemies => m_activeEnemies;
         #endregion
 
-        public EnemySpawner(EnemyFactory factory, TowerManager towerManager, Core.Events.IEventBus eventBus, ProjectileFactory projectileFactory)
+        public EnemySpawner(EnemyFactory factory, TowerManager towerManager, Core.Events.IEventBus eventBus, ProjectileFactory projectileFactory, EnemyDeathEffect deathEffect)
         {
             m_factory = factory;
             m_towerManager = towerManager;
             m_eventBus = eventBus;
             m_projectileFactory = projectileFactory;
+            m_deathEffect = deathEffect;
         }
 
         /// <summary>
@@ -86,6 +93,13 @@ namespace TowerBreakers.Enemy.Logic
                     {
                         var entry = m_spawnMixedPool[i];
                         Vector2 spawnPos = basePos + Vector2.right * totalOffset;
+                        
+                        // [수정]: 보스는 세그먼트 기준 상대 오프셋으로 Y 좌표 조정
+                        if (entry.data.Type == EnemyType.Boss)
+                        {
+                            spawnPos.y = basePos.y + 3.6f;
+                        }
+                        
                         var view = m_factory.Create(entry.data, spawnPos, floorIndex, actualParent);
                         
                         // [최적화]: GetComponent 호출 최소화
@@ -99,11 +113,12 @@ namespace TowerBreakers.Enemy.Logic
                             logic.TrainSpacing = floorData.TrainSpacing;
                             logic.SetAheadEnemy(previousEnemy);
                             previousEnemy = logic;
+                            m_activeEnemies.Add(logic);
                         }
 
                         if (controller != null && isPreSpawn)
                         {
-                            controller.InitializeAsWaiting(entry.data, view, logic, m_eventBus, floorIndex, m_towerManager, m_projectileFactory);
+                            controller.InitializeAsWaiting(entry.data, view, logic, m_deathEffect, m_eventBus, floorIndex, m_towerManager, m_projectileFactory);
                         }
 
                         if (i < m_spawnMixedPool.Count - 1)
@@ -125,6 +140,13 @@ namespace TowerBreakers.Enemy.Logic
                         for (int i = 0; i < packet.EnemyCount; i++)
                         {
                             Vector2 spawnPos = basePos + Vector2.right * totalOffset;
+                            
+                            // [수정]: 보스는 세그먼트 기준 상대 오프셋으로 Y 좌표 조정
+                            if (packet.EnemyPrefabData.Type == EnemyType.Boss)
+                            {
+                                spawnPos.y = basePos.y + 3.6f;
+                            }
+                            
                             var view = m_factory.Create(packet.EnemyPrefabData, spawnPos, floorIndex, actualParent);
                             
                             // [최적화]: GetComponent 호출 최소화 (향후 Factory에서 주입 권장)
@@ -138,11 +160,12 @@ namespace TowerBreakers.Enemy.Logic
                                 logic.TrainSpacing = floorData.TrainSpacing;
                                 logic.SetAheadEnemy(previousEnemy);
                                 previousEnemy = logic;
+                                m_activeEnemies.Add(logic);
                             }
 
                             if (controller != null && isPreSpawn)
                             {
-                                controller.InitializeAsWaiting(packet.EnemyPrefabData, view, logic, m_eventBus, floorIndex, m_towerManager, m_projectileFactory);
+                                controller.InitializeAsWaiting(packet.EnemyPrefabData, view, logic, m_deathEffect, m_eventBus, floorIndex, m_towerManager, m_projectileFactory);
                             }
 
                             if (i < packet.EnemyCount - 1)
@@ -163,6 +186,13 @@ namespace TowerBreakers.Enemy.Logic
                 for (int i = 0; i < floorData.EnemyCount; i++)
                 {
                     Vector2 spawnPos = basePos + Vector2.right * totalOffset;
+                    
+                    // [수정]: 보스는 세그먼트 기준 상대 오프셋으로 Y 좌표 조정
+                    if (floorData.EnemyPrefabData.Type == EnemyType.Boss)
+                    {
+                        spawnPos.y = basePos.y + 3.6f;
+                    }
+                    
                     var view = m_factory.Create(floorData.EnemyPrefabData, spawnPos, floorIndex, actualParent);
 
                     // [최적화]: GetComponent 호출 최소화 (향후 Factory에서 주입 권장)
@@ -176,11 +206,12 @@ namespace TowerBreakers.Enemy.Logic
                         logic.TrainSpacing = floorData.TrainSpacing;
                         logic.SetAheadEnemy(previousEnemy);
                         previousEnemy = logic;
+                        m_activeEnemies.Add(logic);
                     }
 
                     if (controller != null && isPreSpawn)
                     {
-                        controller.InitializeAsWaiting(floorData.EnemyPrefabData, view, logic, m_eventBus, floorIndex, m_towerManager, m_projectileFactory);
+                        controller.InitializeAsWaiting(floorData.EnemyPrefabData, view, logic, m_deathEffect, m_eventBus, floorIndex, m_towerManager, m_projectileFactory);
                     }
 
                     if (i < floorData.EnemyCount - 1)
@@ -198,6 +229,38 @@ namespace TowerBreakers.Enemy.Logic
         public void StopSpawning()
         {
             m_cts?.Cancel();
+        }
+
+        /// <summary>
+        /// [설명]: 지정 층에 스폰된 보스의 BossIntroCutscene을 반환합니다.
+        /// </summary>
+        public TowerBreakers.Enemy.Boss.View.BossIntroCutscene GetBossIntroCutscene(int floorIndex)
+        {
+            var controller = GetBossController(floorIndex);
+            if (controller != null)
+            {
+                return controller.GetComponentInChildren<TowerBreakers.Enemy.Boss.View.BossIntroCutscene>(true);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// [설명]: 지정 층에 스폰된 보스의 EnemyController를 반환합니다.
+        /// </summary>
+        public Logic.EnemyController GetBossController(int floorIndex)
+        {
+            foreach (var enemy in Logic.EnemyPushLogic.ActiveEnemies)
+            {
+                if (enemy == null) continue;
+                var controller = enemy.GetComponent<Logic.EnemyController>();
+                if (controller != null && 
+                    controller.AssignedFloorIndex == floorIndex && 
+                    controller.Type == EnemyType.Boss)
+                {
+                    return controller;
+                }
+            }
+            return null;
         }
         #endregion
     }

@@ -1,0 +1,147 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Totem_Buff
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: f47c7c3380487aa4e8ad0b78d862b4a1, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - d30b43008c9366b4ea9a40f5b7a17d99: 21300000
+    - acfe3b0105838e5408c4019313ef417a: 21300000
+    - 121032515d9c0d247ad6076735f92546: 21300000
+    - bb5380a15b8c9b34d92f77abc914d0df: 21300000
+    - e6747462080b0b344b69d5d9db168727: 21300000
+    - 908ff2b2960f91846b4bb37672a6c70e: 21300000
+    - 2c07937382c3db64d87ccf9be8df66ed: 21300000
+    - de51ef8388806784f8f93bc96ed49dd1: 21300000
+    - 6a0190f48db482146b4984e58389b368: 21300000
+    - ad318ef4647a8ff4599b516985d8c001: 21300000
+    - 0ea7a47574674d04489bccfb0ce85e60: 21300000
+    - 264bea95b4ab4a1409d65584faead67e: 21300000
+    - ba01d7664f34b3c428069e1dd5904c5f: 21300000
+    - 1b033286fc2d8694086fd8102ff62256: 21300000
+    - ef9d27a6a61367c4fb909f0ab8e763f9: 21300000
+    - c17af1f692cc9f2479664ef4059adc3f: 21300000
+    - c6cf83670ce8a064fa593b5bb1da394f: 21300000
+    - fb8616679920b8649b6cbb382ba3e0ac: 21300000
+    - dc30b278b8b915540a0723032264654c: 21300000
+    - d93f9fc8ecb125542900c762d60d0a29: 21300000
+    - 667f20d86d690fc4fb7f98a33860f0fe: 21300000
+    - 0a9b5b696a7baa648a75850b9fcfa258: 21300000
+    - 36df7479d41e69d4dafa23e7c29ff0ca: 21300000
+    - 4299b8795ca893941989a9c9e034828e: 21300000
+    - ebe39b998eb7fa244a63bb527512b008: 21300000
+    - 63be18cb210a57a4ab4f0e948c33fcd6: 21300000
+    - ee74f96c34e894b49b7f83b08cee81d7: 21300000
+    - e2111feca0b0c604e8f9ddc8e39058c5: 21300000
+    - e205093d048ec6d46ace5cb264f9190e: 21300000
+    - 1e339e3f99167c748bd597188c8514b9: 21300000
+    - 2176996f005aa184f84edcbd79137372: 21300000
+    - d113207f561b09a40864b8cf85ad0a84: 21300000
+    - 3db4d89fb3216644e8f37b4b46272566: 21300000
+    - 9c5b98cf615b3a145a6375f55be5e04c: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: d30b43008c9366b4ea9a40f5b7a17d99, type: 3}
+  - {fileID: 21300000, guid: acfe3b0105838e5408c4019313ef417a, type: 3}
+  - {fileID: 21300000, guid: 121032515d9c0d247ad6076735f92546, type: 3}
+  - {fileID: 21300000, guid: bb5380a15b8c9b34d92f77abc914d0df, type: 3}
+  - {fileID: 21300000, guid: e6747462080b0b344b69d5d9db168727, type: 3}
+  - {fileID: 21300000, guid: 908ff2b2960f91846b4bb37672a6c70e, type: 3}
+  - {fileID: 21300000, guid: 2c07937382c3db64d87ccf9be8df66ed, type: 3}
+  - {fileID: 21300000, guid: de51ef8388806784f8f93bc96ed49dd1, type: 3}
+  - {fileID: 21300000, guid: 6a0190f48db482146b4984e58389b368, type: 3}
+  - {fileID: 21300000, guid: ad318ef4647a8ff4599b516985d8c001, type: 3}
+  - {fileID: 21300000, guid: 0ea7a47574674d04489bccfb0ce85e60, type: 3}
+  - {fileID: 21300000, guid: 264bea95b4ab4a1409d65584faead67e, type: 3}
+  - {fileID: 21300000, guid: ba01d7664f34b3c428069e1dd5904c5f, type: 3}
+  - {fileID: 21300000, guid: 1b033286fc2d8694086fd8102ff62256, type: 3}
+  - {fileID: 21300000, guid: ef9d27a6a61367c4fb909f0ab8e763f9, type: 3}
+  - {fileID: 21300000, guid: c17af1f692cc9f2479664ef4059adc3f, type: 3}
+  - {fileID: 21300000, guid: c6cf83670ce8a064fa593b5bb1da394f, type: 3}
+  - {fileID: 21300000, guid: fb8616679920b8649b6cbb382ba3e0ac, type: 3}
+  - {fileID: 21300000, guid: dc30b278b8b915540a0723032264654c, type: 3}
+  - {fileID: 21300000, guid: d93f9fc8ecb125542900c762d60d0a29, type: 3}
+  - {fileID: 21300000, guid: 667f20d86d690fc4fb7f98a33860f0fe, type: 3}
+  - {fileID: 21300000, guid: 0a9b5b696a7baa648a75850b9fcfa258, type: 3}
+  - {fileID: 21300000, guid: 36df7479d41e69d4dafa23e7c29ff0ca, type: 3}
+  - {fileID: 21300000, guid: 4299b8795ca893941989a9c9e034828e, type: 3}
+  - {fileID: 21300000, guid: ebe39b998eb7fa244a63bb527512b008, type: 3}
+  - {fileID: 21300000, guid: 63be18cb210a57a4ab4f0e948c33fcd6, type: 3}
+  - {fileID: 21300000, guid: ee74f96c34e894b49b7f83b08cee81d7, type: 3}
+  - {fileID: 21300000, guid: e2111feca0b0c604e8f9ddc8e39058c5, type: 3}
+  - {fileID: 21300000, guid: e205093d048ec6d46ace5cb264f9190e, type: 3}
+  - {fileID: 21300000, guid: 1e339e3f99167c748bd597188c8514b9, type: 3}
+  - {fileID: 21300000, guid: 2176996f005aa184f84edcbd79137372, type: 3}
+  - {fileID: 21300000, guid: d113207f561b09a40864b8cf85ad0a84, type: 3}
+  - {fileID: 21300000, guid: 3db4d89fb3216644e8f37b4b46272566, type: 3}
+  - {fileID: 21300000, guid: 9c5b98cf615b3a145a6375f55be5e04c, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - Buff-Totem-Idll-6
+  - Buff-Totem-Die-4
+  - Buff-Totem-Effect-9
+  - Buff-Totem-Effect-14
+  - Buff-Totem-Die-2
+  - Buff-Totem-Die-6
+  - Buff-Totem-Idll-3
+  - Buff-Totem-Idll-5
+  - Buff-Totem-Effect-17
+  - Buff-Totem-Effect-15
+  - Buff-Totem-Damage-1
+  - Buff-Totem-Effect-7
+  - Buff-Totem-Effect-16
+  - Buff-Totem-Effect-10
+  - Buff-Totem-Effect-3
+  - Buff-Totem-Effect-19
+  - Buff-Totem-Effect-18
+  - Buff-Totem-Effect-5
+  - Buff-Totem-Effect-8
+  - Buff-Totem-Effect-1
+  - Buff-Totem-Effect-4
+  - Buff-Totem-Effect-6
+  - Buff-Totem-Die-1
+  - Buff-Totem-Die-3
+  - Buff-Totem-Die-7
+  - Buff-Totem-Idll-2
+  - Buff-Totem-Effect-13
+  - Buff-Totem-Effect-2
+  - Buff-Totem-Idll-1
+  - Buff-Totem-Die-5
+  - Buff-Totem-Idll-4
+  - Buff-Totem-Effect-11
+  - Buff-Totem-Die-8
+  - Buff-Totem-Effect-12
+  m_RenderDataMap: {}
+  m_Tag: Totem_Buff
+  m_IsVariant: 0

@@ -57,6 +57,11 @@ namespace TowerBreakers.Player.Data.Models
                 OnSelectedArmorChanged?.Invoke(m_selectedArmor);
             }
         }
+
+        // ── 실시간 장착 데이터 (세션 연동용) ──
+        public WeaponData EquippedWeapon { get; private set; }
+        public ArmorData EquippedHelmet { get; private set; }
+        public ArmorData EquippedBodyArmor { get; private set; }
         #endregion
 
         #region 이벤트
@@ -74,9 +79,48 @@ namespace TowerBreakers.Player.Data.Models
         /// [설명]: UI에서 선택된 갑주가 변경되었을 때 호출됩니다.
         /// </summary>
         public event Action<ArmorData> OnSelectedArmorChanged;
+
+        /// <summary>
+        /// [설명]: 실제 장착된 아이템이 변경되었을 때 호출됩니다.
+        /// </summary>
+        public event Action OnEquipmentChanged;
         #endregion
 
         #region 공개 메서드
+        /// <summary>
+        /// [설명]: 모델의 장착 상태를 외부(UserSessionModel 등) 데이터에 맞춰 동기화합니다.
+        /// </summary>
+        public void SyncEquipment(WeaponData weapon, ArmorData helmet, ArmorData bodyArmor)
+        {
+            EquippedWeapon = weapon;
+            EquippedHelmet = helmet;
+            EquippedBodyArmor = bodyArmor;
+            OnEquipmentChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// [설명]: 보유 목록을 외부 데이터와 동기화합니다.
+        /// </summary>
+        /// <param name="weapons">동기화할 무기 목록</param>
+        /// <param name="armors">동기화할 갑주 목록</param>
+        public void SyncOwnedItems(IEnumerable<WeaponData> weapons, IEnumerable<ArmorData> armors)
+        {
+            if (weapons != null)
+            {
+                m_ownedWeapons.Clear();
+                m_ownedWeapons.AddRange(weapons.Where(w => w != null));
+            }
+
+            if (armors != null)
+            {
+                m_ownedArmors.Clear();
+                m_ownedArmors.AddRange(armors.Where(a => a != null));
+            }
+
+            OnInventoryUpdated?.Invoke();
+            UnityEngine.Debug.Log($"[InventoryModel] 보유 목록 동기화 완료: 무기 {m_ownedWeapons.Count}종, 갑주 {m_ownedArmors.Count}종");
+        }
+
         /// <summary>
         /// [설명]: 보유 목록에 새로운 무기를 추가합니다.
         /// </summary>

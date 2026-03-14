@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
 using DG.Tweening;
+using TMPro;
 
 namespace TowerBreakers.UI.HUD
 {
@@ -21,13 +22,13 @@ namespace TowerBreakers.UI.HUD
 
         [Header("통계 및 진행")]
         [SerializeField, Tooltip("현재 층 텍스트")]
-        private Text m_floorText;
+        private TMP_Text m_floorText;
 
         [SerializeField, Tooltip("적 처치 수 텍스트")]
-        private Text m_killText;
+        private TMP_Text m_killText;
 
         [SerializeField, Tooltip("보물상자 수 텍스트")]
-        private Text m_chestText;
+        private TMP_Text m_chestText;
 
         [SerializeField, Tooltip("'GO' 메시지 루트 오브젝트")]
         private GameObject m_goRoot;
@@ -35,12 +36,17 @@ namespace TowerBreakers.UI.HUD
         [Header("적 현황 (아이콘)")]
         [SerializeField, Tooltip("적 처치 현황 아이콘 뷰")]
         private EnemyStatusView m_enemyStatusView;
+
+        [Header("모바일 컨트롤")]
+        [SerializeField, Tooltip("일시정지 버튼")]
+        private Button m_pauseButton;
         #endregion
 
         #region 내부 필드
         private HUDViewModel m_viewModel;
         private int m_lastFloor = -1;
         private int m_lastLifeCount = -1;
+        private Vector3 m_originalGoScale = Vector3.one;
         #endregion
 
         #region 초기화 및 바인딩
@@ -54,6 +60,11 @@ namespace TowerBreakers.UI.HUD
             if (m_heartIconGroup != null)
             {
                 m_heartIconGroup.SetIcons(m_heartPrefab, m_lastLifeCount).Forget();
+            }
+
+            if (m_pauseButton != null)
+            {
+                m_pauseButton.onClick.AddListener(() => m_viewModel?.RequestPause());
             }
 
             UpdateUI();
@@ -104,9 +115,9 @@ namespace TowerBreakers.UI.HUD
 
                     if (isVisible)
                     {
-                        // 0.5초 간격으로 커졌다 작아지는 루핑 연출 (점멸 느낌)
-                        m_goRoot.transform.localScale = Vector3.one;
-                        m_goRoot.transform.DOScale(1.1f, 0.5f)
+                        // 원본 스케일을 기준으로 1.1배 커졌다 작아지는 루핑 연출
+                        m_goRoot.transform.localScale = m_originalGoScale;
+                        m_goRoot.transform.DOScale(m_originalGoScale * 1.1f, 0.5f)
                             .SetEase(Ease.InOutSine)
                             .SetLoops(-1, LoopType.Yoyo);
                     }
@@ -142,6 +153,14 @@ namespace TowerBreakers.UI.HUD
         #endregion
 
         #region 유니티 생명주기
+        private void Awake()
+        {
+            if (m_goRoot != null)
+            {
+                m_originalGoScale = m_goRoot.transform.localScale;
+            }
+        }
+
         private void OnDestroy()
         {
             if (m_viewModel != null)

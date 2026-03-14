@@ -16,12 +16,14 @@ namespace TowerBreakers.Enemy.Logic
         /// <param name="data">적 데이터</param>
         /// <param name="pushLogic">밀기 로직</param>
         /// <param name="isMoving">현재 이동 상태 (ref)</param>
-        public static void ExecuteMovement(EnemyView view, EnemyData data, EnemyPushLogic pushLogic, ref bool isMoving)
+        /// <param name="enemyController">적 컨트롤러 (속도 배율용)</param>
+        public static void ExecuteMovement(EnemyView view, EnemyData data, EnemyPushLogic pushLogic, ref bool isMoving, EnemyController enemyController = null)
         {
             if (pushLogic == null || pushLogic.PlayerReceiver == null) return;
 
             float gap = 1.1f;
-            float moveDelta = data.MoveSpeed * Time.deltaTime;
+            float speedMultiplier = enemyController != null ? enemyController.SpeedMultiplier : 1.0f;
+            float moveDelta = data.MoveSpeed * speedMultiplier * Time.deltaTime;
 
             // [개선]: 전체 그룹이 아닌 개별/전파식 차단 상태 확인
             bool isBlocked = pushLogic.IsBlocked(gap);

@@ -166,6 +166,19 @@ namespace TowerBreakers.Player.Data.Models
         }
 
         /// <summary>
+        /// [설명]: 특정 시간 동안 플레이어를 무적 상태로 만듭니다.
+        /// </summary>
+        /// <param name="duration">무적 지속 시간 (초)</param>
+        public void SetInvincibility(float duration)
+        {
+            m_invincibilityTimer = Math.Max(m_invincibilityTimer, duration);
+            
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[PlayerModel] 무적 강제 설정: {duration}초 (현재 남은 시간: {m_invincibilityTimer})");
+            #endif
+        }
+
+        /// <summary>
         /// [설명]: 무적 타이머를 갱신합니다. 매 프레임 ITickable을 통해 호출되어야 합니다.
         /// </summary>
         /// <param name="deltaTime">프레임 증분 시간</param>

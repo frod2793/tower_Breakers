@@ -6,6 +6,7 @@ using DG.Tweening;
 using TowerBreakers.Interactions.ViewModel;
 using TowerBreakers.Player.Data.SO;
 using TowerBreakers.Core.Interfaces;
+using TowerBreakers.Effects;
 
 namespace TowerBreakers.Interactions.View
 {
@@ -23,8 +24,6 @@ namespace TowerBreakers.Interactions.View
         [SerializeField, Tooltip("아이템 팝업용 스프라이트 렌더러 (상자 내부 자식)")]
         private SpriteRenderer m_itemIconRenderer;
 
-        [SerializeField, Tooltip("상자 파티클 시스템 (열릴 때 재생)")]
-        private ParticleSystem m_openParticle;
 
         [Header("스프라이트 설정")] [SerializeField, Tooltip("닫힌 상자 스프라이트")]
         private Sprite m_closedSprite;
@@ -72,8 +71,10 @@ namespace TowerBreakers.Interactions.View
 
         private IEventBus m_eventBus;
         private RewardChestViewModel m_viewModel;
+        private EffectManager m_effectManager;
         private Collider2D m_collider;
         private bool m_isDestroying = false;
+        private Vector3 m_spawnPosition;
         private readonly Vector3 m_baseScale = new Vector3(1.5f, 1.5f, 1f);
 
         // [최적화]: 연출용 정적 벡터 캐싱
@@ -86,13 +87,14 @@ namespace TowerBreakers.Interactions.View
         #region 초기화 및 바인딩
 
         [Inject]
-        public void Initialize(IEventBus eventBus)
+        public void Initialize(IEventBus eventBus, RewardChestViewModel viewModel, EffectManager effectManager)
         {
             if (eventBus == null) return;
             m_eventBus = eventBus;
+            m_effectManager = effectManager;
 
-            // ViewModel 생성 및 초기화 (DI를 통한 주입도 가능하나, 프리팹 개별 상태를 위해 직접 생성)
-            m_viewModel = new RewardChestViewModel(m_eventBus);
+            // DIP 적용: ViewModel을 DI로 주입받음 (직접 new 생성 대신)
+            m_viewModel = viewModel;
             Bind();
 
             m_eventBus.Subscribe<OnRewardSpawned>(OnRewardSpawned);
@@ -142,6 +144,9 @@ namespace TowerBreakers.Interactions.View
             {
                 m_eventBus.Publish(new OnRewardChestRegistered(floorIndex));
             }
+
+            // [수정]: 맵 스크롤(하강) 대응을 위해 생성 시점의 월드 좌표 저장
+            m_spawnPosition = transform.position;
         }
         #endregion
 
@@ -237,13 +242,16 @@ namespace TowerBreakers.Interactions.View
 
         private void PlayOpenAnimation()
         {
+            Debug.Log($"[CHEST_DIAGNOSTIC] PlayOpenAnimation 호출됨. SpriteRenderer={m_spriteRenderer != null}, OpenedSprite={m_openedSprite != null}, EffectManager={m_effectManager != null}");
             if (m_spriteRenderer != null && m_openedSprite != null)
             {
                 m_spriteRenderer.sprite = m_openedSprite;
             }
             
-            if (m_openParticle != null)
-                m_openParticle.Play();
+            if (m_effectManager != null)
+            {
+                m_effectManager.PlayEffect(EffectType.ChestOpen, transform.position);
+            }
             
             Vector3 startPosition = transform.localPosition;
             
@@ -265,18 +273,35 @@ namespace TowerBreakers.Interactions.View
 
         private void OnRewardSpawned(OnRewardSpawned evt)
         {
+            Debug.Log($"[CHEST_DIAGNOSTIC] OnRewardSpawned 수신: Key={evt.RewardKey}, EvtFloor={evt.FloorIndex}, EvtPos={evt.Position}, MyFloor={m_viewModel?.FloorIndex}, MySpawnPos={m_spawnPosition}");
             if (Application.isPlaying)
             {
-                if (m_viewModel == null) return;
-                if (evt.FloorIndex != m_viewModel.FloorIndex ||
-                    Vector3.Distance(evt.Position, transform.position) > 0.1f) return;
+                float distance = Vector3.Distance(evt.Position, m_spawnPosition);
+                bool isFloorMatch = evt.FloorIndex == m_viewModel.FloorIndex;
+                bool isPosMatch = distance <= 0.1f;
+
+                Debug.Log($"[CHEST_DIAGNOSTIC] 필터 결과: FloorMatch={isFloorMatch}, Dist={distance:F4}, PosMatch={isPosMatch}");
+
+                if (!isFloorMatch || !isPosMatch) return;
             }
 
             Sprite icon = ResolveRewardSprite(evt.RewardKey);
-            if (icon == null) return;
+            
+            // 유니티 객체 세이프 로그 (?.name 사용 시 예외 발생 가능성 대응)
+            string iconName = icon != null ? icon.name : "NULL";
+            string tableName = m_rewardTable != null ? m_rewardTable.name : "NULL";
+
+            Debug.Log($"[CHEST_DIAGNOSTIC] 스프라이트 조회 결과: Key={evt.RewardKey}, Icon={iconName}, RewardTable={tableName}");
+            
+            if (icon == null)
+            {
+                Debug.LogWarning($"[RewardChestView] 스프라이트를 찾을 수 없음: {evt.RewardKey}");
+                return;
+            }
 
             if (m_itemIconRenderer != null)
             {
+                Debug.Log($"[CHEST_DIAGNOSTIC] 아이템 팝업 시작: Key={evt.RewardKey}, IconRenderer.enabled={m_itemIconRenderer.enabled}");
                 m_itemIconRenderer.sprite = icon;
                 m_itemIconRenderer.enabled = true;
                 m_itemIconRenderer.transform.localPosition = Vector3.zero;
@@ -297,6 +322,7 @@ namespace TowerBreakers.Interactions.View
             }
             else
             {
+                Debug.LogWarning("[RewardChestView] m_itemIconRenderer가 할당되지 않았습니다.");
                 DOVirtual.DelayedCall(1.0f, DestroyChest).SetTarget(this);
             }
         }
@@ -327,7 +353,8 @@ namespace TowerBreakers.Interactions.View
         public void Debug_PopItem(string key)
         {
             int currentFloor = m_viewModel != null ? m_viewModel.FloorIndex : 0;
-            OnRewardSpawned(new OnRewardSpawned(key, transform.position, currentFloor));
+            // [수정]: 디버그 호출 시에도 m_spawnPosition을 전달하여 거리 체크 통과 보장
+            OnRewardSpawned(new OnRewardSpawned(key, m_spawnPosition, currentFloor));
         }
 
         #endregion
@@ -340,6 +367,8 @@ namespace TowerBreakers.Interactions.View
         private Sprite ResolveRewardSprite(string rewardKey)
         {
             if (m_rewardTable == null) return null;
+            
+            // 보상 테이블에서 키에 해당하는 아이콘 검색
             return m_rewardTable.GetSprite(rewardKey);
         }
 

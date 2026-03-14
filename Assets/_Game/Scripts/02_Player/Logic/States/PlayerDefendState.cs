@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using TowerBreakers.Core.Events;
+using TowerBreakers.Core;
 using TowerBreakers.Player.Data.SO;
 using TowerBreakers.Player.Data.Models;
 
@@ -23,19 +24,6 @@ namespace TowerBreakers.Player.Logic
         private readonly Core.Events.IEventBus m_eventBus;
         private readonly PlayerData m_playerData;
         private readonly Tower.Logic.TowerManager m_towerManager;
-
-        // [최적화]: 사거리 내 적 체크를 위한 캐싱 필드
-        private static readonly int s_enemyLayer = LayerMask.GetMask("Enemy");
-        private static readonly Collider2D[] s_overlapBuffer = new Collider2D[1];
-        private static readonly ContactFilter2D s_enemyFilter = CreateEnemyFilter();
-
-        private static ContactFilter2D CreateEnemyFilter()
-        {
-            ContactFilter2D filter = new ContactFilter2D();
-            filter.SetLayerMask(s_enemyLayer);
-            filter.useLayerMask = true;
-            return filter;
-        }
         #endregion
 
         public PlayerDefendState(
@@ -93,12 +81,16 @@ namespace TowerBreakers.Player.Logic
                 {
                     m_view.PlayAnimation(global::PlayerState.OTHER, 1);
                     
+                    // [추가]: 후퇴 연출 중 무적 부여 (0.3s 이동 + 여유분)
+                    m_model.SetInvincibility(0.4f);
+
                     // 경계 제한 해제 (연출 중 벽 압착 판정 방지)
                     m_pushReceiver.IsClampingEnabled = false;
                     
                     m_view.transform.DOMoveX(wallX, 0.3f)
+                        .SetId("DefendPush") // 독립 제어를 위해 ID 부여
                         .SetEase(Ease.OutBack)
-                        .OnUpdate(() => m_model.Position = m_view.transform.position)
+                        .OnUpdate(UpdatePositionFromDefend)
                         .OnComplete(() => 
                         {
                             // 상태 확인 후 안전하게 복귀
@@ -114,61 +106,62 @@ namespace TowerBreakers.Player.Logic
         #region 내부 로직
         /// <summary>
         /// [설명]: DOTween을 사용하여 애니메이션 클립 없이 백플립(회전+점프) 연출을 실행합니다.
+        /// 수정: 상태가 전환되더라도 공중에서 멈추지 않도록 트윈을 독립형으로 분리합니다.
         /// </summary>
-        /// <param name="targetX">착지할 목표 X 좌표 (벽 위치)</param>
-        private void ExecuteBackflip(float targetX)
+        /// <param name="wallX">왼쪽 벽 한계 좌표</param>
+        private void ExecuteBackflip(float wallX)
         {
-            if (m_view == null || m_pushReceiver == null) return;
+            if (m_view == null || m_pushReceiver == null || m_playerData == null) return;
 
-            // [수정]: 현재 바라보는 방향(Y축 회전)을 저장하여 연출 중/후에도 유지되도록 합니다.
+            // 1. 방향 및 목표 지점 계산
+            float facingSign = Core.Utilities.DirectionHelper.GetFacingSign(m_view.transform);
             float currentY = m_view.transform.localEulerAngles.y;
+            Vector3 startPos = m_view.transform.position;
 
-            // 1. 연출 초기 설정
-            m_pushReceiver.IsClampingEnabled = false; // 경계 제한 해제
-            m_view.transform.DOKill();                 // 기존 트윈 중지
+            float targetX = wallX;
+
+            // 2. 연출 초기 설정 (기존 백플립 트윈 제거 및 일반 트윈 정리)
+            m_pushReceiver.IsClampingEnabled = false;
+            DOTween.Kill("PlayerBackflip");
+            m_view.transform.DOKill();
             
-            // 회전값 및 데이터 초기화 (Y축 방향은 유지)
+            // 회전값 초기화 (방향 유지)
             m_view.transform.localRotation = Quaternion.Euler(0, currentY, 0);
 
-            float startY = m_view.transform.position.y;
-            float jumpPower = 3.5f;    // 점프 높이(힘)
-            float duration = 0.65f;     // 전체 연출 시간
+            float jumpPower = m_playerData.BackflipJumpPower;
+            float duration = 0.75f; // 2회전을 위해 시간을 약간 늘림 (0.65 -> 0.75)
 
-            // 2. DOTween 연출 실행
-            // ① 포물선 이동 (Jump): 벽까지 예쁘게 날아갑니다.
-            m_view.transform.DOJump(new Vector3(targetX, startY, 0), jumpPower, 1, duration)
+            // 무적 부여
+            m_model.SetInvincibility(0.85f);
+
+            // 3. DOTween 연출 실행 (SetTarget을 분리하여 transform.DOKill에 의해 죽지 않도록 독립형 구성)
+            // ① 점프 이동
+            m_view.transform.DOJump(new Vector3(targetX, startPos.y, 0), jumpPower, 1, duration)
+                .SetId("PlayerBackflip")
+                .SetTarget(m_model)
                 .SetEase(Ease.OutQuad)
-                .OnUpdate(() => 
-                {
-                    if (m_model != null) m_model.Position = m_view.transform.position;
-                });
+                .OnUpdate(UpdatePositionFromBackflip);
 
-            // ② 공중 회전 (Rotate): 뒤로 360도 회전 (Backflip)
-            // Y축 회전(방향)을 고정한 상태에서 Z축만 -360도 회전합니다.
-            m_view.transform.DORotate(new Vector3(0, currentY, -360f), duration, RotateMode.FastBeyond360)
+            // ② 공중 2회전 (720도)
+            float rotateAmount = facingSign * 720f; 
+            
+            m_view.transform.DORotate(new Vector3(0, currentY, rotateAmount), duration, RotateMode.FastBeyond360)
+                .SetId("PlayerBackflip")
+                .SetTarget(m_model)
                 .SetEase(Ease.InOutQuad)
                 .OnComplete(() =>
                 {
-                    // 물리 및 상태 복구 (원래 바라보던 방향 유지)
-                    m_view.transform.localRotation = Quaternion.Euler(0, currentY, 0);
-                    m_pushReceiver.IsClampingEnabled = true;
+                    // 물리 및 상태 복구
+                    if (m_view != null) m_view.transform.localRotation = Quaternion.Euler(0, currentY, 0);
+                    if (m_pushReceiver != null) m_pushReceiver.IsClampingEnabled = true;
                     
-                    if (m_model != null) m_model.Position = m_view.transform.position;
+                    if (m_model != null && m_view != null) m_model.Position = m_view.transform.position;
                     
-                    // 상태 확인 후 안전하게 복귀
                     if (m_stateMachine != null && m_stateMachine.IsCurrentState<PlayerDefendState>())
                     {
                         m_stateMachine.ChangeState<PlayerIdleState>();
                     }
                 });
-
-
-        }
-
-        private async Cysharp.Threading.Tasks.UniTaskVoid ReturnToIdleAfterDelay()
-        {
-            await Cysharp.Threading.Tasks.UniTask.Delay(500);
-            m_stateMachine.ChangeState<PlayerIdleState>();
         }
 
         /// <summary>
@@ -179,24 +172,32 @@ namespace TowerBreakers.Player.Logic
         {
             if (m_view == null) return false;
             
-            // [최적화]: Deprecated된 NonAlloc 대신 ContactFilter2D 기반의 OverlapCircle 사용 (GC 할당 없음)
             int count = Physics2D.OverlapCircle(
                 m_view.transform.position, 
                 defendRange, 
-                s_enemyFilter, 
-                s_overlapBuffer);
+                PhysicsQueryUtil.EnemyOnlyFilter, 
+                PhysicsQueryUtil.SingleTargetBuffer);
                 
             return count > 0;
+        }
+
+        private void UpdatePositionFromDefend()
+        {
+            m_model.Position = m_view.transform.position;
+        }
+
+        private void UpdatePositionFromBackflip()
+        {
+            if (m_model != null) m_model.Position = m_view.transform.position;
         }
         #endregion
 
         public void OnExit()
         {
-            // 진행 중인 트윈 제거 (잔존 연출 방지)
-            if (m_view != null)
-            {
-                m_view.transform.DOKill();
-            }
+            // [수정]: 전체 트윈 제거(m_view.transform.DOKill())를 제거하여 독립형 백플립 트윈이 죽지 않도록 방지
+            // 대신 방어 시전으로 발동된 일반 후퇴 트윈만 제거
+            DOTween.Kill("DefendPush");
+            DOTween.Kill("PlayerBackflip");
             
             // 상태 복구
             if (m_pushReceiver != null)

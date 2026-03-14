@@ -22,17 +22,19 @@ namespace TowerBreakers.Enemy.Factory
         private readonly Core.Events.IEventBus m_eventBus;
         private readonly ProjectileFactory m_projectileFactory;
         private readonly TowerManager m_towerManager;
+        private readonly EnemyDeathEffect m_deathEffect;
         private readonly Dictionary<string, IObjectPool<EnemyView>> m_pools = new();
         private PlayerPushReceiver m_playerReceiver;
         #endregion
 
         [Inject]
-        public EnemyFactory(IObjectResolver resolver, Core.Events.IEventBus eventBus, ProjectileFactory projectileFactory, TowerManager towerManager)
+        public EnemyFactory(IObjectResolver resolver, Core.Events.IEventBus eventBus, ProjectileFactory projectileFactory, TowerManager towerManager, EnemyDeathEffect deathEffect)
         {
             m_resolver = resolver;
             m_eventBus = eventBus;
             m_projectileFactory = projectileFactory;
             m_towerManager = towerManager;
+            m_deathEffect = deathEffect;
         }
 
         #region 초기화
@@ -54,7 +56,7 @@ namespace TowerBreakers.Enemy.Factory
         {
             if (data.EnemyPrefab == null)
             {
-                Debug.LogError($"[EnemyFactory] '{data.EnemyName}' 데이터에 프리팹이 설정되지 않았습니다.");
+                global::UnityEngine.Debug.LogError($"[EnemyFactory] '{data.EnemyName}' 데이터에 프리팹이 설정되지 않았습니다.");
                 return null;
             }
 
@@ -100,7 +102,7 @@ namespace TowerBreakers.Enemy.Factory
                 }
                 else
                 {
-                    Debug.LogError($"[EnemyFactory] 경고! PlayerPushReceiver가 NULL입니다. {data.EnemyName}이(가) 플레이어를 관통할 수 있습니다.");
+                    global::UnityEngine.Debug.LogError($"[EnemyFactory] 경고! PlayerPushReceiver가 NULL입니다. {data.EnemyName}이(가) 플레이어를 관통할 수 있습니다.");
                 }
             }
 
@@ -111,7 +113,7 @@ namespace TowerBreakers.Enemy.Factory
             if (controller != null && pushLogic != null)
             {
                 // Reclaim 대신 pool.Release를 사용하여 반환하도록 콜백 전달
-                controller.Initialize(data, view, pushLogic, m_eventBus, m_towerManager, floorIndex, m_projectileFactory, (v, name) => pool.Release(v));
+                controller.Initialize(data, view, pushLogic, m_deathEffect, m_eventBus, m_towerManager, floorIndex, m_projectileFactory, (v, name) => pool.Release(v));
             }
 
             return view;

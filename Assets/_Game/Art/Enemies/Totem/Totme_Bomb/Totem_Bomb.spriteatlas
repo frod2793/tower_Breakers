@@ -1,0 +1,159 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Totem_Bomb
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: a77ff5de645a2a14db37375eeefa4233, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - c91b68701fd37b84683e66de260b457c: 21300000
+    - 100aa291d2e08ce4c830c862075b9250: 21300000
+    - c50672f1014c1e343bd6bdca7ba94238: 21300000
+    - e41486620c8098c45b5d22a39e3f9a47: 21300000
+    - a76d5b82c1eb91044ad2a74af9ad0534: 21300000
+    - 5dc26fd29dfaed84aa09da0a6645b7eb: 21300000
+    - 7bd4613305f47224bb27ab04125f3881: 21300000
+    - 31a809c3556c61a4eab9b9cce44de527: 21300000
+    - 66af60d37085daa499e21f252b8b4893: 21300000
+    - fe13ea64f3a388847acb80b35396e32c: 21300000
+    - dd366255588b6784caf1910509858971: 21300000
+    - 6627fd55765ee4447a0b89673650a372: 21300000
+    - 31d2fe651ec811242aad3d993b0cf43e: 21300000
+    - e4f5884627aebd94786077ad8e3addb0: 21300000
+    - bc7b0b664edbe734fa7af2e99a5a4e92: 21300000
+    - 6bd9ef767161e704992118af7087d644: 21300000
+    - 3c0cd8d6f5b66fe4abe6720635938175: 21300000
+    - e50e40f61fa701c48925681650d42b59: 21300000
+    - 16edcc37cf5d2734192867575562b43a: 21300000
+    - 892c8e6700d999c4ca7f84c6c7f858f8: 21300000
+    - 5c1d3fc7c48271c4181fade1b17a26a2: 21300000
+    - 2ad9f6282193add409cbc4dcdb3af69b: 21300000
+    - 0828f5a8569bfa045a213b1ce7a87d0b: 21300000
+    - de74d9e885ef0f64c9dbe57dcaa78357: 21300000
+    - 9549a009b02af3948a0ccef4c727a2f1: 21300000
+    - dbffb70984c8b7c40a231455ab07964f: 21300000
+    - 39ccea796f8e1c3439c2d5d27bebbdec: 21300000
+    - 2e19109943c60da4aa5337ca0189accf: 21300000
+    - 34f6e86af0111ce43ace529861ac6547: 21300000
+    - 6aa8cd9aa1ebaee41a98faf7e5137703: 21300000
+    - c581090ba75ddb94dbfcd0dd5f97bfbf: 21300000
+    - 81e18b5b8717da84e94a5ab6a850fe70: 21300000
+    - a8e493fca549ba64fb219bb2f5c55781: 21300000
+    - 3247e53d7b143734981310de59c47ecc: 21300000
+    - a0c1694dd9350f0499ec8f9e6489479c: 21300000
+    - 311ad39d05d88fb489785fd8d2d13aae: 21300000
+    - aa93d3cd35e6ad740baa1af3e19a3985: 21300000
+    - 58b749de5e5b1e44797f67aeb2fc10c6: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: c91b68701fd37b84683e66de260b457c, type: 3}
+  - {fileID: 21300000, guid: 100aa291d2e08ce4c830c862075b9250, type: 3}
+  - {fileID: 21300000, guid: c50672f1014c1e343bd6bdca7ba94238, type: 3}
+  - {fileID: 21300000, guid: e41486620c8098c45b5d22a39e3f9a47, type: 3}
+  - {fileID: 21300000, guid: a76d5b82c1eb91044ad2a74af9ad0534, type: 3}
+  - {fileID: 21300000, guid: 5dc26fd29dfaed84aa09da0a6645b7eb, type: 3}
+  - {fileID: 21300000, guid: 7bd4613305f47224bb27ab04125f3881, type: 3}
+  - {fileID: 21300000, guid: 31a809c3556c61a4eab9b9cce44de527, type: 3}
+  - {fileID: 21300000, guid: 66af60d37085daa499e21f252b8b4893, type: 3}
+  - {fileID: 21300000, guid: fe13ea64f3a388847acb80b35396e32c, type: 3}
+  - {fileID: 21300000, guid: dd366255588b6784caf1910509858971, type: 3}
+  - {fileID: 21300000, guid: 6627fd55765ee4447a0b89673650a372, type: 3}
+  - {fileID: 21300000, guid: 31d2fe651ec811242aad3d993b0cf43e, type: 3}
+  - {fileID: 21300000, guid: e4f5884627aebd94786077ad8e3addb0, type: 3}
+  - {fileID: 21300000, guid: bc7b0b664edbe734fa7af2e99a5a4e92, type: 3}
+  - {fileID: 21300000, guid: 6bd9ef767161e704992118af7087d644, type: 3}
+  - {fileID: 21300000, guid: 3c0cd8d6f5b66fe4abe6720635938175, type: 3}
+  - {fileID: 21300000, guid: e50e40f61fa701c48925681650d42b59, type: 3}
+  - {fileID: 21300000, guid: 16edcc37cf5d2734192867575562b43a, type: 3}
+  - {fileID: 21300000, guid: 892c8e6700d999c4ca7f84c6c7f858f8, type: 3}
+  - {fileID: 21300000, guid: 5c1d3fc7c48271c4181fade1b17a26a2, type: 3}
+  - {fileID: 21300000, guid: 2ad9f6282193add409cbc4dcdb3af69b, type: 3}
+  - {fileID: 21300000, guid: 0828f5a8569bfa045a213b1ce7a87d0b, type: 3}
+  - {fileID: 21300000, guid: de74d9e885ef0f64c9dbe57dcaa78357, type: 3}
+  - {fileID: 21300000, guid: 9549a009b02af3948a0ccef4c727a2f1, type: 3}
+  - {fileID: 21300000, guid: dbffb70984c8b7c40a231455ab07964f, type: 3}
+  - {fileID: 21300000, guid: 39ccea796f8e1c3439c2d5d27bebbdec, type: 3}
+  - {fileID: 21300000, guid: 2e19109943c60da4aa5337ca0189accf, type: 3}
+  - {fileID: 21300000, guid: 34f6e86af0111ce43ace529861ac6547, type: 3}
+  - {fileID: 21300000, guid: 6aa8cd9aa1ebaee41a98faf7e5137703, type: 3}
+  - {fileID: 21300000, guid: c581090ba75ddb94dbfcd0dd5f97bfbf, type: 3}
+  - {fileID: 21300000, guid: 81e18b5b8717da84e94a5ab6a850fe70, type: 3}
+  - {fileID: 21300000, guid: a8e493fca549ba64fb219bb2f5c55781, type: 3}
+  - {fileID: 21300000, guid: 3247e53d7b143734981310de59c47ecc, type: 3}
+  - {fileID: 21300000, guid: a0c1694dd9350f0499ec8f9e6489479c, type: 3}
+  - {fileID: 21300000, guid: 311ad39d05d88fb489785fd8d2d13aae, type: 3}
+  - {fileID: 21300000, guid: aa93d3cd35e6ad740baa1af3e19a3985, type: 3}
+  - {fileID: 21300000, guid: 58b749de5e5b1e44797f67aeb2fc10c6, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - Explosion-Totem-Damage-1
+  - Explosion-Totem-Idle-1
+  - Explosion-Totem-Die-6
+  - Explosion-Totem-Attack-9
+  - Explosion-Totem-Attack-13
+  - Explosion-Totem-Idle-5
+  - Explosion-Totem-Attack-18
+  - Explosion-Totem-Idle-4
+  - Explosion-Totem-Die-7
+  - Explosion-Totem-Attack-11
+  - Explosion-Totem-Die-8
+  - Explosion-Totem-Attack-19
+  - Explosion-Totem-Attack-5
+  - Explosion-Totem-Attack-22
+  - Explosion-Totem-Attack-10
+  - Explosion-Totem-Attack-7
+  - Explosion-Totem-Attack-17
+  - Explosion-Totem-Attack-23
+  - Explosion-Totem-Idle-3
+  - Explosion-Totem-Die-1
+  - Explosion-Totem-Attack-14
+  - Explosion-Totem-Attack-4
+  - Explosion-Totem-Idle-2
+  - Explosion-Totem-Attack-21
+  - Explosion-Totem-Attack-2
+  - Explosion-Totem-Attack-12
+  - Explosion-Totem-Die-4
+  - Explosion-Totem-Attack-8
+  - Explosion-Totem-Attack-3
+  - Explosion-Totem-Die-3
+  - Explosion-Totem-Attack-15
+  - Explosion-Totem-Die-2
+  - Explosion-Totem-Attack-16
+  - Explosion-Totem-Attack-6
+  - Explosion-Totem-Attack-20
+  - Explosion-Totem-Die-5
+  - Explosion-Totem-Attack-1
+  - Explosion-Totem-Die-9
+  m_RenderDataMap: {}
+  m_Tag: Totem_Bomb
+  m_IsVariant: 0

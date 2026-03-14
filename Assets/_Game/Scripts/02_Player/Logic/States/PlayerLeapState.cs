@@ -1,6 +1,8 @@
 using UnityEngine;
 using DG.Tweening;
 using TowerBreakers.Core.Interfaces;
+using TowerBreakers.Core;
+using TowerBreakers.Core.Events;
 using TowerBreakers.Player.Data.SO;
 using TowerBreakers.Player.Data.Models;
 using TowerBreakers.Player.View;
@@ -17,30 +19,18 @@ namespace TowerBreakers.Player.Logic
         private readonly PlayerModel m_model;
         private readonly PlayerData m_data;
         private readonly PlayerStateMachine m_stateMachine;
+        private readonly Core.Events.IEventBus m_eventBus;
 
         private PlayerPushReceiver m_pushReceiver;
-
-        // [최적화]: GC 할당 및 문자열 파싱 방지를 위한 정적 캐싱 필드들
-        private static readonly Collider2D[] s_hitBuffer = new Collider2D[32];
-        private static readonly int s_targetLayer = LayerMask.GetMask("Enemy", "Object");
-        private static readonly ContactFilter2D s_hitFilter = CreateHitFilter();
-
-        private static ContactFilter2D CreateHitFilter()
-        {
-            ContactFilter2D filter = new ContactFilter2D();
-            filter.SetLayerMask(s_targetLayer);
-            filter.useLayerMask = true;
-            filter.useTriggers = true;
-            return filter;
-        }
         #endregion
 
-        public PlayerLeapState(PlayerView view, PlayerModel model, PlayerData m_data, PlayerStateMachine stateMachine)
+        public PlayerLeapState(PlayerView view, PlayerModel model, PlayerData m_data, PlayerStateMachine stateMachine, Core.Events.IEventBus eventBus)
         {
             m_view = view;
             m_model = model;
             this.m_data = m_data;
             m_stateMachine = stateMachine;
+            m_eventBus = eventBus;
         }
 
         public void OnEnter()
@@ -63,11 +53,14 @@ namespace TowerBreakers.Player.Logic
 
         private void ExecuteLeap()
         {
+            // [추가]: 대쉬 사운드 출력
+            m_eventBus?.Publish(new OnSoundRequested("Dash"));
+
             // 1. 전방의 가장 가까운 적 탐색 (사거리 약 10m)
             float detectionRange = 10f;
             Vector2 origin = m_view.transform.position;
             // [최적화]: 캐싱된 레이어 마스크와 필터를 사용하여 할당 제거
-            int hitCount = Physics2D.OverlapBox(origin + Vector2.right * (detectionRange * 0.5f), new Vector2(detectionRange, 2f), 0f, s_hitFilter, s_hitBuffer);
+            int hitCount = Physics2D.OverlapBox(origin + Vector2.right * (detectionRange * 0.5f), new Vector2(detectionRange, 2f), 0f, PhysicsQueryUtil.EnemyAndObjectFilter, PhysicsQueryUtil.SharedBuffer);
             
             float targetX = origin.x + m_data.LeapDistance; // 기본값 (타겟 없을 시)
             float minDistance = float.MaxValue;
@@ -75,7 +68,7 @@ namespace TowerBreakers.Player.Logic
 
             for (int i = 0; i < hitCount; i++)
             {
-                var col = s_hitBuffer[i];
+                var col = PhysicsQueryUtil.SharedBuffer[i];
                 if (col == null) continue;
 
                 var damageable = col.GetComponent<IDamageable>();
@@ -95,7 +88,7 @@ namespace TowerBreakers.Player.Logic
                     {
                         minDistance = distToEdge;
                         
-                        // 타켓의 왼쪽 경계에서 충분한 거리 앞까지만 이동하여 오버슛 방지
+                        // 타켓의 왼쪽 경계에서 충분한 거리 앞까지 이동하여 오버슛 방지
                         float stopOffset = m_data.LeapStopOffset;
                         targetX = targetLeftEdge - stopOffset;
                         foundTarget = true;
@@ -112,12 +105,18 @@ namespace TowerBreakers.Player.Logic
             // 2. 수평 대시 연출 (DOJump -> DOMoveX)
             // 지면에 붙어서 빠르게 달려가는 느낌을 줍니다. (0.25초)
             m_view.transform.DOMoveX(targetX, 0.25f)
+                .SetTarget(m_view.gameObject)
                 .SetEase(Ease.OutQuad)
-                .OnUpdate(() => m_model.Position = m_view.transform.position)
+                .OnUpdate(UpdatePosition)
                 .OnComplete(() => m_stateMachine.ChangeState<PlayerIdleState>());
 
             // 애니메이션은 달리기(Move) 재생
             m_view.PlayAnimation(global::PlayerState.MOVE, 0); 
+        }
+
+        private void UpdatePosition()
+        {
+            m_model.Position = m_view.transform.position;
         }
     }
 }

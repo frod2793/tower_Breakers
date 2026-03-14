@@ -4,6 +4,7 @@ using TowerBreakers.Player.Data.SO;
 using TowerBreakers.Player.Data.Models;
 using TowerBreakers.Core.Events;
 using TowerBreakers.Core.Interfaces;
+using TowerBreakers.Core;
 
 namespace TowerBreakers.Player.Logic
 {
@@ -20,20 +21,6 @@ namespace TowerBreakers.Player.Logic
         private readonly IEventBus m_eventBus;
         private float m_attackTimer;
         private float m_currentAttackDuration; // 이번 공격의 지속 시간 (데이터 기반)
-
-        // [최적화]: GC 할당 및 문자열 파싱 방지를 위한 정적 캐싱 필드들
-        private static readonly Collider2D[] s_hitBuffer = new Collider2D[32];
-        private static readonly int s_targetLayer = LayerMask.GetMask("Enemy", "Object");
-        private static readonly ContactFilter2D s_hitFilter = CreateHitFilter();
-
-        private static ContactFilter2D CreateHitFilter()
-        {
-            ContactFilter2D filter = new ContactFilter2D();
-            filter.SetLayerMask(s_targetLayer);
-            filter.useLayerMask = true;
-            filter.useTriggers = true;
-            return filter;
-        }
         #endregion
 
         public PlayerAttackState(PlayerView view, PlayerModel model, PlayerData data, PlayerStateMachine stateMachine, IEventBus eventBus)
@@ -80,6 +67,8 @@ namespace TowerBreakers.Player.Logic
 
         private void ExecuteAttack()
         {
+            // [추가]: 공격 사운드 출력
+            m_eventBus?.Publish(new OnSoundRequested("Attack"));
 
             // 1. SPUM 공격 애니메이션 재생
             if (m_view != null)
@@ -94,7 +83,7 @@ namespace TowerBreakers.Player.Logic
 
             Vector2 attackPoint = (Vector2)m_view.transform.position + Vector2.right * (attackRange * 0.5f);
             Vector2 size = new Vector2(attackRange, 2.0f);
-            int hitCount = Physics2D.OverlapBox(attackPoint, size, 0.0f, s_hitFilter, s_hitBuffer);
+            int hitCount = Physics2D.OverlapBox(attackPoint, size, 0.0f, PhysicsQueryUtil.EnemyAndObjectFilter, PhysicsQueryUtil.SharedBuffer);
 
 
             int validHitCount = 0;
@@ -102,7 +91,7 @@ namespace TowerBreakers.Player.Logic
 
             for (int i = 0; i < hitCount; i++)
             {
-                var hitCollider = s_hitBuffer[i];
+                var hitCollider = PhysicsQueryUtil.SharedBuffer[i];
                 if (hitCollider == null) continue;
 
                 // [최적화]: IDamageable 컴포넌트 접근 최적화 (대부분의 경우 루트 오브젝트에 위치)
@@ -130,7 +119,8 @@ namespace TowerBreakers.Player.Logic
             // 3. 타격 연출 실행 (카메라 쉐이크, 역경직)
             if (validHitCount > 0)
             {
-                m_eventBus?.Publish(new OnHitEffectRequested(attackPoint, 0.4f, 0.15f, 0.08f));
+                // [리팩토링]: 프로필 없이 직접 이벤트 발행. 수치는 EffectManager의 중앙 설정을 따름 (기본값 -1)
+                m_eventBus?.Publish(new OnHitEffectRequested(attackPoint));
             }
 
         }

@@ -84,6 +84,10 @@ namespace TowerBreakers.Combat.Logic
             // 벽 압착에 의한 특수 효과(적 동결 등)를 위해 현재 층 정보를 포함한 이벤트 발행
             int currentFloor = (m_towerManager != null) ? m_towerManager.CurrentFloorIndex : 0;
             m_eventBus.Publish(new OnWallCrushOccurred(DAMAGE_AMOUNT, currentFloor));
+
+            // [추가]: 벽 압착 시 시각적 피드백 (강한 카메라 쉐이크 + 역경직)
+            // 위치는 대략적으로 플레이어 머리 위나 현재 위치를 사용 (0, 1, 0)
+            m_eventBus.Publish(new OnHitEffectRequested(new Vector3(0f, 1f, 0f), 1.0f, 0.4f, 0.08f));
             
             // 사망 판정
             if (m_playerModel.IsDead)

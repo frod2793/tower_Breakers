@@ -1,7 +1,8 @@
-using UnityEngine;
 using TowerBreakers.Player.Data.Models;
 using TowerBreakers.Core.Events;
+using TowerBreakers.Effects;
 using VContainer;
+using UnityEngine;
 using System;
 
 namespace TowerBreakers.Player.View
@@ -12,19 +13,10 @@ namespace TowerBreakers.Player.View
     /// </summary>
     public class PlayerEffectView : MonoBehaviour
     {
-        #region 에디터 설정
-        [Header("하트(생명력) 효과")]
-        [SerializeField, Tooltip("하트가 추가(회복/최대치 증가)될 때 재생할 파티클")]
-        private ParticleSystem m_heartGainParticle;
-
-        [Header("타격 효과 설정")]
-        [SerializeField, Tooltip("기본 타격 시 플레이어 위치에서 발생할 파티클 (향후 확장용)")]
-        private ParticleSystem m_defaultHitParticle;
-        #endregion
-
         #region 내부 필드
         private PlayerModel m_model;
         private IEventBus m_eventBus;
+        private Effects.EffectManager m_effectManager;
         
         private int m_lastLifeCount;
         private int m_lastMaxLifeCount;
@@ -35,10 +27,11 @@ namespace TowerBreakers.Player.View
         /// [설명]: 의존성을 주입받고 이벤트를 구독하여 초기화합니다.
         /// </summary>
         [Inject]
-        public void Initialize(PlayerModel model, IEventBus eventBus)
+        public void Initialize(PlayerModel model, IEventBus eventBus, Effects.EffectManager effectManager)
         {
             m_model = model;
             m_eventBus = eventBus;
+            m_effectManager = effectManager;
 
             if (m_model != null)
             {
@@ -73,34 +66,26 @@ namespace TowerBreakers.Player.View
         /// </summary>
         public void PlayEffect(EffectType type, Vector3? position = null)
         {
+            if (m_effectManager == null) return;
+            
             Vector3 targetPos = position ?? transform.position;
-
-            switch (type)
-            {
-                case EffectType.HeartGain:
-                    if (m_heartGainParticle != null)
-                    {
-                        m_heartGainParticle.transform.position = targetPos;
-                        m_heartGainParticle.Play();
-                    }
-                    break;
-                case EffectType.BasicHit:
-                    if (m_defaultHitParticle != null)
-                    {
-                        m_defaultHitParticle.transform.position = targetPos;
-                        m_defaultHitParticle.Play();
-                    }
-                    break;
-            }
+            m_effectManager.PlayEffect(type, targetPos);
         }
         #endregion
 
         #region 내부 로직
         /// <summary>
-        /// [설명]: 생명력 수치 변화를 감지하여 증가한 경우 이펙트를 재생합니다.
+        /// [설명]: 생명력 수치 변화를 감지하여 증가/감소 시 연출을 수행합니다.
         /// </summary>
         private void HandleLifeCountChanged(int current, int max)
         {
+            // [추가]: 생명력이 줄어든 경우 (피격 상황)
+            if (current < m_lastLifeCount)
+            {
+                // [설명]: 플레이어 피격 시에도 사운드 발행. (카메라 쉐이크 등은 CombatEffectPresenter를 통해 확장 가능)
+                m_eventBus?.Publish(new OnSoundRequested("Hit"));
+            }
+
             // 현재 생명력이 늘어났거나, 최대 생명력이 늘어난 경우 (하트 추가 상황)
             if (current > m_lastLifeCount || max > m_lastMaxLifeCount)
             {
@@ -109,16 +94,6 @@ namespace TowerBreakers.Player.View
 
             m_lastLifeCount = current;
             m_lastMaxLifeCount = max;
-        }
-        #endregion
-
-        #region 내부 클래스 및 구조체
-        public enum EffectType
-        {
-            HeartGain,
-            BasicHit,
-            SkillActivate,
-            LevelUp
         }
         #endregion
     }

@@ -64,6 +64,17 @@ namespace TowerBreakers.Enemy.Data
 
         [SerializeField, Tooltip("능력 시전 모션 시간")]
         private float m_abilityDuration = 0.5f;
+
+        [Header("보스 전용 설정")]
+        [SerializeField, Tooltip("보스 페이즈 전환 HP 비율 (0.0~1.0)")]
+        private float[] m_phaseThresholds = new float[] { 0.5f };
+
+        [SerializeField, Tooltip("패턴 간 대기 시간 (초)")]
+        private float m_patternDelay = 2.0f;
+
+
+        [SerializeField, Tooltip("보스 기본 공격 데미지")]
+        private int m_attackDamage = 10;
         #endregion
 
         #region 프로퍼티
@@ -89,6 +100,9 @@ namespace TowerBreakers.Enemy.Data
         public GameObject ProjectilePrefab => m_projectilePrefab;
         public float ProjectilePushDistance => m_projectilePushDistance;
         public float AbilityDuration => m_abilityDuration;
+        public float[] PhaseThresholds => m_phaseThresholds;
+        public float PatternDelay => m_patternDelay;
+        public int AttackDamage => m_attackDamage;
         #endregion
     }
 }

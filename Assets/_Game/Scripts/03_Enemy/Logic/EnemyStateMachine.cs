@@ -72,6 +72,11 @@ namespace TowerBreakers.Enemy.Logic
         {
             return m_currentState is T;
         }
+
+        /// <summary>
+        /// [설명]: 현재 상태를 반환합니다.
+        /// </summary>
+        public IEnemyState CurrentState => m_currentState;
         #endregion
     }
 }

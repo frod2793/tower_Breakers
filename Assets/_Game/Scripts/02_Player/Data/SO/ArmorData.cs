@@ -67,7 +67,17 @@ namespace TowerBreakers.Player.Data.SO
         public Sprite LeftShoulderSprite => m_leftShoulderSprite;
         public Sprite RightShoulderSprite => m_rightShoulderSprite;
         public Sprite HelmetSprite => m_helmetSprite;
-        public Sprite Icon => m_icon != null ? m_icon : m_bodyArmorSprite;
+        public Sprite Icon 
+        {
+            get
+            {
+                // 유니티 객체 세이프 체크 (?. 사용 금지)
+                if (m_icon != null) return m_icon;
+                if (m_helmetSprite != null) return m_helmetSprite;
+                if (m_bodyArmorSprite != null) return m_bodyArmorSprite;
+                return null;
+            }
+        }
         public int LifeBonus => m_lifeBonus;
         public int HealAmount => m_healAmount;
         public float PushResistance => m_pushResistance;

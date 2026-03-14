@@ -13,17 +13,19 @@ namespace TowerBreakers.Enemy.Logic
         private readonly EnemyView m_view;
         private readonly EnemyData m_data;
         private readonly EnemyPushLogic m_pushLogic;
+        private readonly EnemyController m_controller;
         #endregion
 
         #region 내부 변수
         private bool m_isMoving = false;
         #endregion
 
-        public EnemyPushState(EnemyView view, EnemyData data, EnemyPushLogic pushLogic)
+        public EnemyPushState(EnemyView view, EnemyData data, EnemyPushLogic pushLogic, EnemyController controller)
         {
             m_view = view;
             m_data = data;
             m_pushLogic = pushLogic;
+            m_controller = controller;
         }
 
         public void OnEnter()
@@ -38,7 +40,7 @@ namespace TowerBreakers.Enemy.Logic
         public void OnTick()
         {
             // [성능/리팩토링]: 중복 전진 로직을 헬퍼로 통합하고 최적화 적용
-            EnemyMovementHelper.ExecuteMovement(m_view, m_data, m_pushLogic, ref m_isMoving);
+            EnemyMovementHelper.ExecuteMovement(m_view, m_data, m_pushLogic, ref m_isMoving, m_controller);
         }
     }
 }
