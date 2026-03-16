@@ -15,8 +15,22 @@ MonoBehaviour:
   m_towerName: Standard Tower
   m_defaultGroundPrefab: {fileID: 6434753067485243638, guid: 0233600ea876243af85637dfa371794c, type: 3}
   m_floors:
-  - EnemyPrefabData: {fileID: 11400000, guid: 2acb8bc0349fa4b53a3a218c4a78ee49, type: 2}
-    EnemyCount: 1
+  - EnemyPrefabData: {fileID: 11400000, guid: fe1f598b4b9e34e4da34f5d2d05e603a, type: 2}
+    EnemyCount: 5
+    SpawnInterval: 0
+    PreSpawnEnemies: 1
+    TrainSpacing: 0.5
+    SpawnPackets: []
+    RewardTable: {fileID: 11400000, guid: dfcbf88023e6a4c919d35c0de41e28ec, type: 2}
+  - EnemyPrefabData: {fileID: 11400000, guid: fe1f598b4b9e34e4da34f5d2d05e603a, type: 2}
+    EnemyCount: 5
+    SpawnInterval: 0
+    PreSpawnEnemies: 1
+    TrainSpacing: 0.5
+    SpawnPackets: []
+    RewardTable: {fileID: 11400000, guid: dfcbf88023e6a4c919d35c0de41e28ec, type: 2}
+  - EnemyPrefabData: {fileID: 11400000, guid: fe1f598b4b9e34e4da34f5d2d05e603a, type: 2}
+    EnemyCount: 5
     SpawnInterval: 0
     PreSpawnEnemies: 1
     TrainSpacing: 0.5

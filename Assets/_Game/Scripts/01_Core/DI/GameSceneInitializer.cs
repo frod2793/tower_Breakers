@@ -16,16 +16,19 @@ namespace TowerBreakers.Core.DI
         #endregion
 
         #region 초기화 로직
-        /// <summary>
-        /// [설명]: VContainer의 Inject 속성을 통해 SceneContextDTO를 주입받습니다.
-        /// </summary>
         [Inject]
-        public void Initialize(UserSessionModel sessionModel, EquipmentViewModel equipmentViewModel, SceneContextDTO context = null)
+        public void Initialize(
+            UserSessionModel sessionModel,
+            EquipmentViewModel equipmentViewModel,
+            IObjectResolver resolver)
         {
-            if (context != null && context.Equipment != null)
+            if (resolver.TryResolve<SceneContextDTO>(out var context))
             {
-                Debug.Log("[GameSceneInitializer] 주입된 DTO로부터 세션 동기화");
-                sessionModel.UpdateEquipment(context.Equipment);
+                if (context != null && context.Equipment != null)
+                {
+                    Debug.Log("[GameSceneInitializer] 주입된 DTO로부터 세션 동기화");
+                    sessionModel.UpdateEquipment(context.Equipment);
+                }
             }
 
             // 뷰 초기화 (만약 LifetimeScope에서 직접 하지 않는 경우)

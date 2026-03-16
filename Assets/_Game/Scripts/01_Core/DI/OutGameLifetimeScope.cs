@@ -36,11 +36,8 @@ namespace TowerBreakers.Core.DI
 
         protected override void Configure(IContainerBuilder builder)
         {
-            // 0. 코어 모듈 등록 (인게임 의존성 제외, 베이스 시스템만)
+            // 0. 코어 모듈 등록 (전역 시스템은 ProjectLifetimeScope에서 상속받음)
             TowerBreakers.Core.DI.CoreDIModule.RegisterBaseSystems(builder);
-
-            // 1. 세션 모델 등록 (생성자에서 PlayerPrefs 자동 로드)
-            builder.Register<UserSessionModel>(Lifetime.Singleton);
 
             // 2. 장비 데이터베이스 및 플레이어 데이터 등록
             if (m_equipmentDatabase != null)

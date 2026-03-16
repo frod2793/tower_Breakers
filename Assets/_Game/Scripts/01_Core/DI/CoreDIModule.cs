@@ -20,12 +20,8 @@ namespace TowerBreakers.Core.DI
 
         public static void RegisterBaseSystems(IContainerBuilder builder)
         {
-            builder.Register<EventBus>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            builder.Register<CooldownSystem>(Lifetime.Singleton);
-            builder.Register<SceneLoader>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-            
-            // 씬 전환 데이터가 없는 경우를 위한 기본 DTO 등록
-            builder.Register<SceneContextDTO>(Lifetime.Singleton);
+            // [설명]: 전역 시스템(EventBus, SceneLoader 등)은 ProjectLifetimeScope에서 관리됩니다.
+            // 각 씬의 LifetimeScope는 상위 스코프의 인스턴스를 자동으로 Resolve 합니다.
         }
 
         public static void RegisterGameplaySystems(IContainerBuilder builder)

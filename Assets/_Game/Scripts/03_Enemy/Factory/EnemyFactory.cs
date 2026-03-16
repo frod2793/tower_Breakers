@@ -28,13 +28,20 @@ namespace TowerBreakers.Enemy.Factory
         #endregion
 
         [Inject]
-        public EnemyFactory(IObjectResolver resolver, Core.Events.IEventBus eventBus, ProjectileFactory projectileFactory, TowerManager towerManager, EnemyDeathEffect deathEffect)
+        public EnemyFactory(
+            IObjectResolver resolver, 
+            Core.Events.IEventBus eventBus, 
+            ProjectileFactory projectileFactory, 
+            TowerManager towerManager, 
+            EnemyDeathEffect deathEffect,
+            PlayerPushReceiver playerReceiver = null)
         {
             m_resolver = resolver;
             m_eventBus = eventBus;
             m_projectileFactory = projectileFactory;
             m_towerManager = towerManager;
             m_deathEffect = deathEffect;
+            m_playerReceiver = playerReceiver;
         }
 
         #region 초기화

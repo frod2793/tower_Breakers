@@ -11,36 +11,55 @@ namespace TowerBreakers.Core.SceneManagement
     /// </summary>
     public class SceneLoader : ISceneLoader
     {
+        #region 내부 변수
         private readonly IObjectResolver m_resolver;
+        private bool m_isTransitioning;
+        #endregion
 
-        // [설명]: VContainer의 Resolver를 주입받아 Scoping 기능을 활용합니다.
+        #region 초기화
         public SceneLoader(IObjectResolver resolver)
         {
             m_resolver = resolver;
+            m_isTransitioning = false;
+            
+            // [설명]: 전역 싱글톤으로 유지되므로, 새로운 씬이 로드되면 플래그를 초기화
+            SceneManager.sceneLoaded += (scene, mode) => m_isTransitioning = false;
         }
+        #endregion
 
+        #region 공개 API
         public void LoadScene(string sceneName, SceneContextDTO context, TransitionSettings settings = null)
         {
+            if (m_isTransitioning)
+            {
+                return;
+            }
+
             Debug.Log($"[SceneLoader] 씬 전환 시작: {sceneName}");
+            m_isTransitioning = true;
 
-            // [설명]: 다음 씬의 LifetimeScope에 데이터를 주입하기 위한 Scoping 설정
-            // VContainer의 LifetimeScope.EnqueueParent로 데이터를 전달할 수 있습니다.
-            LifetimeScope.Enqueue(builder =>
+            // [설명]: 전역 SceneContextDTO 인스턴스를 찾아 데이터를 업데이트합니다.
+            if (m_resolver.TryResolve<SceneContextDTO>(out var globalContext) && context != null)
             {
-                if (context != null)
+                globalContext.Equipment = context.Equipment;
+                // 필요한 경우 ExtraData 등도 동기화
+                foreach (var kvp in context.ExtraData)
                 {
-                    builder.RegisterInstance(context);
+                    globalContext.ExtraData[kvp.Key] = kvp.Value;
                 }
-            });
+            }
 
-            if (settings != null && TransitionManager.Instance() != null)
+            // [설명]: TransitionManager.Instance()는 없으면 내부적으로 LogError를 발생시키므로 직접 검색
+            var transitionManager = Object.FindFirstObjectByType<TransitionManager>();
+            if (settings != null && transitionManager != null)
             {
-                TransitionManager.Instance().Transition(sceneName, settings, 0f);
+                transitionManager.Transition(sceneName, settings, 0f);
             }
             else
             {
                 SceneManager.LoadScene(sceneName);
             }
         }
+        #endregion
     }
 }

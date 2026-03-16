@@ -16,6 +16,7 @@ namespace TowerBreakers.UI.Screens
         private readonly IEventBus m_eventBus;
         private readonly ISceneLoader m_sceneLoader;
         private bool m_isPaused;
+        private bool m_isExiting;
         private const string OUT_GAME_SCENE_NAME = "OutGame";
         #endregion
 
@@ -83,6 +84,13 @@ namespace TowerBreakers.UI.Screens
         /// <param name="settings">전환 효과 설정</param>
         public void ExitToOutGame(TransitionSettings settings)
         {
+            // [방어 코드]: 중복 전환 방지
+            if (m_isExiting)
+            {
+                return;
+            }
+            m_isExiting = true;
+
             // 나갈 때는 반드시 시간 배율을 정상으로 복구해야 함
             Time.timeScale = 1f;
 

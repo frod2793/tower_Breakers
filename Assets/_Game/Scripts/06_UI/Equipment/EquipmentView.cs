@@ -5,6 +5,7 @@ using TMPro;
 using System.Collections.Generic;
 using TowerBreakers.Player.Data.SO;
 using TowerBreakers.Player.View;
+using VContainer;
 
 namespace TowerBreakers.UI.Equipment
 {
@@ -51,6 +52,7 @@ namespace TowerBreakers.UI.Equipment
         /// <summary>
         /// [설명]: 리팩토링된 뷰모델을 사용하여 뷰를 초기화합니다.
         /// </summary>
+        [Inject]
         public void Initialize(EquipmentViewModel viewModel)
         {
             if (viewModel == null) return;
@@ -108,26 +110,34 @@ namespace TowerBreakers.UI.Equipment
         #region 내부 로직
         private void Refresh()
         {
-            if (m_viewModel == null) return;
-
-            if (m_slotPrefab == null || m_slotGrid == null)
+            if (m_viewModel == null)
             {
-                // [방어 코드]: 인스펙터 누락 시 자동 검색 및 로드 시도
-                if (m_slotGrid == null) m_slotGrid = transform.Find("Grid") ?? transform.Find("SlotGrid") ?? transform.Find("Viewport/Content");
-                
-                if (m_slotPrefab == null)
-                {
-                    m_slotPrefab = Resources.Load<ItemSlotView>(m_slotPrefabPath);
-                    if (m_slotPrefab != null) Debug.Log($"[EquipmentView] Resources에서 프리팹 로드 완료: {m_slotPrefabPath}");
-                }
+                return;
+            }
 
-                if (m_slotPrefab == null || m_slotGrid == null)
+            // [방어 코드]: 필수 컴포넌트 누락 시 자동 검색 및 로드
+            if (m_slotGrid == null)
+            {
+                m_slotGrid = transform.Find("Grid");
+                if (m_slotGrid == null)
                 {
-                    Debug.LogError($"[EquipmentView] 필수 컴포넌트가 할당되지 않았습니다!\n" +
-                        $"Prefab: {m_slotPrefab != null}, Grid: {m_slotGrid != null}\n" +
-                        $"해결 방법: 1. 인스펙터에서 직접 할당 | 2. Resources/{m_slotPrefabPath} 위치에 프리팹 배치 | 3. 자식 오브젝트 이름을 'Grid'로 변경");
-                    return;
+                    m_slotGrid = transform.Find("SlotGrid");
                 }
+                if (m_slotGrid == null)
+                {
+                    m_slotGrid = transform.Find("Viewport/Content");
+                }
+            }
+
+            if (m_slotPrefab == null)
+            {
+                m_slotPrefab = Resources.Load<ItemSlotView>(m_slotPrefabPath);
+            }
+
+            // 인게임 등 UI가 활성화되지 않은 환경이나 설정을 의도적으로 비워둔 경우 에러 없이 리턴
+            if (m_slotGrid == null || m_slotPrefab == null)
+            {
+                return;
             }
 
             // 기존 슬롯 제거

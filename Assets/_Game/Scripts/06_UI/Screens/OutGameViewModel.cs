@@ -14,6 +14,7 @@ namespace TowerBreakers.UI.Screens
         #region 내부 변수
         private readonly ISceneLoader m_sceneLoader;
         private readonly UserSessionModel m_sessionModel;
+        private bool m_isStarting;
         private const string IN_GAME_SCENE_NAME = "InGame";
         #endregion
 
@@ -22,6 +23,7 @@ namespace TowerBreakers.UI.Screens
         {
             m_sceneLoader = sceneLoader;
             m_sessionModel = sessionModel;
+            m_isStarting = false;
         }
         #endregion
 
@@ -33,11 +35,18 @@ namespace TowerBreakers.UI.Screens
         /// <param name="delay">트랜지션 시작 전 지연 시간</param>
         public void StartGameTransition(TransitionSettings settings, float delay = 0f)
         {
+            if (m_isStarting)
+            {
+                return;
+            }
+
             if (settings == null)
             {
                 Debug.LogError("[OutGameViewModel] TransitionSettings 가 지정되지 않았습니다.");
                 return;
             }
+
+            m_isStarting = true;
 
             // [설명]: 현재 세션의 장비 데이터를 DTO에 담아 다음 씬으로 전달 준비
             var context = new SceneContextDTO();

@@ -50,6 +50,7 @@ namespace TowerBreakers.UI.HUD
         #endregion
 
         #region 초기화 및 바인딩
+        [Inject]
         public void Initialize(HUDViewModel viewModel)
         {
             m_viewModel = viewModel;

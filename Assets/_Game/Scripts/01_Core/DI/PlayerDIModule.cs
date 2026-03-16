@@ -28,7 +28,6 @@ namespace TowerBreakers.Core.DI
                 UnityEngine.Debug.LogError("[PlayerDIModule] PlayerData가 설정되지 않았습니다!");
             }
 
-            builder.Register<TowerBreakers.Player.Data.UserSessionModel>(Lifetime.Singleton);
             builder.Register<PlayerModel>(Lifetime.Singleton);
             builder.Register<InventoryModel>(Lifetime.Singleton);
             builder.Register<PlayerStateMachine>(Lifetime.Singleton);
@@ -77,15 +76,16 @@ namespace TowerBreakers.Core.DI
                 builder.RegisterComponent(playerPushReceiver);
                 builder.RegisterBuildCallback(resolver =>
                 {
-                    var factory = resolver.Resolve<EnemyFactory>();
-                    factory.SetPlayerPushReceiver(playerPushReceiver);
-
                     var model = resolver.Resolve<PlayerModel>();
                     var eventBus = resolver.Resolve<Core.Events.IEventBus>();
                     playerPushReceiver.Initialize(model, eventBus);
 
                     UnityEngine.Debug.Log("[PlayerDIModule] PlayerPushReceiver 초기화 완료");
                 });
+            }
+            else
+            {
+                UnityEngine.Debug.LogError("[PlayerDIModule] PlayerPushReceiver가 NULL입니다! 인스펙터 할당을 확인하세요.");
             }
         }
     }

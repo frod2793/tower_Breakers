@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using EasyTransition;
 using TowerBreakers.UI.Screens;
+using VContainer;
 
 namespace TowerBreakers.UI.Screens
 {
@@ -35,6 +36,7 @@ namespace TowerBreakers.UI.Screens
         /// <summary>
         /// [설명]: 뷰모델을 주입받아 초기 상태를 설정하고 이벤트를 바인딩합니다.
         /// </summary>
+        [Inject]
         public void Initialize(InGameMenuViewModel viewModel)
         {
             m_viewModel = viewModel;

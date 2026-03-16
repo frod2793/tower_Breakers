@@ -17,12 +17,15 @@ namespace TowerBreakers.Core.DI
 
         #region 초기화 로직
         [Inject]
-        public void Initialize(UserSessionModel sessionModel, OutGameViewModel outGameVM, SceneContextDTO context = null)
+        public void Initialize(UserSessionModel sessionModel, OutGameViewModel outGameVM, IObjectResolver resolver)
         {
-            if (context != null && context.Equipment != null)
+            if (resolver.TryResolve<SceneContextDTO>(out var context))
             {
-                Debug.Log("[OutGameSceneInitializer] 주입된 DTO로부터 세션 동기화");
-                sessionModel.UpdateEquipment(context.Equipment);
+                if (context != null && context.Equipment != null)
+                {
+                    Debug.Log("[OutGameSceneInitializer] 주입된 DTO로부터 세션 동기화");
+                    sessionModel.UpdateEquipment(context.Equipment);
+                }
             }
 
             if (m_outGameView != null)

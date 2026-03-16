@@ -36,48 +36,25 @@ namespace TowerBreakers.Core.DI
             if (equipmentView != null)
             {
                 builder.RegisterComponent(equipmentView);
-                var cachedView = equipmentView;
-                builder.RegisterBuildCallback(resolver =>
-                {
-                    var vm = resolver.Resolve<EquipmentViewModel>();
-                    cachedView.Initialize(vm);
-                });
+                builder.RegisterBuildCallback(resolver => resolver.Inject(equipmentView));
             }
 
             if (hudView != null)
             {
                 builder.RegisterComponent(hudView);
-                var cachedView = hudView;
-                builder.RegisterBuildCallback(resolver =>
-                {
-                    var vm = resolver.Resolve<HUDViewModel>();
-                    cachedView.Initialize(vm);
-                    UnityEngine.Debug.Log("[UIDIModule] HUDView 초기화 완료");
-                });
+                builder.RegisterBuildCallback(resolver => resolver.Inject(hudView));
             }
 
             if (gameOverView != null)
             {
                 builder.RegisterComponent(gameOverView);
-                var cachedView = gameOverView;
-                builder.RegisterBuildCallback(resolver =>
-                {
-                    var vm = resolver.Resolve<GameOverViewModel>();
-                    cachedView.Initialize(vm);
-                    UnityEngine.Debug.Log("[UIDIModule] GameOverView 초기화 완료");
-                });
+                builder.RegisterBuildCallback(resolver => resolver.Inject(gameOverView));
             }
 
             if (inGameMenuView != null)
             {
                 builder.RegisterComponent(inGameMenuView);
-                var cachedView = inGameMenuView;
-                builder.RegisterBuildCallback(resolver =>
-                {
-                    var vm = resolver.Resolve<InGameMenuViewModel>();
-                    cachedView.Initialize(vm);
-                    UnityEngine.Debug.Log("[UIDIModule] InGameMenuView 초기화 완료");
-                });
+                builder.RegisterBuildCallback(resolver => resolver.Inject(inGameMenuView));
             }
 
             if (playerEffectView != null)
