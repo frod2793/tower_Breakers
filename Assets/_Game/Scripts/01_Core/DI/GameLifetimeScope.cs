@@ -22,6 +22,8 @@ using TowerBreakers.Interactions.Logic;
 using TowerBreakers.Sound.Data;
 using TowerBreakers.Sound.Logic;
 using TowerBreakers.Sound.View;
+using TowerBreakers.DevTools;
+using TowerBreakers.Player.Data;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -110,6 +112,10 @@ namespace TowerBreakers.Core.DI
         [Header("영속성 및 데이터베이스")]
         [SerializeField, Tooltip("장비 데이터베이스 (ID 변환용)")]
         private TowerBreakers.Player.Data.EquipmentDatabase m_equipmentDatabase;
+
+        [Header("디버그 도구")]
+        [SerializeField, Tooltip("아이템 치트 뷰")]
+        private ItemCheatView m_itemCheatView;
         #endregion
 
         protected override void Configure(IContainerBuilder builder)
@@ -127,6 +133,20 @@ namespace TowerBreakers.Core.DI
             if (m_initializer != null)
             {
                 builder.RegisterComponent(m_initializer);
+            }
+
+            builder.Register<ItemCheatModel>(Lifetime.Singleton);
+            builder.Register<ItemCheatViewModel>(Lifetime.Singleton);
+
+            if (m_itemCheatView != null)
+            {
+                builder.RegisterComponent(m_itemCheatView);
+                builder.RegisterBuildCallback(resolver =>
+                {
+                    var viewModel = resolver.Resolve<ItemCheatViewModel>();
+                    m_itemCheatView.SetViewModel(viewModel);
+                    UnityEngine.Debug.Log("[GameLifetimeScope] ItemCheatView 초기화 완료");
+                });
             }
         }
     }

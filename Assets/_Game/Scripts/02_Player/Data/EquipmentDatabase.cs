@@ -62,6 +62,24 @@ namespace TowerBreakers.Player.Data
         {
             return armor != null ? armor.name : string.Empty;
         }
+
+        /// <summary>
+        /// [설명]: 전체 무기 목록을 반환합니다.
+        /// </summary>
+        public IReadOnlyList<WeaponData> GetAllWeapons()
+        {
+            EnsureCache();
+            return m_weaponCache?.Values.ToList() ?? new List<WeaponData>();
+        }
+
+        /// <summary>
+        /// [설명]: 전체 갑주 목록을 반환합니다.
+        /// </summary>
+        public IReadOnlyList<ArmorData> GetAllArmors()
+        {
+            EnsureCache();
+            return m_armorCache?.Values.ToList() ?? new List<ArmorData>();
+        }
         #endregion
 
         #region 내부 로직

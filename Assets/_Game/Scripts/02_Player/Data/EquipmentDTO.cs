@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TowerBreakers.Player.Data
 {
@@ -56,6 +57,56 @@ namespace TowerBreakers.Player.Data
             BodyArmorId = bodyArmorId;
             OwnedWeaponIds = new List<string>();
             OwnedArmorIds = new List<string>();
+        }
+        #endregion
+
+        #region 헬퍼 메서드
+        public EquipmentDTO Clone()
+        {
+            var clone = new EquipmentDTO(WeaponId, HelmetId, BodyArmorId);
+            clone.OwnedWeaponIds = new List<string>(OwnedWeaponIds);
+            clone.OwnedArmorIds = new List<string>(OwnedArmorIds);
+            return clone;
+        }
+
+        public bool HasWeapon(string weaponId)
+        {
+            return !string.IsNullOrEmpty(weaponId) && OwnedWeaponIds.Contains(weaponId);
+        }
+
+        public bool HasArmor(string armorId)
+        {
+            return !string.IsNullOrEmpty(armorId) && OwnedArmorIds.Contains(armorId);
+        }
+
+        public void AddWeapon(string weaponId)
+        {
+            if (!string.IsNullOrEmpty(weaponId) && !OwnedWeaponIds.Contains(weaponId))
+            {
+                OwnedWeaponIds.Add(weaponId);
+            }
+        }
+
+        public void AddArmor(string armorId)
+        {
+            if (!string.IsNullOrEmpty(armorId) && !OwnedArmorIds.Contains(armorId))
+            {
+                OwnedArmorIds.Add(armorId);
+            }
+        }
+
+        public int GetTotalItemCount()
+        {
+            return OwnedWeaponIds.Count + OwnedArmorIds.Count;
+        }
+
+        public bool IsEmpty()
+        {
+            return string.IsNullOrEmpty(WeaponId) &&
+                   string.IsNullOrEmpty(HelmetId) &&
+                   string.IsNullOrEmpty(BodyArmorId) &&
+                   OwnedWeaponIds.Count == 0 &&
+                   OwnedArmorIds.Count == 0;
         }
         #endregion
     }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using TowerBreakers.Player.Data.Models;
 using TowerBreakers.Player.Data.SO;
 using TowerBreakers.Player.Data;
@@ -52,7 +53,7 @@ namespace TowerBreakers.UI.Equipment
         {
             if (inventoryModel == null || playerModel == null || sessionModel == null || database == null || playerData == null)
             {
-                UnityEngine.Debug.LogError($"[EquipmentViewModel] 필수 의존성이 누락되었습니다! (Inv: {inventoryModel != null}, Player: {playerModel != null}, Session: {sessionModel != null}, DB: {database != null}, Data: {playerData != null})");
+                Debug.LogError($"[EquipmentViewModel] 필수 의존성이 누락되었습니다! (Inv: {inventoryModel != null}, Player: {playerModel != null}, Session: {sessionModel != null}, DB: {database != null}, Data: {playerData != null})");
                 return;
             }
 
@@ -72,6 +73,13 @@ namespace TowerBreakers.UI.Equipment
             m_inventoryModel.OnSelectedWeaponChanged += (w) => OnSelectedWeaponChanged?.Invoke(w);
             m_inventoryModel.OnSelectedArmorChanged += (a) => OnSelectedArmorChanged?.Invoke(a);
             m_inventoryModel.OnEquipmentChanged += () => OnDataUpdated?.Invoke();
+            
+            // [수정]: 세션 데이터 변경 시 실시간으로 UI 갱신
+            m_sessionModel.OnEquipmentChanged += (dto) => 
+            {
+                Debug.Log($"[TRACE] 세션 데이터 변경 감지 - 무기 {dto?.OwnedWeaponIds.Count ?? 0}개, 갑주 {dto?.OwnedArmorIds.Count ?? 0}개");
+                SyncWithSession();
+            };
         }
 
         private void SyncWithSession()
@@ -79,9 +87,12 @@ namespace TowerBreakers.UI.Equipment
             var dto = m_sessionModel.CurrentEquipment;
             if (dto == null)
             {
-                UnityEngine.Debug.LogWarning("[EquipmentViewModel] 세션 데이터가 없습니다.");
+                Debug.LogWarning("[EquipmentViewModel] 세션 데이터가 없습니다.");
                 return;
             }
+
+            Debug.Log($"[TRACE] SyncWithSession: 시작 - DTO 원본: 무기 {dto.OwnedWeaponIds.Count}개, 갑주 {dto.OwnedArmorIds.Count}개");
+            Debug.Log($"[TRACE] SyncWithSession: DTO 데이터 - {JsonUtility.ToJson(dto)}");
 
             // 1. 장착 데이터 동기화
             var weapon = m_database.GetWeapon(dto.WeaponId);
@@ -90,42 +101,69 @@ namespace TowerBreakers.UI.Equipment
 
             m_inventoryModel.SyncEquipment(weapon, helmet, bodyArmor);
 
-            // 2. 보유 목록 동기화 (상세 로깅을 위해 루프 사용)
-            // [필터링]: 기본 무기(DefaultWeapon)는 상자 획득물이 아니므로 인벤토리 리스트에서 제외합니다.
+            // 2. 보유 목록 동기화 (중복 체크 강화)
             var ownedWeapons = new List<WeaponData>();
             string defaultWeaponId = m_playerData.DefaultWeapon != null ? m_database.GetWeaponId(m_playerData.DefaultWeapon) : string.Empty;
 
-            UnityEngine.Debug.Log($"[EquipmentViewModel] 무기 로드 시작 (TotalOwned: {dto.OwnedWeaponIds.Count}, Filtered Default: {defaultWeaponId})");
+            Debug.Log($"[TRACE] SyncWithSession: 무기 로드 시작 (TotalOwned: {dto.OwnedWeaponIds.Count}, Filtered Default: {defaultWeaponId})");
+            var addedWeaponIds = new HashSet<string>();
             foreach (var id in dto.OwnedWeaponIds)
             {
                 // 기본 무기 ID는 리스트업하지 않음 (사용자 요청: 상자 획득 장비만 표시)
-                if (id == defaultWeaponId) continue;
+                if (id == defaultWeaponId) 
+                {
+                    Debug.Log($"[TRACE] SyncWithSession: 무기 {id} - 기본 무기 제외됨");
+                    continue;
+                }
+
+                // 중복 체크
+                if (addedWeaponIds.Contains(id))
+                {
+                    Debug.LogWarning($"[EquipmentViewModel] 중복 무기 ID 발견: {id}");
+                    continue;
+                }
 
                 var data = m_database.GetWeapon(id);
                 if (data != null)
                 {
                     ownedWeapons.Add(data);
-                    UnityEngine.Debug.Log($"[EquipmentViewModel] 무기 소유 확인 (리스트업): {id}");
+                    addedWeaponIds.Add(id);
+                    Debug.Log($"[TRACE] SyncWithSession: 무기 추가됨: {id}");
                 }
-                else UnityEngine.Debug.LogWarning($"[EquipmentViewModel] 무기 ID 매칭 실패: {id}");
+                else Debug.LogWarning($"[TRACE] SyncWithSession: 무기 ID 매칭 실패: {id}");
             }
             
             var ownedArmors = new List<ArmorData>();
-            UnityEngine.Debug.Log($"[EquipmentViewModel] 갑주 로드 시작 (Count: {dto.OwnedArmorIds.Count})");
+            var addedArmorIds = new HashSet<string>();
+            Debug.Log($"[TRACE] SyncWithSession: 갑주 로드 시작 (Count: {dto.OwnedArmorIds.Count})");
             foreach (var id in dto.OwnedArmorIds)
             {
+                // 중복 체크
+                if (addedArmorIds.Contains(id))
+                {
+                    Debug.LogWarning($"[EquipmentViewModel] 중복 갑주 ID 발견: {id}");
+                    continue;
+                }
+
                 var data = m_database.GetArmor(id);
                 if (data != null)
                 {
                     ownedArmors.Add(data);
-                    UnityEngine.Debug.Log($"[EquipmentViewModel] 갑주 소유 확인 (리스트업): {id}");
+                    addedArmorIds.Add(id);
+                    Debug.Log($"[TRACE] SyncWithSession: 갑주 추가됨: {id}");
                 }
-                else UnityEngine.Debug.LogWarning($"[EquipmentViewModel] 갑주 ID 매칭 실패: {id}");
+                else Debug.LogWarning($"[TRACE] SyncWithSession: 갑주 ID 매칭 실패: {id}");
             }
 
             m_inventoryModel.SyncOwnedItems(ownedWeapons, ownedArmors);
             
-            UnityEngine.Debug.Log($"[EquipmentViewModel] 세션 동기화 결과: DTO(무기:{dto.OwnedWeaponIds.Count}, 갑주:{dto.OwnedArmorIds.Count}) -> 최종 리스트업(무기:{ownedWeapons.Count}, 갑주:{ownedArmors.Count})");
+            Debug.Log($"[TRACE] SyncWithSession: 완료 - 최종 리스트업: 무기 {ownedWeapons.Count}개, 갑주 {ownedArmors.Count}개");
+            Debug.Log($"[EquipmentViewModel] 세션 동기화 결과: DTO(무기:{dto.OwnedWeaponIds.Count}, 갑주:{dto.OwnedArmorIds.Count}) -> 최종 리스트업(무기:{ownedWeapons.Count}, 갑주:{ownedArmors.Count})");
+            
+            if (ownedWeapons.Count == 0 && dto.OwnedWeaponIds.Count > 0)
+            {
+                Debug.LogWarning($"[TRACE] SyncWithSession: 주의 - 보유 무기가 DTO에는 있으나 UI 리스트에서 모두 걸러졌습니다. (기본 무기 제외 로직 확인 필요)");
+            }
         }
         #endregion
 

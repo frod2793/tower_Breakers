@@ -1,6 +1,7 @@
 using System;
 using TowerBreakers.Core.Events;
 using TowerBreakers.Core.SceneManagement;
+using TowerBreakers.Player.Data;
 using UnityEngine;
 using EasyTransition;
 
@@ -15,6 +16,7 @@ namespace TowerBreakers.UI.Screens
         #region 내부 필드
         private readonly IEventBus m_eventBus;
         private readonly ISceneLoader m_sceneLoader;
+        private readonly UserSessionModel m_sessionModel;
         private bool m_isPaused;
         private bool m_isExiting;
         private const string OUT_GAME_SCENE_NAME = "OutGame";
@@ -30,10 +32,11 @@ namespace TowerBreakers.UI.Screens
         #endregion
 
         #region 초기화
-        public InGameMenuViewModel(IEventBus eventBus, ISceneLoader sceneLoader)
+        public InGameMenuViewModel(IEventBus eventBus, ISceneLoader sceneLoader, UserSessionModel sessionModel)
         {
             m_eventBus = eventBus;
             m_sceneLoader = sceneLoader;
+            m_sessionModel = sessionModel;
             m_isPaused = false;
         }
         #endregion
@@ -94,8 +97,21 @@ namespace TowerBreakers.UI.Screens
             // 나갈 때는 반드시 시간 배율을 정상으로 복구해야 함
             Time.timeScale = 1f;
 
-            // [설명]: 씬 전환 시 전달할 데이터가 없더라도 구조적 정합성을 위해 빈 컨텍스트 전달 가능
+            // [수정]: 현재 세션의 데이터를 포함하여 전달 - 데이터 유실 방지
             var context = new SceneContextDTO();
+            
+            if (m_sessionModel != null)
+            {
+                var currentEquipment = m_sessionModel.ExportDTO();
+                context.Equipment = currentEquipment;
+                Debug.Log($"[TRACE] ExitToOutGame: ExportDTO() 결과 - 무기 {currentEquipment.OwnedWeaponIds.Count}개, 갑주 {currentEquipment.OwnedArmorIds.Count}개");
+                Debug.Log($"[TRACE] ExitToOutGame: DTO 데이터 - {JsonUtility.ToJson(currentEquipment)}");
+                Debug.Log($"[InGameMenu] ExitToOutGame: 무기 {currentEquipment.OwnedWeaponIds.Count}개, 갑주 {currentEquipment.OwnedArmorIds.Count}개 전달");
+            }
+            else
+            {
+                Debug.LogWarning("[InGameMenu] UserSessionModel이 null입니다. 빈 DTO를 전달합니다.");
+            }
             
             if (m_sceneLoader != null)
             {

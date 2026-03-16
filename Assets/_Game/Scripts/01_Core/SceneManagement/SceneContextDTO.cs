@@ -1,4 +1,5 @@
 using TowerBreakers.Player.Data;
+using VContainer;
 
 namespace TowerBreakers.Core.SceneManagement
 {
@@ -14,6 +15,7 @@ namespace TowerBreakers.Core.SceneManagement
         /// </summary>
         public System.Collections.Generic.Dictionary<string, object> ExtraData { get; private set; }
 
+        [Inject]
         public SceneContextDTO()
         {
             Equipment = new EquipmentDTO();

@@ -82,8 +82,14 @@ namespace TowerBreakers.Player.Data
             if (!m_currentEquipment.OwnedWeaponIds.Contains(weaponId))
             {
                 m_currentEquipment.OwnedWeaponIds.Add(weaponId);
+                Debug.Log($"[TRACE] AddOwnedWeapon: {weaponId} 추가됨. 현재 목록: {m_currentEquipment.OwnedWeaponIds.Count}개");
                 Save();
                 Debug.Log($"<color=green>[UserSession] 신규 무기 획득 및 영속화: {weaponId}</color>");
+                Debug.Log($"[TRACE] AddOwnedWeapon: Save() 완료. 직렬화 데이터: {JsonUtility.ToJson(m_currentEquipment)}");
+            }
+            else
+            {
+                Debug.Log($"[TRACE] AddOwnedWeapon: {weaponId}은(는) 이미 보유 중. 목록 크기: {m_currentEquipment.OwnedWeaponIds.Count}");
             }
         }
 
@@ -99,8 +105,14 @@ namespace TowerBreakers.Player.Data
             if (!m_currentEquipment.OwnedArmorIds.Contains(armorId))
             {
                 m_currentEquipment.OwnedArmorIds.Add(armorId);
+                Debug.Log($"[TRACE] AddOwnedArmor: {armorId} 추가됨. 현재 목록: {m_currentEquipment.OwnedArmorIds.Count}개");
                 Save();
                 Debug.Log($"<color=green>[UserSession] 신규 갑주 획득 및 영속화: {armorId}</color>");
+                Debug.Log($"[TRACE] AddOwnedArmor: Save() 완료. 직렬화 데이터: {JsonUtility.ToJson(m_currentEquipment)}");
+            }
+            else
+            {
+                Debug.Log($"[TRACE] AddOwnedArmor: {armorId}은(는) 이미 보유 중. 목록 크기: {m_currentEquipment.OwnedArmorIds.Count}");
             }
         }
 
@@ -124,6 +136,36 @@ namespace TowerBreakers.Player.Data
             m_currentEquipment.OwnedArmorIds.Clear();
             Save();
             Debug.Log("<color=yellow>[UserSession] 보유 갑주 목록 초기화 완료</color>");
+        }
+
+        /// <summary>
+        /// [설명]: 현재 상태를 순수 DTO로 추출합니다. 외부에서 데이터를 읽을 때 사용합니다.
+        /// </summary>
+        /// <returns>현재 장비 데이터의 복사본</returns>
+        public EquipmentDTO ExportDTO()
+        {
+            if (m_currentEquipment == null)
+            {
+                return new EquipmentDTO();
+            }
+            return m_currentEquipment.Clone();
+        }
+
+        /// <summary>
+        /// [설명]: 외부 DTO로부터 상태를 복원하고 영속화합니다. 씬 전환 시 데이터 동기화에 사용됩니다.
+        /// </summary>
+        /// <param name="dto">복원할 장비 데이터</param>
+        public void ImportDTO(EquipmentDTO dto)
+        {
+            if (dto == null)
+            {
+                Debug.LogWarning("[UserSession] ImportDTO: 전달된 DTO가 null입니다. 작업을 건너뜁니다.");
+                return;
+            }
+
+            Debug.Log($"[UserSession] ImportDTO: 무기 {dto.OwnedWeaponIds.Count}개, 갑주 {dto.OwnedArmorIds.Count}개");
+            CurrentEquipment = dto.Clone();
+            Save();
         }
         #endregion
 

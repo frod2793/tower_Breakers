@@ -1162,6 +1162,7 @@ GameObject:
   m_Component:
   - component: {fileID: 587391125}
   - component: {fileID: 587391126}
+  - component: {fileID: 587391127}
   m_Layer: 0
   m_Name: '[ - PlayerDebugger - ]'
   m_TagString: Untagged
@@ -1197,6 +1198,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Logic.PlayerDebugger
   m_enableFrameDropLogs: 0
+--- !u!114 &587391127
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 587391124}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2608b13be4963224badc81c54f16b25e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.DevTools.ItemCheatView
+  m_showOnKeyPress: 1
+  m_toggleKey: 283
 --- !u!1 &587861310
 GameObject:
   m_ObjectHideFlags: 0
@@ -1656,6 +1671,7 @@ MonoBehaviour:
   m_soundDatabase: {fileID: 11400000, guid: 853dab533330e402c98a1281398e68a5, type: 2}
   m_soundPlayer: {fileID: 287968064}
   m_equipmentDatabase: {fileID: 11400000, guid: 2afa5feb30a554b318313d4426c45952, type: 2}
+  m_itemCheatView: {fileID: 587391127}
 --- !u!114 &845722666
 MonoBehaviour:
   m_ObjectHideFlags: 0
