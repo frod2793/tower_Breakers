@@ -1649,6 +1649,7 @@ MonoBehaviour:
   m_gameOverView: {fileID: 1501953937}
   m_inGameMenuView: {fileID: 1730834151}
   m_towerTransitionPresenter: {fileID: 350700109}
+  m_initializer: {fileID: 1778195480}
   m_damageTextPrefab: {fileID: 1793672500987242818, guid: 203755e9106ee42aea488e3072cea960, type: 3}
   m_damageTextParent: {fileID: 1768410531}
   m_rewardTable: {fileID: 11400000, guid: dfcbf88023e6a4c919d35c0de41e28ec, type: 2}
@@ -3553,6 +3554,7 @@ MonoBehaviour:
   m_armorTabButton: {fileID: 0}
   m_slotGrid: {fileID: 0}
   m_slotPrefab: {fileID: 0}
+  m_slotPrefabPath: Prefabs/itemSlot
   m_saveButton: {fileID: 0}
   m_playerPreview: {fileID: 1442287382}
 --- !u!114 &1730834151
@@ -3922,6 +3924,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1776886051}
   m_CullTransparentMesh: 1
+--- !u!1 &1778195478
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1778195479}
+  - component: {fileID: 1778195480}
+  m_Layer: 0
+  m_Name: ' GameSceneInitializer'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1778195479
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1778195478}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1796424546}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1778195480
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1778195478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dde78175a2469384e9a6d6c6e957379e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Core.DI.GameSceneInitializer
+  m_equipmentView: {fileID: 1730834150}
 --- !u!1 &1785980235
 GameObject:
   m_ObjectHideFlags: 0
@@ -3999,6 +4046,7 @@ Transform:
   - {fileID: 1817759401}
   - {fileID: 287968062}
   - {fileID: 1977087379}
+  - {fileID: 1778195479}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1817759400
@@ -4671,6 +4719,7 @@ MonoBehaviour:
   m_explosionForce: 5
   m_upwardBias: 1.5
   m_torqueForce: 360
+  m_fadeDelay: 0.5
   m_fadeDuration: 1
 --- !u!1 &1984525395
 GameObject:

@@ -1,5 +1,7 @@
 using UnityEngine;
 using EasyTransition;
+using TowerBreakers.Core.SceneManagement;
+using TowerBreakers.Player.Data;
 
 namespace TowerBreakers.UI.Screens
 {
@@ -10,7 +12,17 @@ namespace TowerBreakers.UI.Screens
     public class OutGameViewModel
     {
         #region 내부 변수
+        private readonly ISceneLoader m_sceneLoader;
+        private readonly UserSessionModel m_sessionModel;
         private const string IN_GAME_SCENE_NAME = "InGame";
+        #endregion
+
+        #region 초기화
+        public OutGameViewModel(ISceneLoader sceneLoader, UserSessionModel sessionModel)
+        {
+            m_sceneLoader = sceneLoader;
+            m_sessionModel = sessionModel;
+        }
         #endregion
 
         #region 공개 메서드
@@ -27,14 +39,22 @@ namespace TowerBreakers.UI.Screens
                 return;
             }
 
-            // EasyTransitions 매니저를 통해 씬 로드
-            if (TransitionManager.Instance() != null)
+            // [설명]: 현재 세션의 장비 데이터를 DTO에 담아 다음 씬으로 전달 준비
+            var context = new SceneContextDTO();
+            if (m_sessionModel != null)
             {
-                TransitionManager.Instance().Transition(IN_GAME_SCENE_NAME, settings, delay);
+                context.Equipment = m_sessionModel.CurrentEquipment;
+            }
+
+            // [설명]: 명시적으로 정의된 SceneLoader를 통해 데이터와 함께 씬 전환
+            if (m_sceneLoader != null)
+            {
+                m_sceneLoader.LoadScene(IN_GAME_SCENE_NAME, context, settings);
             }
             else
             {
-                Debug.LogError("[OutGameViewModel] TransitionManager 인스턴스를 찾을 수 없습니다.");
+                // 폴백: 직접 씬 로드
+                UnityEngine.SceneManagement.SceneManager.LoadScene(IN_GAME_SCENE_NAME);
             }
         }
         #endregion

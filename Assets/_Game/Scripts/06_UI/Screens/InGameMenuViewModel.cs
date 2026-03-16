@@ -1,5 +1,6 @@
 using System;
 using TowerBreakers.Core.Events;
+using TowerBreakers.Core.SceneManagement;
 using UnityEngine;
 using EasyTransition;
 
@@ -13,6 +14,7 @@ namespace TowerBreakers.UI.Screens
     {
         #region 내부 필드
         private readonly IEventBus m_eventBus;
+        private readonly ISceneLoader m_sceneLoader;
         private bool m_isPaused;
         private const string OUT_GAME_SCENE_NAME = "OutGame";
         #endregion
@@ -27,9 +29,10 @@ namespace TowerBreakers.UI.Screens
         #endregion
 
         #region 초기화
-        public InGameMenuViewModel(IEventBus eventBus)
+        public InGameMenuViewModel(IEventBus eventBus, ISceneLoader sceneLoader)
         {
             m_eventBus = eventBus;
+            m_sceneLoader = sceneLoader;
             m_isPaused = false;
         }
         #endregion
@@ -83,9 +86,12 @@ namespace TowerBreakers.UI.Screens
             // 나갈 때는 반드시 시간 배율을 정상으로 복구해야 함
             Time.timeScale = 1f;
 
-            if (TransitionManager.Instance() != null && settings != null)
+            // [설명]: 씬 전환 시 전달할 데이터가 없더라도 구조적 정합성을 위해 빈 컨텍스트 전달 가능
+            var context = new SceneContextDTO();
+            
+            if (m_sceneLoader != null)
             {
-                TransitionManager.Instance().Transition(OUT_GAME_SCENE_NAME, settings, 0f);
+                m_sceneLoader.LoadScene(OUT_GAME_SCENE_NAME, context, settings);
             }
             else
             {

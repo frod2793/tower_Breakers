@@ -85,6 +85,10 @@ namespace TowerBreakers.Core.DI
         [SerializeField, Tooltip("층 전환 연출 프리젠터")]
         private TowerBreakers.Tower.View.TowerTransitionPresenter m_towerTransitionPresenter;
 
+        [Header("씬 초기화")]
+        [SerializeField, Tooltip("게임 씬 초기화 컴포넌트")]
+        private GameSceneInitializer m_initializer;
+
         [Header("데미지 텍스트 설정")]
         [SerializeField, Tooltip("데미지 텍스트 프리팹 (DamageTextView)")]
         private DamageTextView m_damageTextPrefab;
@@ -119,6 +123,11 @@ namespace TowerBreakers.Core.DI
             UIDIModule.Register(builder, m_hudView, m_gameOverView, m_equipmentView, m_inGameMenuView, m_damageTextPrefab, m_damageTextParent, m_playerEffectView, m_towerTransitionPresenter);
             RewardDIModule.Register(builder, m_rewardTable);
             SoundDIModule.Register(builder, m_soundDatabase, m_soundPlayer);
+
+            if (m_initializer != null)
+            {
+                builder.RegisterComponent(m_initializer);
+            }
         }
     }
 }
