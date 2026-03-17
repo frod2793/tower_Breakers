@@ -1440,11 +1440,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2759179381390659625}
   - component: {fileID: 92938023494105849}
-  - component: {fileID: 1681051715039891081}
-  - component: {fileID: 918849703062042101}
   - component: {fileID: 903858773943774178}
-  - component: {fileID: 1368872064849949509}
-  - component: {fileID: 8095010504269499413}
+  - component: {fileID: 4335210533593278346}
+  - component: {fileID: 8297276178084552577}
   m_Layer: 9
   m_Name: player
   m_TagString: Player
@@ -4583,37 +4581,6 @@ MonoBehaviour:
   - {fileID: 7400000, guid: 4c70df3312bb83346a1bf065b30d3467, type: 2}
   - {fileID: 7400000, guid: 1ef525d53ae254f7d82ef364ced85490, type: 2}
   - {fileID: 7400000, guid: fabe4f140fdb9cb448bc941c7c93e8b6, type: 2}
---- !u!114 &1681051715039891081
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2259016813592298886}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 287d34be5f7c54f50b9f1518a51f1ee0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.View.PlayerView
-  m_spumPrefabs: {fileID: 92938023494105849}
-  m_afterImage: {fileID: 8095010504269499413}
---- !u!114 &918849703062042101
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2259016813592298886}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d4bce0f510d5c454b8b04eaf608e40f6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Logic.PlayerPushReceiver
-  m_useCameraBounds: 1
-  m_leftWallXThreshold: -2.5
-  m_screenEdgeOffset: 0.5
-  m_backflipThresholdX: 4
-  m_isClampingEnabled: 1
 --- !u!70 &903858773943774178
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -4651,7 +4618,7 @@ CapsuleCollider2D:
   m_Offset: {x: -0, y: 0.30632037}
   m_Size: {x: 0.5, y: 0.7492751}
   m_Direction: 0
---- !u!114 &1368872064849949509
+--- !u!114 &4335210533593278346
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4660,12 +4627,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 2259016813592298886}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 13104b664ab1642b28089b91d7a485cb, type: 3}
+  m_Script: {fileID: 11500000, guid: 49b70c24231724da58b609728c7bc137, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.View.PlayerProjectileFactory
-  m_missilePoolSize: 10
-  m_slashPoolSize: 5
---- !u!114 &8095010504269499413
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Controller.PlayerAttackController
+  m_attackRange: 2
+  m_attackCooldown: 1
+  m_attackPoint: {fileID: 0}
+--- !u!114 &8297276178084552577
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4674,14 +4642,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 2259016813592298886}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: de6ba1c692c704c91944ecd27ad4d5a9, type: 3}
+  m_Script: {fileID: 11500000, guid: 158070d5e7a8c42f1a2f5fa06c723f81, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.View.AfterimageEffect
-  m_afterimageColor: {r: 0.3254717, g: 0.9002584, b: 1, a: 0.4}
-  m_spawnInterval: 0.05
-  m_fadeDuration: 0.3
-  m_overrideSortingOrder: 1
-  m_sortingOrderOverrideValue: 10
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Controller.PlayerPushReceiver
+  m_resistance: 0.5
+  m_leftWallX: -8
+  m_damagePerHit: 1
+  m_damageCooldown: 1
+  m_currentHealth: 0
+  m_lastDamageTime: 0
 --- !u!1 &2333811413061753725
 GameObject:
   m_ObjectHideFlags: 0

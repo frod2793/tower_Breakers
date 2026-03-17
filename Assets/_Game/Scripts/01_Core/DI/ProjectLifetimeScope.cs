@@ -1,51 +1,39 @@
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
-using TowerBreakers.Core;
-using TowerBreakers.Core.Events;
 using TowerBreakers.Player.Data;
-using TowerBreakers.Core.SceneManagement;
-using TowerBreakers.Sound.Data;
-using TowerBreakers.Sound.Logic;
-using TowerBreakers.Sound.View;
+using TowerBreakers.Player.Model;
+using TowerBreakers.Player.Service;
 
-/// <summary>
-/// [설명]: 어플리케이션 전역에서 유지되어야 하는 의존성을 관리하는 LifetimeScope입니다.
-/// </summary>
-public class ProjectLifetimeScope : LifetimeScope
+namespace TowerBreakers.Core.DI
 {
-    #region 에디터 설정
-    [Header("전역 사운드 시스템")]
-    [SerializeField, Tooltip("전역 사운드 데이터베이스")]
-    private SoundDatabase m_soundDatabase;
-
-    [SerializeField, Tooltip("전역 사운드 플레이어")]
-    private SoundPlayer m_soundPlayer;
-    #endregion
-
-    protected override void Configure(IContainerBuilder builder)
+    /// <summary>
+    /// [기능]: 프로젝트 전역 의존성 주입 컨테이너
+    /// </summary>
+    public class ProjectLifetimeScope : LifetimeScope
     {
-        // 1. 코어 엔진 시스템
-        builder.Register<EventBus>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-        builder.Register<CooldownSystem>(Lifetime.Singleton).AsSelf();
-        builder.Register<SceneLoader>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
+        #region 에디터 설정
+        [SerializeField, Tooltip("장비 데이터베이스 에셋")]
+        private EquipmentDatabase m_equipmentDatabase;
+        #endregion
 
-        // 2. 사용자 세션 및 데이터 관리
-        builder.Register<UserSessionModel>(Lifetime.Singleton).AsSelf();
-        builder.Register<SceneContextDTO>(Lifetime.Singleton).AsSelf();
-
-        // 3. 전역 사운드 시스템 구성
-        if (m_soundDatabase != null && m_soundPlayer != null)
+        protected override void Configure(IContainerBuilder builder)
         {
-            builder.RegisterInstance(m_soundDatabase);
-            builder.RegisterComponent(m_soundPlayer);
-            builder.Register<SoundPresenter>(Lifetime.Singleton).AsSelf();
+            // 데이터 모델 등록
+            builder.Register<UserSessionModel>(Lifetime.Singleton);
 
-            builder.RegisterBuildCallback(resolver =>
+            // 데이터베이스 인스턴스 등록
+            if (m_equipmentDatabase != null)
             {
-                resolver.Resolve<SoundPresenter>();
-                Debug.Log("[ProjectLifetimeScope] 글로벌 시스템 초기화 완료");
-            });
+                builder.RegisterInstance(m_equipmentDatabase);
+            }
+            else
+            {
+                Debug.LogWarning("[ProjectLifetimeScope] EquipmentDatabase가 할당되지 않았습니다.");
+            }
+
+            // 서비스 등록
+            builder.Register<IEquipmentService, EquipmentService>(Lifetime.Singleton);
         }
     }
 }

@@ -12,14 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56484429a50c048d484b1f335ba1fb13, type: 3}
   m_Name: EquipmentDatabase
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Data.EquipmentDatabase
-  m_weapons:
-  - {fileID: 11400000, guid: f78534727b3144307b9bdee98f54f68f, type: 2}
-  - {fileID: 11400000, guid: 846a2e48d315843d5963a152435bf8df, type: 2}
-  - {fileID: 11400000, guid: 9323f696b6008425d8de16c56d618e12, type: 2}
-  m_armors:
-  - {fileID: 11400000, guid: 99c0c193dec94474bad91fdd1aaf11ef, type: 2}
-  - {fileID: 11400000, guid: 66a28ecbff939450c90b3eea9ff9f14f, type: 2}
-  - {fileID: 11400000, guid: ca722318c12ef434ca519d38f1fa7734, type: 2}
-  - {fileID: 11400000, guid: ba8ed8f55734f4a67a29656151390e04, type: 2}
-  - {fileID: 11400000, guid: 0dc15631df1fe48efa1db267109a1c27, type: 2}
-  - {fileID: 11400000, guid: adb116af32c5a4bb490036405bc622b8, type: 2}
+  m_weapons: []
+  m_armors: []
+  m_helmets: []

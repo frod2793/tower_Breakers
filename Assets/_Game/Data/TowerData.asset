@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8df8bad6d25614036a324719cd92f838, type: 3}
+  m_Name: TowerData
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Data.TowerData
+  m_towerName: 
+  m_description: 
+  m_floors:
+  - {fileID: 11400000, guid: d53e62434e93346538019bb552030e9c, type: 2}
+  - {fileID: 11400000, guid: 865a213c64f6f4bf89263a1cf6f79063, type: 2}
+  - {fileID: 11400000, guid: 3bd436651d4eb4d5593c534d62326abb, type: 2}
+  - {fileID: 11400000, guid: 742a673b9a7854f0595ff9156c536252, type: 2}
+  - {fileID: 11400000, guid: b26bdace7181b4770a3c5cc642ca657d, type: 2}
+  - {fileID: 11400000, guid: 5948d5884317c488ea65a99602887cfd, type: 2}
+  m_startFloor: 1

@@ -1,111 +1,124 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TowerBreakers.Player.Data.SO;
-using System;
+using TMPro;
+using DG.Tweening;
+using TowerBreakers.Player.Data;
 
 namespace TowerBreakers.UI.Equipment
 {
     /// <summary>
-    /// [설명]: 인벤토리의 개별 장비 슬롯을 관리하는 뷰 클래스입니다.
-    /// 사용자의 요청에 따라 아이콘과 장착 버튼만 포함하도록 간소화되었습니다.
+    /// [기능]: 아이템 슬릿 UI 뷰
     /// </summary>
     public class ItemSlotView : MonoBehaviour
     {
-        #region 에디터 설정
-        [SerializeField, Tooltip("장비 아이콘 이미지")]
-        private Image m_iconImage;
+        [Header("UI 컴포넌트")]
+        [Tooltip("아이템 이미지")]
+        [SerializeField] private Image m_itemImage;
 
-        [SerializeField, Tooltip("슬롯/장착 버튼")]
-        private Button m_slotButton;
+        [Tooltip("아이템 이름 텍스트")]
+        [SerializeField] private TextMeshProUGUI m_itemNameText;
 
-        [SerializeField, Tooltip("장착 중 표시 오브젝트")]
-        private GameObject m_equippedMark;
-        #endregion
+        [Tooltip("장착 상태 텍스트")]
+        [SerializeField] private TextMeshProUGUI m_equippedText;
 
-        #region 내부 변수
-        private WeaponData m_weaponData;
-        private ArmorData m_armorData;
-        private Action<WeaponData> m_onWeaponClicked;
-        private Action<ArmorData> m_onArmorClicked;
-        #endregion
+        [Tooltip("스탯 요약 텍스트")]
+        [SerializeField] private TextMeshProUGUI m_statSummaryText;
 
-        #region 초기화
-        /// <summary>
-        /// [설명]: 슬롯의 무기 데이터와 콜백을 설정합니다.
-        /// </summary>
-        public void SetWeaponSlot(WeaponData data, Action<WeaponData> onClicked)
+        [Tooltip("등급 표시 이미지")]
+        [SerializeField] private Image m_gradeBadge;
+
+        [Header("설정")]
+        [Tooltip("등급별 색상")]
+        [SerializeField] private Color[] m_gradeColors;
+
+        private ItemSlotViewModel m_viewModel;
+
+        public void Initialize(ItemSlotViewModel viewModel)
         {
-            if (data == null) return;
+            m_viewModel = viewModel;
+            UpdateUI();
+        }
 
-            m_weaponData = data;
-            m_armorData = null;
-            m_onWeaponClicked = onClicked;
-
-            if (m_iconImage != null)
+        private void UpdateUI()
+        {
+            if (m_viewModel == null)
             {
-                m_iconImage.sprite = data.Icon;
+                return;
             }
 
-            if (m_slotButton != null)
+            if (m_itemNameText != null)
             {
-                m_slotButton.onClick.RemoveAllListeners();
-                m_slotButton.onClick.AddListener(() => m_onWeaponClicked?.Invoke(m_weaponData));
+                m_itemNameText.text = m_viewModel.ItemName;
+            }
+
+            if (m_equippedText != null)
+            {
+                m_equippedText.text = m_viewModel.IsEquipped ? "장착중" : string.Empty;
+                m_equippedText.gameObject.SetActive(m_viewModel.IsEquipped);
+            }
+
+            if (m_statSummaryText != null)
+            {
+                m_statSummaryText.text = m_viewModel.GetStatSummary();
+            }
+
+            if (m_gradeBadge != null && m_gradeColors != null && m_gradeColors.Length > m_viewModel.Grade)
+            {
+                m_gradeBadge.color = m_gradeColors[m_viewModel.Grade];
+            }
+
+            UpdateItemImage();
+        }
+
+        private void UpdateItemImage()
+        {
+            if (m_itemImage != null)
+            {
+                var sprite = LoadItemSprite(m_viewModel.SpumSpriteId);
+                m_itemImage.sprite = sprite;
+                m_itemImage.gameObject.SetActive(sprite != null);
             }
         }
 
-        /// <summary>
-        /// [설명]: 슬롯의 갑주 데이터와 콜백을 설정합니다.
-        /// </summary>
-        public void SetArmorSlot(ArmorData data, Action<ArmorData> onClicked)
+        private Sprite LoadItemSprite(string spriteId)
         {
-            if (data == null) return;
-
-            m_armorData = data;
-            m_weaponData = null;
-            m_onArmorClicked = onClicked;
-
-            if (m_iconImage != null)
+            if (string.IsNullOrEmpty(spriteId))
             {
-                m_iconImage.sprite = data.Icon;
+                return null;
             }
 
-            if (m_slotButton != null)
+            return Resources.Load<Sprite>($"Items/{spriteId}");
+        }
+
+        public void OnSlotClicked()
+        {
+            if (m_viewModel == null)
             {
-                m_slotButton.onClick.RemoveAllListeners();
-                m_slotButton.onClick.AddListener(() => m_onArmorClicked?.Invoke(m_armorData));
+                return;
+            }
+
+            m_viewModel.Equip();
+            PlayClickAnimation();
+        }
+
+        private void PlayClickAnimation()
+        {
+            if (transform != null)
+            {
+                transform.DOKill();
+                transform.DOScale(0.9f, 0.1f)
+                    .SetEase(Ease.OutQuad)
+                    .OnComplete(() =>
+                    {
+                        transform.DOScale(1f, 0.1f)
+                            .SetEase(Ease.InQuad);
+                    });
             }
         }
-        #endregion
 
-        #region 상태 업데이트
-        /// <summary>
-        /// [설명]: 현재 슬롯의 장착 상태 시각화를 갱신합니다.
-        /// </summary>
-        public void UpdateEquippedState(WeaponData equippedWeapon, ArmorData equippedHelmet, ArmorData equippedBodyArmor)
+        private void OnDestroy()
         {
-            bool isEquipped = false;
-
-            if (m_weaponData != null)
-            {
-                isEquipped = m_weaponData == equippedWeapon;
-            }
-            else if (m_armorData != null)
-            {
-                if (m_armorData.Category == ArmorCategory.Helmet)
-                {
-                    isEquipped = m_armorData == equippedHelmet;
-                }
-                else
-                {
-                    isEquipped = m_armorData == equippedBodyArmor;
-                }
-            }
-
-            if (m_equippedMark != null)
-            {
-                m_equippedMark.SetActive(isEquipped);
-            }
+            transform.DOKill();
         }
-        #endregion
     }
 }

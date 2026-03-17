@@ -359,12 +359,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 5153100436983057892}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 335f5c72644004169ac8b73ae629cad3, type: 3}
+  m_Script: {fileID: 11500000, guid: ddf34dccb7a0d480d9906b979045c937, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.UI.Equipment.ItemSlotView
-  m_iconImage: {fileID: 2149649420303745452}
-  m_slotButton: {fileID: 3819806872092148388}
-  m_equippedMark: {fileID: 1257792948664242912}
+  m_itemImage: {fileID: 2149649420303745452}
+  m_itemNameText: {fileID: 0}
+  m_equippedText: {fileID: 5962845214370320462}
+  m_statSummaryText: {fileID: 0}
+  m_gradeBadge: {fileID: 0}
+  m_gradeColors: []
 --- !u!1 &7881364241479611026
 GameObject:
   m_ObjectHideFlags: 0

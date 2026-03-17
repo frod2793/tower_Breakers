@@ -3310,11 +3310,10 @@ GameObject:
   m_Component:
   - component: {fileID: 2450905275811625565}
   - component: {fileID: 1062093783691750256}
-  - component: {fileID: 3325913374216392224}
-  - component: {fileID: 937473926098505345}
-  - component: {fileID: 2057661867462243581}
   - component: {fileID: 2282247759135278491}
   - component: {fileID: 2743128493557396364}
+  - component: {fileID: 4560258531452196394}
+  - component: {fileID: 4745266333104816325}
   m_Layer: 7
   m_Name: skull
   m_TagString: Enemy
@@ -6283,43 +6282,6 @@ MonoBehaviour:
   - {fileID: 7400000, guid: 4c70df3312bb83346a1bf065b30d3467, type: 2}
   - {fileID: 7400000, guid: 1ef525d53ae254f7d82ef364ced85490, type: 2}
   - {fileID: 7400000, guid: fabe4f140fdb9cb448bc941c7c93e8b6, type: 2}
---- !u!114 &3325913374216392224
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7359377293411260106}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c7e2675c859a4b5bbf5ceabbe52bbca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.View.EnemyView
-  m_spumPrefabs: {fileID: 1062093783691750256}
---- !u!114 &937473926098505345
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7359377293411260106}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 64513172cf01546c8816059ecc4c3d75, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Logic.EnemyPushLogic
---- !u!114 &2057661867462243581
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7359377293411260106}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9db7404a231704dd5b07e8afd3dcae10, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Logic.EnemyController
 --- !u!70 &2282247759135278491
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -6365,7 +6327,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7359377293411260106}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -6384,6 +6346,37 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &4560258531452196394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7359377293411260106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eaaac2598ede94d8cbb91ca2601135f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Service.EnemyController
+  m_data: {fileID: 11400000, guid: 689fef021d5e04f0aa6b3dbe4ac6b5e5, type: 2}
+  m_currentHealth: 0
+--- !u!114 &4745266333104816325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7359377293411260106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29d77f667d9cc41f799437d3fb20a45d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Service.EnemyPushController
+  m_moveSpeed: 2
+  m_pushForce: 5
+  m_pushRange: 1.5
+  m_playerTag: Player
+  m_enemyData: {fileID: 11400000, guid: 689fef021d5e04f0aa6b3dbe4ac6b5e5, type: 2}
 --- !u!1 &7382781275474857725
 GameObject:
   m_ObjectHideFlags: 0
