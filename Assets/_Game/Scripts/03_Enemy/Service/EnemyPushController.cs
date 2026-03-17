@@ -90,7 +90,7 @@ namespace TowerBreakers.Tower.Service
 
             if (m_followTarget != null)
             {
-                targetX = m_followTarget.position.x - m_trainSpacing;
+                targetX = m_followTarget.position.x + m_trainSpacing;
             }
             else
             {
@@ -100,16 +100,16 @@ namespace TowerBreakers.Tower.Service
                     var frontEnemy = m_trainFormation[myIndexInFormation - 1];
                     if (frontEnemy != null)
                     {
-                        targetX = frontEnemy.transform.position.x - m_trainSpacing;
+                        targetX = frontEnemy.transform.position.x + m_trainSpacing;
                     }
                     else
                     {
-                        targetX = transform.position.x - 10f;
+                        targetX = GetSafeTargetX();
                     }
                 }
                 else
                 {
-                    targetX = transform.position.x - 10f;
+                    targetX = GetSafeTargetX();
                 }
             }
 
@@ -129,6 +129,16 @@ namespace TowerBreakers.Tower.Service
             );
         }
 
+        private float GetSafeTargetX()
+        {
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                return player.transform.position.x + 2f;
+            }
+            return transform.position.x;
+        }
+
         private void PushPlayer()
         {
             var colliders = Physics2D.OverlapCircleAll(transform.position, m_pushRange);
@@ -141,6 +151,7 @@ namespace TowerBreakers.Tower.Service
                     if (pushReceiver != null)
                     {
                         Vector2 pushDirection = (collider.transform.position - transform.position).normalized;
+                        pushDirection.y = 0; // Y축 이동 방지
                         pushReceiver.Push(pushDirection * m_pushForce);
                     }
                 }

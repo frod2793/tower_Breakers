@@ -5,7 +5,7 @@ using TowerBreakers.Tower.Data;
 namespace TowerBreakers.Tower.Service
 {
     /// <summary>
-    /// [기능]: 적 컨트롤러 (적 프리팹에 부착)
+    /// [기능]: 적 컨트롤러 (일반 몹, 엘리트 전용)
     /// </summary>
     public class EnemyController : MonoBehaviour, IEnemyController
     {
@@ -15,11 +15,28 @@ namespace TowerBreakers.Tower.Service
         [Header("현재 스탯")]
         [SerializeField] private float m_currentHealth;
 
+        [Header("애니메이션")]
+        [Tooltip("SPUM 프리팹 (자동으로 자식에서 찾음)")]
+        [SerializeField] private SPUM_Prefabs m_spumPrefabs;
+
         public event Action<GameObject> OnDeath;
 
         public float CurrentHealth => m_currentHealth;
         public float MaxHealth => m_data != null ? m_data.Health : 0f;
         public float Attack => m_data != null ? m_data.Attack : 0f;
+
+        private void Awake()
+        {
+            if (m_spumPrefabs == null)
+            {
+                m_spumPrefabs = GetComponentInChildren<SPUM_Prefabs>();
+            }
+
+            if (m_spumPrefabs == null)
+            {
+                m_spumPrefabs = transform.GetChild(0).GetComponent<SPUM_Prefabs>();
+            }
+        }
 
         public void Initialize(EnemyData data)
         {
@@ -59,15 +76,21 @@ namespace TowerBreakers.Tower.Service
         /// </summary>
         public void SyncAnimation()
         {
-            // [설명]: SPUM 프리팹 내부의 Animator를 찾습니다.
-            var animator = GetComponentInChildren<Animator>();
-            if (animator != null)
+            if (m_spumPrefabs != null)
             {
-                // 현재 재생 중인 모든 레이어의 애니메이션을 0프레임부터 다시 재생
-                for (int i = 0; i < animator.layerCount; i++)
+                m_spumPrefabs._anim.Rebind();
+                m_spumPrefabs._anim.Play(0, 0, 0f);
+            }
+            else
+            {
+                var animator = GetComponentInChildren<Animator>();
+                if (animator != null)
                 {
-                    var stateInfo = animator.GetCurrentAnimatorStateInfo(i);
-                    animator.Play(stateInfo.fullPathHash, i, 0f);
+                    for (int i = 0; i < animator.layerCount; i++)
+                    {
+                        var stateInfo = animator.GetCurrentAnimatorStateInfo(i);
+                        animator.Play(stateInfo.fullPathHash, i, 0f);
+                    }
                 }
             }
         }

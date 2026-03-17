@@ -13,6 +13,7 @@ namespace TowerBreakers.Tower.Service
     {
         private readonly Transform[] m_spawnPoints;
         private readonly GameObject m_enemyPrefab;
+        private float m_spawnYOffset;
 
         private Transform m_parentTransform;
         
@@ -23,11 +24,12 @@ namespace TowerBreakers.Tower.Service
 
         public int SpawnedEnemyCount => m_normalEnemies.Count + m_eliteEnemies.Count + m_bossEnemies.Count;
 
-        public EnemySpawnService(GameObject enemyPrefab, Transform[] spawnPoints, Transform parentTransform)
+        public EnemySpawnService(GameObject enemyPrefab, Transform[] spawnPoints, Transform parentTransform, float spawnYOffset = 0f)
         {
             m_enemyPrefab = enemyPrefab;
             m_spawnPoints = spawnPoints;
             m_parentTransform = parentTransform;
+            m_spawnYOffset = spawnYOffset;
         }
 
         /// <summary>
@@ -42,6 +44,11 @@ namespace TowerBreakers.Tower.Service
 
         public void SetSpawnPoints(Transform[] spawnPoints)
         {
+        }
+
+        public void SetSpawnYOffset(float yOffset)
+        {
+            m_spawnYOffset = yOffset;
         }
 
         public void SetEnemyPrefab(GameObject prefab)
@@ -258,7 +265,8 @@ namespace TowerBreakers.Tower.Service
             }
 
             // 2. Y축 보정 (플랫폼이 있다면 플랫폼 높이에 맞춤)
-            float finalY = (parent != null) ? parent.position.y : basePosition.y;
+            float baseY = (parent != null) ? parent.position.y : basePosition.y;
+            float finalY = baseY + m_spawnYOffset;
 
             // 3. 최종 위치: 기준점(가장 왼쪽 적) + X 오프셋
             return new Vector3(basePosition.x + offsetX, finalY, basePosition.z);

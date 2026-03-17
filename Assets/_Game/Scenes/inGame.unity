@@ -166,10 +166,7 @@ MonoBehaviour:
   parentReference:
     TypeName: TowerBreakers.Core.DI.ProjectLifetimeScope
   autoRun: 1
-  autoInjectGameObjects:
-  - {fileID: 1938295638}
-  - {fileID: 318021559}
-  - {fileID: 1171159532}
+  autoInjectGameObjects: []
   m_customCharacterManager: {fileID: 1171159534}
   m_spumPrefabs: {fileID: 1442287386}
   m_towerData: {fileID: 11400000, guid: de9bddb0278a74243b03f09ff936f1ee, type: 2}
@@ -178,6 +175,7 @@ MonoBehaviour:
   m_enemyPrefab: {fileID: 7359377293411260106, guid: da7416bb022334ae984a65ecf216288c, type: 3}
   m_spawnPoints:
   - {fileID: 1358896344}
+  m_spawnYOffset: 0.5
   m_transitionDuration: 2
   m_platformPool: {fileID: 318021561}
   m_playerTransform: {fileID: 1652479742}
@@ -187,6 +185,37 @@ MonoBehaviour:
   m_cameraTransform: {fileID: 0}
   m_targetPlatform: {fileID: 0}
   m_goImage: {fileID: 0}
+  m_playerConfig:
+    DashSpeed: 10
+    DashCooldown: 2
+    ParryCooldown: 3
+    AttackRange: 2
+    AttackCooldown: 0.5
+    RetreatSpeed: 8
+    ParryDuration: 0.5
+    LeftWallX: -8
+    EnemyStopDuration: 0.5
+  m_battleUIConfig:
+    DashSkill:
+      Name: Dash
+      CooldownTime: 2
+    ParrySkill:
+      Name: Parry
+      CooldownTime: 3
+    AttackSkill:
+      Name: Attack
+      CooldownTime: 0.5
+    Skill1:
+      Name: Skill1
+      CooldownTime: 5
+    Skill2:
+      Name: Skill2
+      CooldownTime: 10
+    Skill3:
+      Name: Skill3
+      CooldownTime: 15
+  m_battleUIView: {fileID: 837567948}
+  m_playerView: {fileID: 1632754919}
 --- !u!1 &93593719
 GameObject:
   m_ObjectHideFlags: 0
@@ -1208,7 +1237,7 @@ GameObject:
   - component: {fileID: 646852969}
   - component: {fileID: 646852968}
   m_Layer: 5
-  m_Name: Leap_Button
+  m_Name: Dash_Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1315,6 +1344,62 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 646852966}
   m_CullTransparentMesh: 1
+--- !u!1 &837567945
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 837567946}
+  - component: {fileID: 837567948}
+  m_Layer: 0
+  m_Name: UIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &837567946
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 837567945}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1796424546}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &837567948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 837567945}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d6c1ede0a700b7488b90e21ebcd9648, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.UI.View.BattleUIView
+  m_dashButton: {fileID: 646852968}
+  m_parryButton: {fileID: 1760800171}
+  m_attackButton: {fileID: 1021304647}
+  m_skill1Button: {fileID: 1984525397}
+  m_skill2Button: {fileID: 360944847}
+  m_skill3Button: {fileID: 1776886053}
+  m_dashCooldownImage: {fileID: 0}
+  m_parryCooldownImage: {fileID: 0}
+  m_attackCooldownImage: {fileID: 0}
+  m_skill1CooldownImage: {fileID: 0}
+  m_skill2CooldownImage: {fileID: 0}
+  m_skill3CooldownImage: {fileID: 0}
 --- !u!1 &841855408
 GameObject:
   m_ObjectHideFlags: 0
@@ -2706,6 +2791,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1532194422}
   m_CullTransparentMesh: 1
+--- !u!114 &1632754919 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7474188019039943448, guid: 9097df29531aa42a790fb305b234725a, type: 3}
+  m_PrefabInstance: {fileID: 1084656064}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 287d34be5f7c54f50b9f1518a51f1ee0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.View.PlayerView
 --- !u!4 &1640564347 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3779546771757612836, guid: 359d885cd313243cbba2d034e3fe4bb4, type: 3}
@@ -3662,6 +3758,7 @@ Transform:
   - {fileID: 1938295639}
   - {fileID: 318021560}
   - {fileID: 1171159533}
+  - {fileID: 837567946}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1820576200
@@ -4136,6 +4233,7 @@ MonoBehaviour:
   m_arrivalPoint: {fileID: 1068083475}
   m_dashSpeed: 10
   m_dashDuration: 0.5
+  m_yOffset: -0.5
   m_playerTransform: {fileID: 1084656065}
 --- !u!1 &1973713891
 GameObject:

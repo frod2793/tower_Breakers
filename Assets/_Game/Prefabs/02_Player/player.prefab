@@ -1441,8 +1441,8 @@ GameObject:
   - component: {fileID: 2759179381390659625}
   - component: {fileID: 92938023494105849}
   - component: {fileID: 903858773943774178}
-  - component: {fileID: 4335210533593278346}
   - component: {fileID: 8297276178084552577}
+  - component: {fileID: 7474188019039943448}
   m_Layer: 9
   m_Name: player
   m_TagString: Player
@@ -4618,21 +4618,6 @@ CapsuleCollider2D:
   m_Offset: {x: -0, y: 0.30632037}
   m_Size: {x: 0.5, y: 0.7492751}
   m_Direction: 0
---- !u!114 &4335210533593278346
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2259016813592298886}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49b70c24231724da58b609728c7bc137, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Controller.PlayerAttackController
-  m_attackRange: 2
-  m_attackCooldown: 1
-  m_attackPoint: {fileID: 0}
 --- !u!114 &8297276178084552577
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4651,6 +4636,19 @@ MonoBehaviour:
   m_damageCooldown: 1
   m_currentHealth: 0
   m_lastDamageTime: 0
+--- !u!114 &7474188019039943448
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2259016813592298886}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 287d34be5f7c54f50b9f1518a51f1ee0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.View.PlayerView
+  m_spumPrefabs: {fileID: 92938023494105849}
 --- !u!1 &2333811413061753725
 GameObject:
   m_ObjectHideFlags: 0

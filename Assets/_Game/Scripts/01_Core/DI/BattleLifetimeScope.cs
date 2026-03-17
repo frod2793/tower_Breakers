@@ -10,6 +10,12 @@ using TowerBreakers.Player.Data;
 using TowerBreakers.Player.Model;
 using TowerBreakers.Player.Service;
 using TowerBreakers.Player.Stat;
+using TowerBreakers.UI.View;
+using TowerBreakers.UI.ViewModel;
+using TowerBreakers.UI.DTO;
+using TowerBreakers.Player.DTO;
+using TowerBreakers.Player.Logic;
+using TowerBreakers.Player.View;
 
 namespace TowerBreakers.Core.DI
 {
@@ -44,6 +50,9 @@ namespace TowerBreakers.Core.DI
         [SerializeField, Tooltip("적 스폰 포인트")]
         private Transform[] m_spawnPoints;
 
+        [SerializeField, Tooltip("적 스폰 Y 오프셋")]
+        private float m_spawnYOffset;
+
         [Header("트랜지션")]
         [SerializeField, Tooltip("층 이동 트랜지션 시간")]
         private float m_transitionDuration = 2f;
@@ -73,6 +82,12 @@ namespace TowerBreakers.Core.DI
 
         [SerializeField, Tooltip("GO 이미지")]
         private UnityEngine.UI.Image m_goImage;
+
+        [Header("리팩토링 컴포넌트")]
+        [SerializeField] private PlayerConfigDTO m_playerConfig;
+        [SerializeField] private BattleUIDTO m_battleUIConfig;
+        [SerializeField] private BattleUIView m_battleUIView;
+        [SerializeField] private PlayerView m_playerView;
         #endregion
 
         #region 초기화 및 바인딩 로직
@@ -127,7 +142,8 @@ namespace TowerBreakers.Core.DI
             builder.Register<EnemySpawnService>(Lifetime.Scoped)
                 .WithParameter(m_enemyPrefab)
                 .WithParameter(m_spawnPoints)
-                .WithParameter(m_targetPlatform);
+                .WithParameter(m_targetPlatform)
+                .WithParameter(m_spawnYOffset);
         }
 
         private void RegisterControllers(IContainerBuilder builder)
@@ -147,6 +163,15 @@ namespace TowerBreakers.Core.DI
             {
                 builder.RegisterComponent(m_platformPool);
             }
+
+            // 리팩토링된 클래스 등록
+            builder.RegisterInstance(m_playerConfig ?? new PlayerConfigDTO());
+            builder.RegisterInstance(m_battleUIConfig ?? new BattleUIDTO());
+            builder.Register<BattleUIViewModel>(Lifetime.Scoped);
+            builder.Register<PlayerLogic>(Lifetime.Scoped);
+
+            if (m_battleUIView != null) builder.RegisterComponent(m_battleUIView);
+            if (m_playerView != null) builder.RegisterComponent(m_playerView);
 
             builder.RegisterEntryPoint<GameController>();
         }

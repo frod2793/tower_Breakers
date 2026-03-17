@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
+using TowerBreakers.Player.Logic;
 
 namespace TowerBreakers.Tower.Service
 {
@@ -31,7 +32,14 @@ namespace TowerBreakers.Tower.Service
         [Tooltip("플레이어 트랜스폼")]
         [SerializeField] private Transform m_playerTransform;
 
+        private PlayerLogic m_playerLogic;
+
         public event Action OnSpawnComplete;
+
+        public void Initialize(PlayerLogic logic)
+        {
+            m_playerLogic = logic;
+        }
 
         public void SetSpawnPoint(Transform spawnPoint)
         {
@@ -73,9 +81,19 @@ namespace TowerBreakers.Tower.Service
                 return;
             }
 
+            // 초기 위치 설정 및 논리 좌표 동기화
             Vector3 startPos = m_spawnPoint.position;
             startPos.y += m_yOffset;
             m_playerTransform.position = startPos;
+            
+            if (m_playerLogic != null)
+            {
+                m_playerLogic.SetPosition(new Vector2(startPos.x, startPos.y));
+            }
+
+            // 방향 전환 (오른쪽을 바라보도록 설정)
+            m_playerTransform.localScale = new Vector3(Mathf.Abs(m_playerTransform.localScale.x), m_playerTransform.localScale.y, m_playerTransform.localScale.z);
+            
             m_playerTransform.gameObject.SetActive(true);
 
             Vector3 endPos = m_arrivalPoint.position;
@@ -84,8 +102,16 @@ namespace TowerBreakers.Tower.Service
             float distance = Vector3.Distance(startPos, endPos);
             float duration = distance / m_dashSpeed * m_dashDuration;
 
+            // 이동 애니메이션 수행 및 매 프레임 논리 좌표 업데이트
             await m_playerTransform.DOMove(endPos, duration)
                 .SetEase(Ease.OutQuad)
+                .OnUpdate(() => 
+                {
+                    if (m_playerLogic != null)
+                    {
+                        m_playerLogic.SetPosition(new Vector2(m_playerTransform.position.x, m_playerTransform.position.y));
+                    }
+                })
                 .ToUniTask();
 
             OnSpawnComplete?.Invoke();

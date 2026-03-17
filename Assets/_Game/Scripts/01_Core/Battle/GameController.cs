@@ -9,6 +9,12 @@ using TowerBreakers.Player.Controller;
 using TowerBreakers.Tower.Data;
 using TowerBreakers.Tower.Service;
 using TowerBreakers.Core.Scene;
+using TowerBreakers.UI.View;
+using TowerBreakers.UI.ViewModel;
+using TowerBreakers.UI.DTO;
+using TowerBreakers.Player.Logic;
+using TowerBreakers.Player.View;
+using TowerBreakers.Player.DTO;
 using Cysharp.Threading.Tasks;
 
 namespace TowerBreakers.Core.Battle
@@ -30,8 +36,14 @@ namespace TowerBreakers.Core.Battle
         private readonly PlatformPool m_platformPool;
         private readonly PlayerSpawnService m_playerSpawnService;
         
-        [SerializeField] private PlayerAttackController m_playerAttackController;
-        [SerializeField] private PlayerPushReceiver m_playerPushReceiver;
+        private PlayerPushReceiver m_playerPushReceiver;
+        
+        private readonly PlayerView m_playerView;
+        private readonly BattleUIView m_battleUIView;
+        private readonly PlayerLogic m_playerLogic;
+        private readonly BattleUIViewModel m_uiViewModel;
+        private readonly PlayerConfigDTO m_playerConfig;
+        private readonly BattleUIDTO m_uiConfig;
         #endregion
 
         #region 초기화
@@ -47,7 +59,13 @@ namespace TowerBreakers.Core.Battle
             EnemySpawnService enemySpawnService,
             FloorTransitionService floorTransitionService,
             PlatformPool platformPool,
-            PlayerSpawnService playerSpawnService)
+            PlayerSpawnService playerSpawnService,
+            PlayerView playerView,
+            BattleUIView battleUIView,
+            PlayerLogic playerLogic,
+            BattleUIViewModel uiViewModel,
+            PlayerConfigDTO playerConfig,
+            BattleUIDTO uiConfig)
         {
             m_characterManager = characterManager;
             m_userSession = userSession;
@@ -60,6 +78,13 @@ namespace TowerBreakers.Core.Battle
             m_floorTransitionService = floorTransitionService;
             m_platformPool = platformPool;
             m_playerSpawnService = playerSpawnService;
+            
+            m_playerView = playerView;
+            m_battleUIView = battleUIView;
+            m_playerLogic = playerLogic;
+            m_uiViewModel = uiViewModel;
+            m_playerConfig = playerConfig;
+            m_uiConfig = uiConfig;
         }
 
         /// <summary>
@@ -76,7 +101,8 @@ namespace TowerBreakers.Core.Battle
             
             if (m_playerSpawnService != null)
             {
-                m_playerSpawnService.SetPlayerTransform(m_playerAttackController != null ? m_playerAttackController.transform : null);
+                m_playerSpawnService.Initialize(m_playerLogic); // 로직 주입 추가
+                m_playerSpawnService.SetPlayerTransform(m_playerView != null ? m_playerView.transform : null);
                 m_playerSpawnService.OnSpawnComplete += OnPlayerSpawnComplete;
                 m_playerSpawnService.PlaySpawnAnimation();
             }
@@ -127,6 +153,12 @@ namespace TowerBreakers.Core.Battle
 
         private void OnPlayerSpawnComplete()
         {
+            DelayedEnemyAdvance().Forget();
+        }
+
+        private async Cysharp.Threading.Tasks.UniTask DelayedEnemyAdvance()
+        {
+            await Cysharp.Threading.Tasks.UniTask.Delay(1000);
             StartEnemyAdvanceForCurrentFloor();
         }
 
@@ -134,11 +166,20 @@ namespace TowerBreakers.Core.Battle
         {
             var enemies = GameObject.FindGameObjectsWithTag("Enemy");
             
-            foreach (var enemy in enemies)
+            if (enemies.Length == 0) return;
+
+            var player = GameObject.FindGameObjectWithTag("Player");
+            Transform playerTransform = player != null ? player.transform : null;
+
+            for (int i = 0; i < enemies.Length; i++)
             {
-                var pushController = enemy.GetComponent<EnemyPushController>();
+                var pushController = enemies[i].GetComponent<EnemyPushController>();
                 if (pushController != null)
                 {
+                    if (i == 0 && playerTransform != null)
+                    {
+                        pushController.SetFollowTarget(playerTransform);
+                    }
                     pushController.StartMoving();
                 }
             }
@@ -154,7 +195,16 @@ namespace TowerBreakers.Core.Battle
             InitializePlayerStats();
             InitializePlayerPush();
             InitializePlayerAttack();
+            InitializeUI();
             SubscribeToEvents();
+        }
+
+        private void InitializeUI()
+        {
+            if (m_battleUIView != null)
+            {
+                m_battleUIView.Initialize(m_uiViewModel, m_uiConfig);
+            }
         }
 
         private void InitializeTower()
@@ -189,9 +239,16 @@ namespace TowerBreakers.Core.Battle
 
         private void InitializePlayerPush()
         {
+            // PlayerView가 참조하는 오브젝트에서 PlayerPushReceiver를 가져옵니다.
+            if (m_playerView != null && m_playerPushReceiver == null)
+            {
+                m_playerPushReceiver = m_playerView.GetComponent<PlayerPushReceiver>();
+            }
+
             if (m_playerPushReceiver != null && m_playerStatService != null)
             {
-                m_playerPushReceiver.Initialize(m_playerStatService.TotalHealth);
+                // PlayerLogic을 주입하여 상태 관리를 위임합니다.
+                m_playerPushReceiver.Initialize(m_playerStatService.TotalHealth, m_playerLogic);
                 m_playerPushReceiver.OnPlayerDeath += OnPlayerDeath;
             }
         }
@@ -203,9 +260,9 @@ namespace TowerBreakers.Core.Battle
 
         private void InitializePlayerAttack()
         {
-            if (m_playerAttackController != null && m_playerStatService != null)
+            if (m_playerView != null)
             {
-                m_playerAttackController.Initialize(m_playerStatService);
+                m_playerView.Initialize(m_playerLogic, m_uiViewModel, m_playerStatService);
             }
         }
 

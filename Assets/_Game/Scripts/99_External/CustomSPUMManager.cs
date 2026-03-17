@@ -43,7 +43,11 @@ namespace TowerBreakers.SPUM
             SetupRendererReferences();
             SubscribeEvents();
 
-            UpdateAllEquipment();
+            if (m_spumPrefabs != null)
+            {
+                m_spumPrefabs.PopulateAnimationLists();
+                m_spumPrefabs.OverrideControllerInit();
+            }
 
             Debug.Log("[CustomSPUMManager] 초기화 완료");
         }

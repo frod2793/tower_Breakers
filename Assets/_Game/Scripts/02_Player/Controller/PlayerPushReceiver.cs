@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using TowerBreakers.Player.Logic;
 
 namespace TowerBreakers.Player.Controller
 {
@@ -21,6 +22,10 @@ namespace TowerBreakers.Player.Controller
         [Tooltip("밀림 후 쿨다운 (초)")]
         [SerializeField] private float m_damageCooldown = 1f;
 
+        [Header("참조")]
+        [Tooltip("플레이어 로직")]
+        [SerializeField] private PlayerLogic m_playerLogic;
+
         [Header("상태")]
         [SerializeField] private int m_currentHealth;
         [SerializeField] private float m_lastDamageTime;
@@ -30,10 +35,14 @@ namespace TowerBreakers.Player.Controller
 
         public int CurrentHealth => m_currentHealth;
 
-        public void Initialize(int maxHealth)
+        public void Initialize(int maxHealth, PlayerLogic playerLogic = null)
         {
-            m_currentHealth = maxHealth;
-            Debug.Log($"[PlayerPushReceiver] 초기화 - 체력: {m_currentHealth}");
+            m_playerLogic = playerLogic;
+            if (m_playerLogic != null)
+            {
+                m_playerLogic.InitializeHealth(maxHealth);
+            }
+            Debug.Log($"[PlayerPushReceiver] 초기화 완료");
         }
 
         private void Update()
@@ -43,11 +52,21 @@ namespace TowerBreakers.Player.Controller
 
         public void Push(Vector2 force)
         {
-            transform.Translate(force * Time.deltaTime);
+            if (m_playerLogic != null)
+            {
+                // 밀림 저항력을 적용하여 로직에 전달
+                m_playerLogic.ApplyExternalPush(force * m_resistance);
+            }
+            else
+            {
+                // 로직이 없는 경우의 폴백
+                transform.Translate(force * m_resistance * Time.deltaTime);
+            }
         }
 
         private void CheckLeftWall()
         {
+            // 좌측 벽 충돌 체크 (센서 역할)
             if (transform.position.x <= m_leftWallX)
             {
                 if (Time.time - m_lastDamageTime >= m_damageCooldown)
@@ -59,22 +78,20 @@ namespace TowerBreakers.Player.Controller
 
         private void TakeDamage()
         {
-            m_currentHealth -= m_damagePerHit;
             m_lastDamageTime = Time.time;
 
-            Debug.Log($"[PlayerPushReceiver] 피해! 남은 체력: {m_currentHealth}");
-
-            OnHealthChanged?.Invoke(m_currentHealth);
-
-            if (m_currentHealth <= 0)
+            if (m_playerLogic != null)
             {
-                Die();
+                m_playerLogic.TakeDamage(m_damagePerHit);
+                Debug.Log($"[PlayerPushReceiver] 벽 충돌 피해 발생 (남은 체력: {m_playerLogic.State.Health})");
             }
+
+            OnHealthChanged?.Invoke(m_playerLogic?.State.Health ?? 0);
         }
 
         private void Die()
         {
-            Debug.Log("[PlayerPushReceiver] 플레이어 사망!");
+            // 실제 사망 처리는 PlayerLogic에서 수행하고 View가 반응함
             OnPlayerDeath?.Invoke();
         }
 
