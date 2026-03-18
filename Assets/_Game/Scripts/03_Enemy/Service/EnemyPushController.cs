@@ -42,6 +42,7 @@ namespace TowerBreakers.Tower.Service
         }
 
         private IEnemyController m_enemyController;
+        private EnemyVFXController m_vfxController;
         private Vector3 m_lastPos;
 
         public void Initialize(EnemyData data, List<EnemyPushController> formation, EnemyType type, int trainIndex, float spacing)
@@ -58,6 +59,7 @@ namespace TowerBreakers.Tower.Service
             }
 
             m_enemyController = GetComponent<IEnemyController>();
+            m_vfxController = GetComponent<EnemyVFXController>();
             m_lastPos = transform.position;
         }
 
@@ -140,8 +142,9 @@ namespace TowerBreakers.Tower.Service
             // [개선]: 기절 시간 중첩(+=) 적용. 연속 패링 시 기절 시간이 합산됩니다.
             m_stunTimer += duration;
             
-            // 스턴 즉시 피격 애니메이션 재생
+            // 스턴 즉시 피격 애니메이션 및 VFX 재생
             UpdateAnimationState();
+            if (m_vfxController != null) m_vfxController.FlashColor();
             
             Debug.Log($"[EnemyPushController] 경직(중첩) 적용 - 추가 시간: {duration}s, 총 남은 시간: {m_stunTimer:F2}s");
         }
@@ -162,8 +165,9 @@ namespace TowerBreakers.Tower.Service
             knockbackVector.z = 0;
             transform.position += knockbackVector;
 
-            // 넉백 발생 시 즉시 피격 애니메이션 재생
+            // 넉백 발생 시 즉시 피격 애니메이션 및 VFX 재생
             UpdateAnimationState();
+            if (m_vfxController != null) m_vfxController.FlashColor();
             
             Debug.Log($"[EnemyPushController] 넉백 적용 - 대상: {name}, 방향: {direction}, 힘: {force}, 위치: {beforePos} -> {transform.position}");
         }

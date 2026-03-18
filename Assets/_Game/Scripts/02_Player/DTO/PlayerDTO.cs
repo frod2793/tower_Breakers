@@ -18,6 +18,9 @@ namespace TowerBreakers.Player.DTO
         [Tooltip("대쉬 쿨타임")]
         public float DashCooldown = 2f;
 
+        [Tooltip("대쉬 최소 거리 (적과의 거리가 이 값 이상일 때만 대쉬 가능)")]
+        public float DashMinDistance = 1.5f;
+
         [Header("패링 설정")]
         [Tooltip("패링 쿨타임")]
         public float ParryCooldown = 3f;
@@ -48,9 +51,6 @@ namespace TowerBreakers.Player.DTO
         #region 이동 및 밀림 설정
         [Tooltip("왼쪽 벽 위치")]
         public float LeftWallX = -8f;
-
-        [Tooltip("대쉬 최소 거리")]
-        public float DashMinDistance = 1.5f;
 
         [Tooltip("패링 범위")]
         public float ParryRange = 2.0f;

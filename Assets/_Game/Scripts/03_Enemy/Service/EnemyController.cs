@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using TowerBreakers.Tower.Data;
+using TowerBreakers.SPUM;
 
 namespace TowerBreakers.Tower.Service
 {
@@ -19,6 +20,10 @@ namespace TowerBreakers.Tower.Service
         [Tooltip("SPUM 프리팹 (자동으로 자식에서 찾음)")]
         [SerializeField] private SPUM_Prefabs m_spumPrefabs;
 
+        [Header("VFX")]
+        [Tooltip("VFX 컨트롤러 (피격, 사망 이펙트 전담)")]
+        [SerializeField] private EnemyVFXController m_vfxController;
+
         public event Action<GameObject> OnDeath;
 
         private PlayerState m_lastState = PlayerState.IDLE;
@@ -36,6 +41,11 @@ namespace TowerBreakers.Tower.Service
             if (m_spumPrefabs == null)
             {
                 m_spumPrefabs = transform.GetChild(0).GetComponent<SPUM_Prefabs>();
+            }
+
+            if (m_vfxController == null)
+            {
+                m_vfxController = GetComponent<EnemyVFXController>();
             }
 
             if (m_spumPrefabs != null)
@@ -61,6 +71,11 @@ namespace TowerBreakers.Tower.Service
 
             m_currentHealth -= damage;
 
+            if (m_vfxController != null)
+            {
+                m_vfxController.FlashColor();
+            }
+
             Debug.Log($"[EnemyController] 피해 입음 - 남은 체력: {m_currentHealth}");
 
             if (m_currentHealth <= 0)
@@ -72,6 +87,18 @@ namespace TowerBreakers.Tower.Service
         private void Die()
         {
             Debug.Log($"[EnemyController] 적 사망 - {m_data?.EnemyName}");
+
+            // 사망 시 즉시 콜라이더 비활성화하여 물리 간섭 제거
+            var collider = GetComponent<Collider2D>();
+            if (collider != null)
+            {
+                collider.enabled = false;
+            }
+
+            if (m_vfxController != null)
+            {
+                m_vfxController.ExplodeParts();
+            }
 
             OnDeath?.Invoke(gameObject);
         }

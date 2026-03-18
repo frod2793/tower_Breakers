@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using UnityEngine;
 using TowerBreakers.Player.DTO;
 using TowerBreakers.Player.Logic;
@@ -29,6 +30,11 @@ namespace TowerBreakers.Player.View
         private IPlayerStatService m_statService;
         private PlayerState m_currentAnimState = PlayerState.IDLE;
         private Vector3 m_lastPos;
+
+        /// <summary>
+        /// [설명]: 연타 시 이전 공격 시퀀스를 즉시 중단시키기 위한 캔슬 토큰 소스입니다.
+        /// </summary>
+        private CancellationTokenSource m_attackCts;
         #endregion
 
         #region 초기화 및 바인딩 로직
@@ -249,23 +255,51 @@ namespace TowerBreakers.Player.View
 
         private async void StartAttackSequence()
         {
-            PlayAnimation(PlayerState.ATTACK);
-            await UniTask.Delay(300);
-
-            // 공격 판정 로직 (View에서 OverlapCircle을 통해 수행 후 로직에 알림)
-            GameObject nearestEnemy = FindNearestEnemy();
-            if (nearestEnemy != null)
+            // [개선]: 이전 공격 시퀀스가 진행 중이라면 취소하여 즉시 다음 연타/모션 갱신 허용
+            if (m_attackCts != null)
             {
-                var enemyController = nearestEnemy.GetComponent<IEnemyController>();
-                if (enemyController != null && m_statService != null)
-                {
-                    enemyController.TakeDamage(m_statService.TotalAttack);
-                }
+                m_attackCts.Cancel();
+                m_attackCts.Dispose();
             }
+            m_attackCts = new CancellationTokenSource();
+            var token = m_attackCts.Token;
 
-            await UniTask.Delay(200);
-            m_logic.EndAction();
-            PlayAnimation(PlayerState.IDLE);
+            try
+            {
+                PlayAnimation(PlayerState.ATTACK);
+
+                // [개선]: 하드코딩(300ms, 200ms) 대신 AttackCooldown 수치에 비례하여 동적으로 대기 시간 분배
+                // 쿨타임의 40% 시점에 타격 판정, 나머지 60%를 후딜레이로 사용
+                float attackCooldown = m_config.AttackCooldown;
+                int preDelay = (int)(attackCooldown * 0.4f * 1000);
+                int postDelay = (int)(attackCooldown * 0.6f * 1000);
+
+                await UniTask.Delay(preDelay, cancellationToken: token);
+
+                // 공격 판정 로직 (View에서 OverlapCircle을 통해 수행 후 로직에 알림)
+                GameObject nearestEnemy = FindNearestEnemy();
+                if (nearestEnemy != null)
+                {
+                    var enemyController = nearestEnemy.GetComponent<IEnemyController>();
+                    if (enemyController != null && m_statService != null)
+                    {
+                        enemyController.TakeDamage(m_statService.TotalAttack);
+                    }
+                }
+
+                await UniTask.Delay(postDelay, cancellationToken: token);
+
+                m_logic.EndAction();
+                PlayAnimation(PlayerState.IDLE);
+            }
+            catch (OperationCanceledException)
+            {
+                // 연타에 의한 취소는 의도된 것이며 별도 로그 없이 종료
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[PlayerView] StartAttackSequence 예외 발생: {ex.Message}");
+            }
         }
 
         private GameObject FindNearestEnemy()

@@ -3314,6 +3314,7 @@ GameObject:
   - component: {fileID: 2743128493557396364}
   - component: {fileID: 4560258531452196394}
   - component: {fileID: 4745266333104816325}
+  - component: {fileID: 6244962107028751716}
   m_Layer: 7
   m_Name: skull
   m_TagString: Enemy
@@ -6361,6 +6362,7 @@ MonoBehaviour:
   m_data: {fileID: 11400000, guid: 689fef021d5e04f0aa6b3dbe4ac6b5e5, type: 2}
   m_currentHealth: 0
   m_spumPrefabs: {fileID: 1062093783691750256}
+  m_vfxController: {fileID: 0}
 --- !u!114 &4745266333104816325
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6378,6 +6380,23 @@ MonoBehaviour:
   m_pushRange: 0
   m_playerTag: Player
   m_enemyData: {fileID: 11400000, guid: 689fef021d5e04f0aa6b3dbe4ac6b5e5, type: 2}
+--- !u!114 &6244962107028751716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7359377293411260106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9ca06512987848a59df6f1312bb9e00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Service.EnemyVFXController
+  m_flashColor: {r: 1, g: 0, b: 0, a: 1}
+  m_flashDuration: 0.1
+  m_explodeForce: 5
+  m_rotationForce: 360
+  m_fadeOutDuration: 1
 --- !u!1 &7382781275474857725
 GameObject:
   m_ObjectHideFlags: 0

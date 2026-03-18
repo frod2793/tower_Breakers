@@ -18,6 +18,7 @@ namespace TowerBreakers.UI.View
         [SerializeField] private Button m_dashButton;
         [SerializeField] private Button m_parryButton;
         [SerializeField] private Button m_attackButton;
+        [SerializeField] private HoldableButton m_attackHoldBtn;
         [SerializeField] private Button m_skill1Button;
         [SerializeField] private Button m_skill2Button;
         [SerializeField] private Button m_skill3Button;
@@ -53,7 +54,17 @@ namespace TowerBreakers.UI.View
             // 버튼 이벤트 바인딩
             if (m_dashButton != null) m_dashButton.onClick.AddListener(() => m_viewModel.ExecuteSkill(dto.DashSkill.Name));
             if (m_parryButton != null) m_parryButton.onClick.AddListener(() => m_viewModel.ExecuteSkill(dto.ParrySkill.Name));
-            if (m_attackButton != null) m_attackButton.onClick.AddListener(() => m_viewModel.ExecuteSkill(dto.AttackSkill.Name));
+            
+            // [개선]: 공격 버튼은 홀드와 연타가 가능하도록 HoldableButton 이벤트를 사용
+            if (m_attackHoldBtn != null) 
+            {
+                m_attackHoldBtn.OnExecute += () => m_viewModel.ExecuteSkill(dto.AttackSkill.Name);
+            }
+            else if (m_attackButton != null) 
+            {
+                m_attackButton.onClick.AddListener(() => m_viewModel.ExecuteSkill(dto.AttackSkill.Name));
+            }
+
             if (m_skill1Button != null) m_skill1Button.onClick.AddListener(() => m_viewModel.ExecuteSkill(dto.Skill1.Name));
             if (m_skill2Button != null) m_skill2Button.onClick.AddListener(() => m_viewModel.ExecuteSkill(dto.Skill2.Name));
             if (m_skill3Button != null) m_skill3Button.onClick.AddListener(() => m_viewModel.ExecuteSkill(dto.Skill3.Name));

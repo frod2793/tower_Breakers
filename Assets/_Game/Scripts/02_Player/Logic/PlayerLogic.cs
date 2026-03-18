@@ -97,9 +97,10 @@ namespace TowerBreakers.Player.Logic
                 return false;
             }
 
-            if (IsBusy())
+            // [개선]: 핵앤슬래쉬 장르 특성상 공격 중이더라도 다른 행동(대쉬, 패링 등)이 아니라면 연타 가능하도록 허용
+            if (m_state.IsDashing || m_state.IsParrying || m_state.IsRetreating)
             {
-                Debug.Log($"[PlayerLogic] 공격 실패 - 현재 바쁜 상태 (Dashing: {m_state.IsDashing}, Parrying: {m_state.IsParrying}, Attacking: {m_state.IsAttacking}, Retreating: {m_state.IsRetreating})");
+                Debug.Log($"[PlayerLogic] 공격 실패 - 현재 조작 불가 상태 (Dashing: {m_state.IsDashing}, Parrying: {m_state.IsParrying}, Retreating: {m_state.IsRetreating})");
                 return false;
             }
 
