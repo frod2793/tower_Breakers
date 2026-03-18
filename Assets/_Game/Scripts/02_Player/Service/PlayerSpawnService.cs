@@ -3,6 +3,7 @@ using UnityEngine;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
 using TowerBreakers.Player.Logic;
+using TowerBreakers.Player.DTO;
 
 namespace TowerBreakers.Tower.Service
 {
@@ -32,13 +33,32 @@ namespace TowerBreakers.Tower.Service
         [Tooltip("플레이어 트랜스폼")]
         [SerializeField] private Transform m_playerTransform;
 
+        [Tooltip("플레이어 설정 DTO")]
+        [SerializeField] private PlayerConfigDTO m_playerConfig;
+
         private PlayerLogic m_playerLogic;
 
         public event Action OnSpawnComplete;
 
+        #region 초기화
+        /// <summary>
+        /// [설명]: 플레이어 스폰 서비스를 초기화합니다.
+        /// </summary>
+        /// <param name="logic">연결된 플레이어 로직</param>
         public void Initialize(PlayerLogic logic)
         {
+            if (logic == null) return;
             m_playerLogic = logic;
+            
+            // [참고]: PlayerPushReceiver의 초기화는 별도로 진행되거나 
+            // 뷰 초기화 시점에 logic/config가 주입됨
+        }
+        #endregion
+
+        [VContainer.Inject]
+        public void SetPlayerConfig(PlayerConfigDTO config)
+        {
+            m_playerConfig = config;
         }
 
         public void SetSpawnPoint(Transform spawnPoint)

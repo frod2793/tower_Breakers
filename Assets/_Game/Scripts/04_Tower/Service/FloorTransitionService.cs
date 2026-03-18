@@ -52,11 +52,16 @@ namespace TowerBreakers.Tower.Service
             set => m_transitionDuration = value;
         }
 
-        public FloorTransitionService(Transform playerTransform, Transform cameraTransform, Image goImage)
+        public FloorTransitionService(
+            Transform playerTransform, 
+            Transform cameraTransform, 
+            Image goImage, 
+            float transitionDuration)
         {
             m_playerTransform = playerTransform;
             m_cameraTransform = cameraTransform;
             m_goImage = goImage;
+            m_transitionDuration = transitionDuration;
         }
 
         public void SetPlatformPool(PlatformPool pool)

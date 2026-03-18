@@ -48,48 +48,89 @@ namespace TowerBreakers.Player.Logic
 
         public bool TryDash(float time, float targetX)
         {
-            if (time - m_state.LastDashTime < m_config.DashCooldown) return false;
-            if (IsBusy()) return false;
+            if (time - m_state.LastDashTime < m_config.DashCooldown)
+            {
+                Debug.Log($"[PlayerLogic] 대시 실패 - 쿨타임 중 (남은 시간: {m_config.DashCooldown - (time - m_state.LastDashTime):F2}s)");
+                return false;
+            }
+
+            if (IsBusy())
+            {
+                Debug.Log($"[PlayerLogic] 대시 실패 - 현재 바쁜 상태 (Dashing: {m_state.IsDashing}, Parrying: {m_state.IsParrying}, Attacking: {m_state.IsAttacking}, Retreating: {m_state.IsRetreating})");
+                return false;
+            }
 
             m_state.LastDashTime = time;
             m_state.IsDashing = true;
             m_state.Position = new Vector2(targetX, m_state.Position.y);
+            Debug.Log("[PlayerLogic] 대시 발동 성공");
             OnDashStarted?.Invoke();
             return true;
         }
 
         public bool TryParry(float time)
         {
-            if (time - m_state.LastParryTime < m_config.ParryCooldown) return false;
-            if (IsBusy()) return false;
+            if (time - m_state.LastParryTime < m_config.ParryCooldown)
+            {
+                Debug.Log($"[PlayerLogic] 패링 실패 - 쿨타임 대기 중 (남은 시간: {m_config.ParryCooldown - (time - m_state.LastParryTime):F2}s)");
+                return false;
+            }
+
+            if (IsBusy())
+            {
+                Debug.Log($"[PlayerLogic] 패링 실패 - 현재 바쁜 상태 (Dashing: {m_state.IsDashing}, Parrying: {m_state.IsParrying}, Attacking: {m_state.IsAttacking}, Retreating: {m_state.IsRetreating})");
+                return false;
+            }
 
             m_state.LastParryTime = time;
             m_state.IsParrying = true;
+            Debug.Log("[PlayerLogic] 패링 발동 성공");
             OnParryStarted?.Invoke();
             return true;
         }
 
         public bool TryAttack(float time)
         {
-            if (time - m_state.LastAttackTime < m_config.AttackCooldown) return false;
-            if (IsBusy()) return false;
+            if (time - m_state.LastAttackTime < m_config.AttackCooldown)
+            {
+                Debug.Log($"[PlayerLogic] 공격 실패 - 쿨타임 중 (남은 시간: {m_config.AttackCooldown - (time - m_state.LastAttackTime):F2}s)");
+                return false;
+            }
+
+            if (IsBusy())
+            {
+                Debug.Log($"[PlayerLogic] 공격 실패 - 현재 바쁜 상태 (Dashing: {m_state.IsDashing}, Parrying: {m_state.IsParrying}, Attacking: {m_state.IsAttacking}, Retreating: {m_state.IsRetreating})");
+                return false;
+            }
 
             m_state.LastAttackTime = time;
             m_state.IsAttacking = true;
+            Debug.Log("[PlayerLogic] 공격 발동 성공");
             OnAttackStarted?.Invoke();
             return true;
         }
 
+        /// <summary>
+        /// [설명]: 플레이어의 현재 위치를 설정합니다. 왼쪽 벽 제한이 적용됩니다.
+        /// </summary>
+        /// <param name="position">새로운 위치</param>
         public void SetPosition(Vector2 position)
         {
-            m_state.Position = position;
+            float clampedX = Math.Max(position.x, m_config.LeftWallX);
+            m_state.Position = new Vector2(clampedX, position.y);
         }
 
+        /// <summary>
+        /// [설명]: 패링 시 퇴각 상태를 시작합니다.
+        /// </summary>
         public void StartRetreat()
         {
             m_state.IsRetreating = true;
         }
 
+        /// <summary>
+        /// [설명]: 현재 진행 중인 모든 액션 상태를 초기화합니다.
+        /// </summary>
         public void EndAction()
         {
             m_state.IsDashing = false;
@@ -98,32 +139,44 @@ namespace TowerBreakers.Player.Logic
             m_state.IsRetreating = false;
         }
 
+        /// <summary>
+        /// [설명]: 플레이어가 바쁜 상태(액션 수행 중)인지 확인합니다.
+        /// </summary>
+        /// <returns>바쁨 여부</returns>
         public bool IsBusy()
         {
             return m_state.IsDashing || m_state.IsParrying || m_state.IsAttacking || m_state.IsRetreating;
         }
 
+        /// <summary>
+        /// [설명]: 외부에서 가해지는 밀림 힘을 계산하여 위치에 반영합니다.
+        /// </summary>
+        /// <param name="force">외부 힘 (저항력이 적용된 값)</param>
         public void ApplyExternalPush(Vector2 force)
         {
+            // [참고]: force에는 이미 View/Receiver 레벨에서 저항력이 곱해져서 전달됨
             Vector2 currentPos = m_state.Position;
             float newX = currentPos.x + force.x * Time.deltaTime;
             
-            // Y값은 현재 위치 그대로 고정
-            m_state.Position = new Vector2(newX, currentPos.y);
-
-            // 왼쪽 벽 제한
-            if (m_state.Position.x < m_config.LeftWallX)
-            {
-                m_state.Position = new Vector2(m_config.LeftWallX, currentPos.y);
-            }
+            // 왼쪽 벽 제한 및 위치 갱신
+            float clampedX = Math.Max(newX, m_config.LeftWallX);
+            m_state.Position = new Vector2(clampedX, currentPos.y);
         }
 
+        /// <summary>
+        /// [설명]: 플레이어의 초기 체력을 설정합니다.
+        /// </summary>
+        /// <param name="health">최대 체력</param>
         public void InitializeHealth(int health)
         {
             m_state.MaxHealth = health;
             m_state.Health = health;
         }
 
+        /// <summary>
+        /// [설명]: 데미지를 입고 체력을 갱신합니다.
+        /// </summary>
+        /// <param name="damage">입힐 데미지량</param>
         public void TakeDamage(int damage)
         {
             m_state.Health = Math.Max(0, m_state.Health - damage);
@@ -135,6 +188,9 @@ namespace TowerBreakers.Player.Logic
             }
         }
 
+        /// <summary>
+        /// [설명]: 플레이어 사망 처리를 수행합니다.
+        /// </summary>
         public void Die()
         {
             OnDeath?.Invoke();

@@ -6373,9 +6373,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29d77f667d9cc41f799437d3fb20a45d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Service.EnemyPushController
-  m_moveSpeed: 2
-  m_pushForce: 5
-  m_pushRange: 1.5
+  m_moveSpeed: 0
+  m_pushForce: 0
+  m_pushRange: 0
   m_playerTag: Player
   m_enemyData: {fileID: 11400000, guid: 689fef021d5e04f0aa6b3dbe4ac6b5e5, type: 2}
 --- !u!1 &7382781275474857725

@@ -14,6 +14,7 @@ namespace TowerBreakers.UI.ViewModel
     {
         #region 내부 필드
         private readonly BattleUIDTO m_dto;
+        private readonly PlayerConfigDTO m_playerConfig;
         private readonly Dictionary<string, float> m_cooldownRemaining = new Dictionary<string, float>();
         #endregion
 
@@ -23,9 +24,10 @@ namespace TowerBreakers.UI.ViewModel
         #endregion
 
         #region 초기화 및 바인딩 로직
-        public BattleUIViewModel(BattleUIDTO dto)
+        public BattleUIViewModel(BattleUIDTO dto, PlayerConfigDTO playerConfig)
         {
             m_dto = dto ?? new BattleUIDTO();
+            m_playerConfig = playerConfig ?? new PlayerConfigDTO();
         }
         #endregion
 
@@ -78,9 +80,11 @@ namespace TowerBreakers.UI.ViewModel
         #region 내부 로직
         private float GetCooldownTime(string skillName)
         {
-            if (skillName == m_dto.DashSkill.Name) return m_dto.DashSkill.CooldownTime;
-            if (skillName == m_dto.ParrySkill.Name) return m_dto.ParrySkill.CooldownTime;
-            if (skillName == m_dto.AttackSkill.Name) return m_dto.AttackSkill.CooldownTime;
+            // [개선]: 로직(PlayerConfigDTO)과 UI의 쿨타임 설정을 단일화하여 정합성 보장
+            if (skillName == m_dto.DashSkill.Name) return m_playerConfig.DashCooldown;
+            if (skillName == m_dto.ParrySkill.Name) return m_playerConfig.ParryCooldown;
+            if (skillName == m_dto.AttackSkill.Name) return m_playerConfig.AttackCooldown;
+            
             if (skillName == m_dto.Skill1.Name) return m_dto.Skill1.CooldownTime;
             if (skillName == m_dto.Skill2.Name) return m_dto.Skill2.CooldownTime;
             if (skillName == m_dto.Skill3.Name) return m_dto.Skill3.CooldownTime;

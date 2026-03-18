@@ -21,6 +21,7 @@ namespace TowerBreakers.Tower.Service
 
         public event Action<GameObject> OnDeath;
 
+        private PlayerState m_lastState = PlayerState.IDLE;
         public float CurrentHealth => m_currentHealth;
         public float MaxHealth => m_data != null ? m_data.Health : 0f;
         public float Attack => m_data != null ? m_data.Attack : 0f;
@@ -35,6 +36,11 @@ namespace TowerBreakers.Tower.Service
             if (m_spumPrefabs == null)
             {
                 m_spumPrefabs = transform.GetChild(0).GetComponent<SPUM_Prefabs>();
+            }
+
+            if (m_spumPrefabs != null)
+            {
+                m_spumPrefabs.OverrideControllerInit();
             }
         }
 
@@ -68,6 +74,21 @@ namespace TowerBreakers.Tower.Service
             Debug.Log($"[EnemyController] 적 사망 - {m_data?.EnemyName}");
 
             OnDeath?.Invoke(gameObject);
+        }
+
+        /// <summary>
+        /// [설명]: 적의 애니메이션 상태를 변경합니다. (중복 호출 방지 포함)
+        /// </summary>
+        /// <param name="state">변경할 상태</param>
+        public void PlayAnimation(PlayerState state)
+        {
+            if (m_lastState == state) return;
+            m_lastState = state;
+
+            if (m_spumPrefabs != null)
+            {
+                m_spumPrefabs.PlayAnimation(state, 0);
+            }
         }
 
         #region 공개 메서드

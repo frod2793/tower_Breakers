@@ -175,26 +175,39 @@ MonoBehaviour:
   m_enemyPrefab: {fileID: 7359377293411260106, guid: da7416bb022334ae984a65ecf216288c, type: 3}
   m_spawnPoints:
   - {fileID: 1358896344}
-  m_spawnYOffset: 0.5
+  m_enemyConfig:
+    MoveSpeed: 2
+    PushForce: 2
+    PushRange: 1
+    TrainSpacing: 1
+    SpawnYOffset: 0.5
+  m_playerConfig:
+    DashSpeed: 10
+    DashCooldown: 0.1
+    ParryCooldown: 0.1
+    RetreatSpeed: 8
+    ParryDuration: 0.1
+    EnemyStopDuration: 1
+    ParryPushForce: 10
+    ParryActivationRange: 1
+    AttackRange: 2
+    AttackCooldown: 0.1
+    LeftWallX: -4.5
+    DashMinDistance: 2
+    ParryRange: 5
+    PushResistance: 0
+    DamagePerHit: 1
+    DamageCooldown: 1
   m_transitionDuration: 2
   m_platformPool: {fileID: 318021561}
+  m_targetPlatform: {fileID: 0}
+  m_goImage: {fileID: 0}
   m_playerTransform: {fileID: 1652479742}
+  m_playerView: {fileID: 1632754919}
   m_playerSpawnPoint: {fileID: 992580194}
   m_playerArrivalPoint: {fileID: 1068083475}
   m_playerSpawnService: {fileID: 1938295640}
   m_cameraTransform: {fileID: 0}
-  m_targetPlatform: {fileID: 0}
-  m_goImage: {fileID: 0}
-  m_playerConfig:
-    DashSpeed: 10
-    DashCooldown: 2
-    ParryCooldown: 3
-    AttackRange: 2
-    AttackCooldown: 0.5
-    RetreatSpeed: 8
-    ParryDuration: 0.5
-    LeftWallX: -8
-    EnemyStopDuration: 0.5
   m_battleUIConfig:
     DashSkill:
       Name: Dash
@@ -215,7 +228,6 @@ MonoBehaviour:
       Name: Skill3
       CooldownTime: 15
   m_battleUIView: {fileID: 837567948}
-  m_playerView: {fileID: 1632754919}
 --- !u!1 &93593719
 GameObject:
   m_ObjectHideFlags: 0
@@ -1993,6 +2005,10 @@ PrefabInstance:
     - target: {fileID: 2759179381390659625, guid: 9097df29531aa42a790fb305b234725a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7474188019039943448, guid: 9097df29531aa42a790fb305b234725a, type: 3}
+      propertyPath: m_config.LeftWallX
+      value: -4.55
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4235,6 +4251,23 @@ MonoBehaviour:
   m_dashDuration: 0.5
   m_yOffset: -0.5
   m_playerTransform: {fileID: 1084656065}
+  m_playerConfig:
+    DashSpeed: 10
+    DashCooldown: 2
+    ParryCooldown: 3
+    RetreatSpeed: 8
+    ParryDuration: 0.5
+    EnemyStopDuration: 0.5
+    ParryPushForce: 10
+    ParryActivationRange: 3
+    AttackRange: 2
+    AttackCooldown: 0.5
+    LeftWallX: -8
+    DashMinDistance: 2
+    ParryRange: 5
+    PushResistance: 0.5
+    DamagePerHit: 1
+    DamageCooldown: 1
 --- !u!1 &1973713891
 GameObject:
   m_ObjectHideFlags: 0

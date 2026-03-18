@@ -16,6 +16,8 @@ using TowerBreakers.Player.Logic;
 using TowerBreakers.Player.View;
 using TowerBreakers.Player.DTO;
 using Cysharp.Threading.Tasks;
+using TowerBreakers.Core.DI;
+using TowerBreakers.Enemy.DTO;
 
 namespace TowerBreakers.Core.Battle
 {
@@ -35,6 +37,7 @@ namespace TowerBreakers.Core.Battle
         private readonly FloorTransitionService m_floorTransitionService;
         private readonly PlatformPool m_platformPool;
         private readonly PlayerSpawnService m_playerSpawnService;
+        private readonly BattleLifetimeScope m_battleLifetimeScope;
         
         private PlayerPushReceiver m_playerPushReceiver;
         
@@ -101,8 +104,8 @@ namespace TowerBreakers.Core.Battle
             
             if (m_playerSpawnService != null)
             {
-                m_playerSpawnService.Initialize(m_playerLogic); // 로직 주입 추가
                 m_playerSpawnService.SetPlayerTransform(m_playerView != null ? m_playerView.transform : null);
+                m_playerSpawnService.Initialize(m_playerLogic);
                 m_playerSpawnService.OnSpawnComplete += OnPlayerSpawnComplete;
                 m_playerSpawnService.PlaySpawnAnimation();
             }
@@ -239,7 +242,6 @@ namespace TowerBreakers.Core.Battle
 
         private void InitializePlayerPush()
         {
-            // PlayerView가 참조하는 오브젝트에서 PlayerPushReceiver를 가져옵니다.
             if (m_playerView != null && m_playerPushReceiver == null)
             {
                 m_playerPushReceiver = m_playerView.GetComponent<PlayerPushReceiver>();
@@ -247,8 +249,8 @@ namespace TowerBreakers.Core.Battle
 
             if (m_playerPushReceiver != null && m_playerStatService != null)
             {
-                // PlayerLogic을 주입하여 상태 관리를 위임합니다.
-                m_playerPushReceiver.Initialize(m_playerStatService.TotalHealth, m_playerLogic);
+                // [설명]: DTO와 로직을 주입하여 초기화 (PushResistance 등은 DTO 내부에 있음)
+                m_playerPushReceiver.Initialize(m_playerStatService.TotalHealth, m_playerConfig, m_playerLogic);
                 m_playerPushReceiver.OnPlayerDeath += OnPlayerDeath;
             }
         }

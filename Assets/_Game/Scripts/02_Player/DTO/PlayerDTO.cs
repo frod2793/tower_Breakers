@@ -10,20 +10,17 @@ namespace TowerBreakers.Player.DTO
     [Serializable]
     public class PlayerConfigDTO
     {
+        #region 기본 설정
+        [Header("대쉬 설정")]
         [Tooltip("대쉬 속도")]
         public float DashSpeed = 10f;
 
         [Tooltip("대쉬 쿨타임")]
         public float DashCooldown = 2f;
 
+        [Header("패링 설정")]
         [Tooltip("패링 쿨타임")]
         public float ParryCooldown = 3f;
-
-        [Tooltip("공격 범위")]
-        public float AttackRange = 2f;
-
-        [Tooltip("공격 쿨타임")]
-        public float AttackCooldown = 0.5f;
 
         [Tooltip("패링 후 퇴각 속도")]
         public float RetreatSpeed = 8f;
@@ -31,11 +28,42 @@ namespace TowerBreakers.Player.DTO
         [Tooltip("패링 지속 시간")]
         public float ParryDuration = 0.5f;
 
+        [Tooltip("패링 시 적 정지 시간")]
+        public float EnemyStopDuration = 0.5f;
+
+        [Tooltip("패링 시 적을 밀어내는 힘")]
+        public float ParryPushForce = 10f;
+
+        [Tooltip("패링 발동 가능 최소 거리 (적이 이 거리 안에 있어야 패링이 작동)")]
+        public float ParryActivationRange = 3.0f;
+
+        [Header("공격 설정")]
+        [Tooltip("공격 범위")]
+        public float AttackRange = 2f;
+
+        [Tooltip("공격 쿨타임")]
+        public float AttackCooldown = 0.5f;
+        #endregion
+
+        #region 이동 및 밀림 설정
         [Tooltip("왼쪽 벽 위치")]
         public float LeftWallX = -8f;
 
-        [Tooltip("패링 시 적 정지 시간")]
-        public float EnemyStopDuration = 0.5f;
+        [Tooltip("대쉬 최소 거리")]
+        public float DashMinDistance = 1.5f;
+
+        [Tooltip("패링 범위")]
+        public float ParryRange = 2.0f;
+
+        [Tooltip("밀림 저항력 (0.0: 완전 밀림, 1.0: 밀리지 않음)")]
+        public float PushResistance = 0.5f;
+
+        [Tooltip("벽 도달 시 체력 감소량")]
+        public int DamagePerHit = 1;
+
+        [Tooltip("밀림 후 쿨다운 (초)")]
+        public float DamageCooldown = 1f;
+        #endregion
     }
 
     /// <summary>
