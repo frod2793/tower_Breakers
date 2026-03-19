@@ -45,11 +45,6 @@ namespace TowerBreakers.Player.Model
 
         public void AddItem(string itemId)
         {
-            if (m_inventoryIds.Contains(itemId))
-            {
-                return;
-            }
-
             m_inventoryIds.Add(itemId);
             OnItemAdded?.Invoke(itemId);
             OnInventoryChanged?.Invoke();

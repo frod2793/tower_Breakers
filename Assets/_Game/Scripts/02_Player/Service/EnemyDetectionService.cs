@@ -72,6 +72,10 @@ namespace TowerBreakers.Player.Service
             {
                 if (enemy == null || !enemy.activeInHierarchy) continue;
 
+                // [추가]: 현재 플레이어와 동일한 층(Y축 기준)에 있는 적만 탐지 대상으로 포함
+                // 층간 간격이 10이므로 2.0f 이내의 오차는 동일 층으로 간주
+                if (Mathf.Abs(enemy.transform.position.y - playerPosition.y) > 2.0f) continue;
+
                 float targetX = enemy.transform.position.x;
                 // 플레이어보다 오른쪽에 있는 적만 대상
                 if (targetX > playerPosition.x)

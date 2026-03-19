@@ -15,6 +15,9 @@ namespace TowerBreakers.Player.Data
         [Tooltip("장비 표시 이름")]
         [SerializeField] private string m_itemName;
 
+        [Tooltip("장비 아이콘 (상자 개봉 연출 등에 사용)")]
+        [SerializeField] private Sprite m_icon;
+
         [Tooltip("장비 설명")]
         [SerializeField] [TextArea] private string m_description;
 
@@ -42,6 +45,7 @@ namespace TowerBreakers.Player.Data
         [SerializeField] private string m_spumItemPath;
 
         public string ID => m_id;
+        public Sprite Icon => m_icon;
         public string ItemName => m_itemName;
         public string Description => m_description;
         public EquipmentType Type => m_type;

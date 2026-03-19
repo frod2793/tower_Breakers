@@ -282,7 +282,7 @@ GameObject:
   - component: {fileID: 4977980301376572099}
   - component: {fileID: 8557425484980424754}
   - component: {fileID: 6876249502096434689}
-  - component: {fileID: 1830519471302012764}
+  - component: {fileID: 894521372827016765}
   m_Layer: 5
   m_Name: itemSlot
   m_TagString: Untagged
@@ -350,7 +350,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &1830519471302012764
+--- !u!114 &894521372827016765
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -359,7 +359,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5153100436983057892}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ddf34dccb7a0d480d9906b979045c937, type: 3}
+  m_Script: {fileID: 11500000, guid: 335f5c72644004169ac8b73ae629cad3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.UI.Equipment.ItemSlotView
   m_itemImage: {fileID: 2149649420303745452}

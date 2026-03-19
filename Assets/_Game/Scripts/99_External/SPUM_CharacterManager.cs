@@ -47,7 +47,7 @@ namespace TowerBreakers.SPUM
 
             if (m_spumManager == null)
             {
-                m_spumManager = FindObjectOfType<SPUM_Manager>();
+                m_spumManager = GameObject.FindFirstObjectByType<SPUM_Manager>();
             }
 
             if (m_spumManager == null)

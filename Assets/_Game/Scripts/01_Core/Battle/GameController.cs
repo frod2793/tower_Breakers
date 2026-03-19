@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -18,6 +19,8 @@ using TowerBreakers.Player.DTO;
 using Cysharp.Threading.Tasks;
 using TowerBreakers.Core.DI;
 using TowerBreakers.Enemy.DTO;
+using TowerBreakers.Battle;
+using TowerBreakers.Player.Data;
 
 namespace TowerBreakers.Core.Battle
 {
@@ -47,6 +50,10 @@ namespace TowerBreakers.Core.Battle
         private readonly BattleUIViewModel m_uiViewModel;
         private readonly PlayerConfigDTO m_playerConfig;
         private readonly BattleUIDTO m_uiConfig;
+        private readonly EnemyConfigDTO m_enemyConfig;
+        private readonly RewardChestView m_rewardChestPrefab;
+        private readonly EquipmentDatabase m_equipmentDatabase;
+        private readonly Transform m_rewardChestSpawnPoint;
         #endregion
 
         #region 초기화
@@ -68,7 +75,11 @@ namespace TowerBreakers.Core.Battle
             PlayerLogic playerLogic,
             BattleUIViewModel uiViewModel,
             PlayerConfigDTO playerConfig,
-            BattleUIDTO uiConfig)
+            BattleUIDTO uiConfig,
+            EnemyConfigDTO enemyConfig,
+            EquipmentDatabase equipmentDatabase,
+            RewardChestView rewardChestPrefab = null,
+            Transform rewardChestSpawnPoint = null)
         {
             m_characterManager = characterManager;
             m_userSession = userSession;
@@ -88,6 +99,10 @@ namespace TowerBreakers.Core.Battle
             m_uiViewModel = uiViewModel;
             m_playerConfig = playerConfig;
             m_uiConfig = uiConfig;
+            m_enemyConfig = enemyConfig;
+            m_equipmentDatabase = equipmentDatabase;
+            m_rewardChestPrefab = rewardChestPrefab;
+            m_rewardChestSpawnPoint = rewardChestSpawnPoint;
         }
 
         /// <summary>
@@ -136,22 +151,8 @@ namespace TowerBreakers.Core.Battle
                     }
                 }
                 
-                await SpawnEnemiesForCurrentFloorAsync(currentFloor);
+                // [수정]: OnPlatformReady 이벤트가 이미 적 생성을 트리거하므로 명시적인 호출을 제거하여 중복 스폰 방지
             }
-        }
-
-        private async UniTask SpawnEnemiesForCurrentFloorAsync(FloorData floor)
-        {
-            Transform platformTransform = null;
-            if (m_floorTransitionService != null)
-            {
-                platformTransform = m_floorTransitionService.GetCurrentPlatformTransform();
-            }
-            
-            await m_enemySpawnService.SpawnEnemies(floor, OnEnemyDeath, platformTransform);
-            m_towerFloorService.SetEnemyCount(floor.GetTotalEnemyCount());
-            
-            SpawnNextFloorEnemies();
         }
 
         private void OnPlayerSpawnComplete()
@@ -167,23 +168,29 @@ namespace TowerBreakers.Core.Battle
 
         private void StartEnemyAdvanceForCurrentFloor()
         {
-            var enemies = GameObject.FindGameObjectsWithTag("Enemy");
-            
-            if (enemies.Length == 0) return;
+            Transform currentPlatform = m_floorTransitionService?.GetCurrentPlatformTransform();
+            if (currentPlatform == null) return;
 
-            var player = GameObject.FindGameObjectWithTag("Player");
-            Transform playerTransform = player != null ? player.transform : null;
+            StartAdvanceForList(m_enemySpawnService.NormalEnemies, currentPlatform);
+            StartAdvanceForList(m_enemySpawnService.EliteEnemies, currentPlatform);
+            StartAdvanceForList(m_enemySpawnService.BossEnemies, currentPlatform);
+        }
 
-            for (int i = 0; i < enemies.Length; i++)
+        private void StartAdvanceForList(IReadOnlyList<GameObject> enemies, Transform platform)
+        {
+            foreach (var enemy in enemies)
             {
-                var pushController = enemies[i].GetComponent<EnemyPushController>();
-                if (pushController != null)
+                if (enemy == null) continue;
+                
+                // [핵심 수정]: 해당 적이 현재 플랫폼(층)에 속해 있는지 확인하여, 선스폰된 다른 층의 적이 움직이는 것을 방지
+                if (enemy.transform.parent == platform)
                 {
-                    if (i == 0 && playerTransform != null)
+                    var pushController = enemy.GetComponent<EnemyPushController>();
+                    if (pushController != null)
                     {
-                        pushController.SetFollowTarget(playerTransform);
+                        pushController.SetCanAdvance(true);
+                        pushController.StartMoving();
                     }
-                    pushController.StartMoving();
                 }
             }
         }
@@ -222,6 +229,11 @@ namespace TowerBreakers.Core.Battle
 
         private void InitializeEnemySpawn()
         {
+            if (m_enemySpawnService != null)
+            {
+                Debug.Log("[GameController] 적 스폰 서비스 초기화 (기존 데이터 제거)");
+                m_enemySpawnService.ClearEnemies();
+            }
         }
 
         private void InitializeCharacter()
@@ -307,11 +319,12 @@ namespace TowerBreakers.Core.Battle
             var currentFloor = m_towerFloorService.GetCurrentFloorData();
             if (currentFloor != null && currentFloor.FloorNumber == floorNumber)
             {
-                SpawnEnemiesForCurrentFloor(currentFloor);
+                // [수정]: 동기 메서드에서 비동기 호출 시 적절한 처리
+                SpawnEnemiesForCurrentFloor(currentFloor).Forget();
             }
         }
 
-        private async void SpawnEnemiesForCurrentFloor(FloorData floor)
+        private async UniTaskVoid SpawnEnemiesForCurrentFloor(FloorData floor)
         {
             Transform platformTransform = null;
             if (m_floorTransitionService != null)
@@ -319,26 +332,71 @@ namespace TowerBreakers.Core.Battle
                 platformTransform = m_floorTransitionService.GetCurrentPlatformTransform();
             }
             
-            await m_enemySpawnService.SpawnEnemies(floor, OnEnemyDeath, platformTransform);
+            // [핵심 리팩토링]: 자식 개수(childCount)는 환경 오브젝트 등에 의해 부정확할 수 있으므로, 서비스 내부의 스폰 상태를 확인합니다.
+            bool alreadySpawned = m_enemySpawnService.IsFloorSpawned(floor.FloorNumber);
+
+            Debug.Log($"[GameController-Diag] SpawnEnemiesForCurrentFloor 층:{floor.FloorNumber}, Platform:{platformTransform?.name}, PlatformY:{platformTransform?.position.y}, alreadySpawned:{alreadySpawned}");
+
+            if (!alreadySpawned)
+            {
+                Debug.Log($"[GameController] 현재 층({floor.FloorNumber}) 적이 없어 새로 스폰합니다.");
+                await m_enemySpawnService.SpawnEnemies(floor, OnEnemyDeath, platformTransform, true);
+            }
+            else
+            {
+                Debug.Log($"[GameController] 현재 층({floor.FloorNumber})에 이미 선스폰된 적이 존재하여 콜백만 연결합니다.");
+                // 이미 스폰되어 있다면 사망 콜백만 연결
+                m_enemySpawnService.SetOnEnemyDeathCallback(OnEnemyDeath);
+            }
+
             m_towerFloorService.SetEnemyCount(floor.GetTotalEnemyCount());
 
-            SpawnNextFloorEnemies();
+            await SpawnNextFloorEnemies();
         }
 
-        private async void SpawnNextFloorEnemies()
+        private async UniTask SpawnNextFloorEnemies()
         {
-            if (m_floorTransitionService != null && m_towerFloorService != null)
+            if (m_floorTransitionService == null || m_towerFloorService == null) return;
+
+            int currentFloor = m_towerFloorService.CurrentFloor;
+            Debug.Log($"[GameController-Diag] 선스폰 시작 - 현재 층: {currentFloor}");
+
+            // 1. n+1 층 적 선스폰
+            int nextFloor1 = currentFloor + 1;
+            if (nextFloor1 <= m_towerFloorService.TotalFloors)
             {
-                var nextFloorNumber = m_towerFloorService.CurrentFloor + 1;
-                if (nextFloorNumber <= m_towerFloorService.TotalFloors)
+                var floorData = m_towerFloorService.GetFloorData(nextFloor1);
+                var platform = m_floorTransitionService.GetNextPlatformTransform();
+                
+                if (floorData != null && platform != null)
                 {
-                    var nextFloor = m_towerFloorService.GetFloorData(nextFloorNumber);
-                    if (nextFloor != null)
+                    bool alreadySpawned = m_enemySpawnService.IsFloorSpawned(nextFloor1);
+                    Debug.Log($"[GameController-Diag] n+1 층({nextFloor1}) 확인 - Platform:{platform.name}, PlatformY:{platform.position.y}, alreadySpawned:{alreadySpawned}");
+                    
+                    if (!alreadySpawned)
                     {
-                        var nextPlatformTransform = m_floorTransitionService.GetNextPlatformTransform();
-                        // [설명]: 다음 층의 적들을 미리 생성할 때도 해당 플랫폼을 부모로 지정합니다.
-                        // UniTask를 리턴하게 변경되었으므로 await를 사용하여 생성이 완료될 때까지 대기할 수 있습니다.
-                        await m_enemySpawnService.SpawnEnemies(nextFloor, null, nextPlatformTransform);
+                        Debug.Log($"[GameController] n+1 층({nextFloor1}) 적 선스폰 시작 (PlatformY: {platform.position.y})");
+                        await m_enemySpawnService.SpawnEnemies(floorData, OnEnemyDeath, platform, false);
+                    }
+                }
+            }
+
+            // 2. n+2 층 적 선스폰
+            int nextFloor2 = currentFloor + 2;
+            if (nextFloor2 <= m_towerFloorService.TotalFloors)
+            {
+                var floorData = m_towerFloorService.GetFloorData(nextFloor2);
+                var platform = m_floorTransitionService.GetThirdPlatformTransform();
+                
+                if (floorData != null && platform != null)
+                {
+                    bool alreadySpawned = m_enemySpawnService.IsFloorSpawned(nextFloor2);
+                    Debug.Log($"[GameController-Diag] n+2 층({nextFloor2}) 확인 - Platform:{platform.name}, PlatformY:{platform.position.y}, alreadySpawned:{alreadySpawned}");
+
+                    if (!alreadySpawned)
+                    {
+                        Debug.Log($"[GameController] n+2 층({nextFloor2}) 적 선스폰 시작 (PlatformY: {platform.position.y})");
+                        await m_enemySpawnService.SpawnEnemies(floorData, OnEnemyDeath, platform, false);
                     }
                 }
             }
@@ -349,16 +407,78 @@ namespace TowerBreakers.Core.Battle
             m_towerFloorService.RegisterEnemyDeath();
         }
 
-        private async void OnAllEnemiesCleared()
+        private void OnAllEnemiesCleared()
         {
+            Debug.Log("[GameController] 모든 적 처치 완료 - 보상 상자 스폰 대기");
+            SpawnRewardChest();
+        }
+
+        private void SpawnRewardChest()
+        {
+            if (m_rewardChestPrefab == null)
+            {
+                Debug.LogWarning("[GameController] 보상 상자 프리팹이 설정되지 않았습니다. 즉시 보상 처리합니다.");
+                CompleteFloorSequence();
+                return;
+            }
+
+            // [추가]: 상자를 생성하기 전에 보상을 미리 결정함 (연출용 아이콘 확보)
+            var selectedItem = GetRandomSpumReward();
+            if (selectedItem == null)
+            {
+                Debug.LogWarning("[GameController] 보상 리스트가 비어있어 상자를 스폰하지 않고 다음 층으로 넘어갑니다. (EquipmentDatabase 확인 필요)");
+                CompleteFloorSequence();
+                return;
+            }
+
+            Transform platformTransform = m_floorTransitionService != null ? m_floorTransitionService.GetCurrentPlatformTransform() : null;
+            
+            Vector3 spawnPos;
+            if (m_rewardChestSpawnPoint != null)
+            {
+                spawnPos = m_rewardChestSpawnPoint.position;
+                Debug.Log($"[GameController] 지정된 SpawnPoint 사용: {spawnPos}");
+            }
+            else
+            {
+                float spawnX = m_enemyConfig != null ? m_enemyConfig.RewardChestSpawnX : -2f;
+                float spawnY = m_enemyConfig != null ? m_enemyConfig.SpawnYOffset : 0f;
+                spawnPos = new Vector3(spawnX, spawnY, 0);
+                if (platformTransform != null) spawnPos += platformTransform.position;
+                Debug.Log($"[GameController] 기본 좌표 계산 사용: {spawnPos} (Platform: {platformTransform?.name})");
+            }
+
+            // [수정]: 스폰 좌표의 Z축을 0으로 강제하여 카메라 클리핑 및 가려짐 방지
+            spawnPos.z = 0;
+
+            var chest = GameObject.Instantiate(m_rewardChestPrefab, spawnPos, Quaternion.identity, platformTransform);
+            chest.gameObject.SetActive(true); // [기반 수정]: 프리팹이 비활성 상태일 경우를 대비하여 명시적 활성화
+            
+            // [수정]: 보상 아이콘을 전달하며 초기화 (실제 지급은 개봉 콜백에서 수행)
+            chest.Initialize(selectedItem.Icon, () =>
+            {
+                Debug.Log($"[GameController] 상자 개봉 확인 - 아이템 지급: {selectedItem.ItemName}");
+                SubmitReward(selectedItem);
+                CompleteFloorSequence();
+            });
+
+            Debug.Log($"[GameController] 보상 상자 스폰 완료: {spawnPos}, 보상 대상: {selectedItem.ItemName}");
+        }
+
+        private async void CompleteFloorSequence()
+        {
+            // 1. 고정 보상 처리
             var reward = m_towerFloorService.GetCurrentFloorReward();
             if (reward != null)
             {
                 ProcessFloorReward(reward);
             }
 
+            // [참고]: SPUM 장비 보상은 이제 상자 개봉 콜백에서 직접 처리됨 (SubmitReward 호출됨)
+
             if (m_towerFloorService.IsLastFloor())
             {
+                EndBattle(true);
                 return;
             }
 
@@ -368,7 +488,6 @@ namespace TowerBreakers.Core.Battle
             if (nextFloor != null && m_floorTransitionService != null)
             {
                 m_floorTransitionService.SetCurrentPlatform(nextFloor.FloorNumber);
-
                 await m_floorTransitionService.PlayTransitionAsync();
             }
         }
@@ -391,6 +510,30 @@ namespace TowerBreakers.Core.Battle
                 {
                     m_userSession.AddItem(itemId);
                 }
+            }
+        }
+
+        private EquipmentData GetRandomSpumReward()
+        {
+            if (m_equipmentDatabase == null) return null;
+
+            var candidates = new List<EquipmentData>();
+            candidates.AddRange(m_equipmentDatabase.Weapons);
+            candidates.AddRange(m_equipmentDatabase.Armors);
+            candidates.AddRange(m_equipmentDatabase.Helmets);
+
+            if (candidates.Count == 0) return null;
+
+            int randomIndex = Random.Range(0, candidates.Count);
+            return candidates[randomIndex];
+        }
+
+        private void SubmitReward(EquipmentData selectedItem)
+        {
+            if (selectedItem != null)
+            {
+                m_userSession.AddItem(selectedItem.ID);
+                m_uiViewModel.ShowRewardMessage($"보상 획득: {selectedItem.ItemName}");
             }
         }
 

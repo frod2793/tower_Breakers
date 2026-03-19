@@ -85,8 +85,6 @@ namespace TowerBreakers.Tower.Service
 
             Debug.Log($"[PlatformPool] 플랫폼 활성화 - 층: {floorNumber}");
             
-            OnPlatformActivated?.Invoke(floorNumber);
-            
             return platform;
         }
 

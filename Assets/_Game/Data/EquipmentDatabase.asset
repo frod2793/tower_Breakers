@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56484429a50c048d484b1f335ba1fb13, type: 3}
   m_Name: EquipmentDatabase
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Data.EquipmentDatabase
-  m_weapons: []
-  m_armors: []
-  m_helmets: []
+  m_weapons:
+  - {fileID: 0}
+  m_armors:
+  - {fileID: 0}
+  m_helmets:
+  - {fileID: 0}

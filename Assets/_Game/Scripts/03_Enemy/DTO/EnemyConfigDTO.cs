@@ -14,14 +14,14 @@ namespace TowerBreakers.Enemy.DTO
         [Tooltip("적 기본 이동 속도")]
         public float MoveSpeed = 2f;
 
-        [Tooltip("플레이어 밀어내기 힘")]
-        public float PushForce = 5f;
-
         [Tooltip("밀어내기 범위 (센싱 반경)")]
-        public float PushRange = 1.5f;
+        public float PushRange = 0.8f;
 
         [Tooltip("적 기차 행렬 간격")]
         public float TrainSpacing = 1.5f;
+
+        [Tooltip("보상 상자 스폰 X 좌표")]
+        public float RewardChestSpawnX = -2f;
 
         [Tooltip("스폰 Y 오프셋")]
         public float SpawnYOffset = 0f;

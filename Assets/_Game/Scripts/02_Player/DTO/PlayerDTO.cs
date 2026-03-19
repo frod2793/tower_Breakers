@@ -18,8 +18,11 @@ namespace TowerBreakers.Player.DTO
         [Tooltip("대쉬 쿨타임")]
         public float DashCooldown = 2f;
 
-        [Tooltip("대쉬 최소 거리 (적과의 거리가 이 값 이상일 때만 대쉬 가능)")]
+        [Tooltip("대쉬 최소 거리 (적과의 거리가 이 값 이상일 때만 대시 가능)")]
         public float DashMinDistance = 1.5f;
+
+        [Tooltip("대시 정지 거리 (적 앞의 해당 거리에서 멈춤)")]
+        public float DashStopDistance = 1.5f;
 
         [Header("패링 설정")]
         [Tooltip("패링 쿨타임")]

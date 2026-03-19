@@ -24,6 +24,9 @@ namespace TowerBreakers.Tower.Data
         [Tooltip("생성 위치 오프셋 (X)")]
         [SerializeField] private float m_positionOffsetX;
 
+        [Tooltip("생성 위치 오프셋 (Y)")]
+        [SerializeField] private float m_positionOffsetY;
+
         [Tooltip("기차 행렬에서의 순서 (일반 몹만 사용)")]
         [SerializeField] private int m_trainIndex;
 
@@ -45,6 +48,7 @@ namespace TowerBreakers.Tower.Data
         public int Count => m_count;
         public float SpawnDelay => m_spawnDelay;
         public float PositionOffsetX => m_positionOffsetX;
+        public float PositionOffsetY => m_positionOffsetY;
         public int TrainIndex => m_trainIndex;
         public float TrainSpacing => m_trainSpacing;
     }

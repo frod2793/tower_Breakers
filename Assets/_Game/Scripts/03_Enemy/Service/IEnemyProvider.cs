@@ -11,5 +11,10 @@ namespace TowerBreakers.Tower.Service
         IReadOnlyList<GameObject> NormalEnemies { get; }
         IReadOnlyList<GameObject> EliteEnemies { get; }
         IReadOnlyList<GameObject> BossEnemies { get; }
+
+        /// <summary>
+        /// [설명]: 특정 층의 적들이 이미 스폰되었는지 확인합니다.
+        /// </summary>
+        bool IsFloorSpawned(int floorNumber);
     }
 }

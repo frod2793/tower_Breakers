@@ -17,6 +17,7 @@ using TowerBreakers.Player.DTO;
 using TowerBreakers.Player.Logic;
 using TowerBreakers.Player.View;
 using TowerBreakers.Enemy.DTO;
+using TowerBreakers.Battle;
 
 namespace TowerBreakers.Core.DI
 {
@@ -60,6 +61,20 @@ namespace TowerBreakers.Core.DI
 
         [SerializeField, Tooltip("플레이어 설정 (밀림 저항, 벽 데미지 등)")]
         private PlayerConfigDTO m_playerConfig = new PlayerConfigDTO();
+
+        [Header("플레이어 직접 설정 (Override)")]
+        [SerializeField, Tooltip("패링 사거리 (판정 범위) - 이름 변경을 통해 이전 1.0 데이터를 강제 폐기합니다.")]
+        private float m_parryActivationRange_Final = 2.0f;
+
+        [SerializeField, Tooltip("대시 정지 거리 (적 앞의 해당 거리에서 멈춤)")]
+        private float m_dashStopDistance_Final = 1.5f;
+
+        [Header("보상 상자")]
+        [SerializeField, Tooltip("보상 상자 프리팹")]
+        private RewardChestView m_rewardChestPrefab;
+
+        [SerializeField, Tooltip("보상 상자 스폰 위치")]
+        private Transform m_rewardChestSpawnPoint;
         #endregion
 
         #region 환경 및 트랜지션
@@ -133,12 +148,23 @@ namespace TowerBreakers.Core.DI
             builder.RegisterInstance(m_equipmentDatabase);
 
             // DTO 등록 (생성자 주입용)
+            // [기반 수정]: 인스턴스 이름과 ID를 함께 출력하여 중복 실행 여부 및 대상을 명확히 식별함
+            Debug.Log($"[BattleLifetimeScope] 할당 전 Inspector 값 ({gameObject.name} ID:{gameObject.GetInstanceID()}) - m_parryActivationRange_Final: {m_parryActivationRange_Final}, m_dashStopDistance_Final: {m_dashStopDistance_Final}");
+
+            m_playerConfig.ParryRange = m_parryActivationRange_Final;
+            m_playerConfig.ParryActivationRange = m_parryActivationRange_Final; // 발동 거리도 동일하게 동기화
+            m_playerConfig.DashStopDistance = m_dashStopDistance_Final;
+            
+            Debug.Log($"[BattleLifetimeScope] DTO 할당 후 - ParryRange: {m_playerConfig.ParryRange}, Activation: {m_playerConfig.ParryActivationRange}, DashStop: {m_playerConfig.DashStopDistance}, EnemySpawnY: {m_enemyConfig.SpawnYOffset}");
+            
             builder.RegisterInstance(m_enemyConfig);
             builder.RegisterInstance(m_playerConfig);
             builder.RegisterInstance(m_battleUIConfig ?? new BattleUIDTO());
 
-            builder.Register<UserSessionModel>(Lifetime.Singleton);
-            builder.Register<IEquipmentService, EquipmentService>(Lifetime.Singleton);
+            if (m_rewardChestPrefab != null)
+            {
+                builder.RegisterComponentInNewPrefab(m_rewardChestPrefab, Lifetime.Scoped);
+            }
         }
 
         /// <summary>
@@ -153,16 +179,20 @@ namespace TowerBreakers.Core.DI
             builder.Register<FloorTransitionService>(Lifetime.Scoped)
                 .WithParameter("playerTransform", m_playerTransform)
                 .WithParameter("cameraTransform", m_cameraTransform)
-                .WithParameter("goImage", m_goImage)
-                .WithParameter("transitionDuration", m_transitionDuration); // [개선]: 파라미터 이름을 명시하여 모호성 제거
+                .WithParameter("transitionDuration", m_transitionDuration); // [개선]: 생성자 파라미터에 따라 자동 주입됨
 
             builder.Register<IPlayerStatService, PlayerStatService>(Lifetime.Scoped);
 
-            // EnemySpawnService 등록 (DTO 자동 주입)
+            // EnemySpawnService 등록 (IEnemyProvider 인터페이스로도 노출)
             builder.Register<EnemySpawnService>(Lifetime.Scoped)
+                .As<EnemySpawnService>()
+                .As<IEnemyProvider>()
                 .WithParameter(m_enemyPrefab)
                 .WithParameter(m_spawnPoints)
                 .WithParameter(m_targetPlatform);
+
+            // 적 탐지 서비스 등록
+            builder.Register<IEnemyDetectionService, EnemyDetectionService>(Lifetime.Scoped);
         }
 
         /// <summary>
@@ -196,7 +226,8 @@ namespace TowerBreakers.Core.DI
             if (m_playerView != null) builder.RegisterComponent(m_playerView);
 
             // 게임 전체 흐름 컨트롤러
-            builder.RegisterEntryPoint<GameController>();
+            builder.RegisterEntryPoint<GameController>()
+                .WithParameter("rewardChestSpawnPoint", m_rewardChestSpawnPoint);
         }
         #endregion
 

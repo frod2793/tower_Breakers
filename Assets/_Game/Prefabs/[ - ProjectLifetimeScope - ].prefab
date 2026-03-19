@@ -48,4 +48,4 @@ MonoBehaviour:
     TypeName: 
   autoRun: 1
   autoInjectGameObjects: []
-  m_equipmentDatabase: {fileID: 0}
+  m_equipmentDatabase: {fileID: 11400000, guid: 2afa5feb30a554b318313d4426c45952, type: 2}

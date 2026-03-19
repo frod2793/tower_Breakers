@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
+using TowerBreakers.UI.ViewModel;
 
 namespace TowerBreakers.Tower.Service
 {
@@ -13,34 +14,19 @@ namespace TowerBreakers.Tower.Service
     {
         private readonly Transform m_playerTransform;
         private readonly Transform m_cameraTransform;
-        private readonly Image m_goImage;
+        private readonly BattleUIViewModel m_uiViewModel;
+        private readonly PlayerSpawnService m_playerSpawnService;
         
         [Header("설정")]
-        [Tooltip("트랜지션 재생 시간 (초)")]
-        [SerializeField] private float m_transitionDuration = 2f;
-
-        [Tooltip("대기 시간 (초)")]
-        [SerializeField] private float m_waitDuration = 1f;
-
-        [Header("플랫폼 풀")]
-        [Tooltip("플랫폼 풀")]
-        [SerializeField] private PlatformPool m_platformPool;
-
-        [Tooltip("현재 플랫폼")]
-        [SerializeField] private GameObject m_currentPlatform;
-
-        [Tooltip("다음 층 플랫폼")]
-        [SerializeField] private GameObject m_nextPlatform;
+        private float m_transitionDuration = 2f;
+        private float m_waitDuration = 1f;
+        private PlatformPool m_platformPool;
+        private GameObject m_currentPlatform;
+        private GameObject m_nextPlatform;
+        private GameObject m_thirdPlatform;
 
         [Header("위치 설정")]
-        [Tooltip("플레이어 오른쪽 시작 위치 (화면 밖)")]
-        [SerializeField] private float m_playerExitX = 15f;
-
-        [Tooltip("플레이어 왼쪽 시작 위치 (화면 밖)")]
-        [SerializeField] private float m_playerEnterX = -15f;
-
-        [Tooltip("플랫폼 하강 높이")]
-        [SerializeField] private float m_platformDropHeight = 5f;
+        private float m_platformDropHeight = 10f;
 
         public event Action OnTransitionComplete;
         public event Action OnTransitionStarted;
@@ -55,12 +41,14 @@ namespace TowerBreakers.Tower.Service
         public FloorTransitionService(
             Transform playerTransform, 
             Transform cameraTransform, 
-            Image goImage, 
+            BattleUIViewModel uiViewModel,
+            PlayerSpawnService playerSpawnService,
             float transitionDuration)
         {
             m_playerTransform = playerTransform;
             m_cameraTransform = cameraTransform;
-            m_goImage = goImage;
+            m_uiViewModel = uiViewModel;
+            m_playerSpawnService = playerSpawnService;
             m_transitionDuration = transitionDuration;
         }
 
@@ -70,23 +58,11 @@ namespace TowerBreakers.Tower.Service
             
             if (m_platformPool != null)
             {
-                m_platformPool.OnPlatformActivated += OnPlatformActivated;
+                // [수정]: Pool 내부의 자동 이벤트 대신 서비스에서 명시적으로 상태를 제어함
             }
         }
 
-        private void OnPlatformActivated(int floorNumber)
-        {
-            Debug.Log($"[FloorTransitionService] 플랫폼 활성화 완료 - 층: {floorNumber}");
-            OnPlatformReady?.Invoke(floorNumber);
-        }
-
-        public void SetPlayerTransform(Transform player)
-        {
-        }
-
-        public void SetGoImage(Image goImage)
-        {
-        }
+        // [삭제]: Pool 이벤트를 직접 구독하는 대신 필요한 시점에 수동으로 호출함
 
         private int m_currentFloorNumber = 1;
         private int m_nextFloorNumber = 2;
@@ -109,50 +85,56 @@ namespace TowerBreakers.Tower.Service
             return m_nextPlatform != null ? m_nextPlatform.transform : null;
         }
 
+        public Transform GetThirdPlatformTransform()
+        {
+            return m_thirdPlatform != null ? m_thirdPlatform.transform : null;
+        }
+
         public async UniTask PlayTransitionAsync()
         {
             OnTransitionStarted?.Invoke();
 
             Debug.Log("[FloorTransitionService] ===== 트랜지션 시작 =====");
 
-            if (m_goImage != null)
+            // 1. GO 이미지 점멸 및 버튼 비활성화
+            if (m_uiViewModel != null)
             {
-                Debug.Log("[FloorTransitionService] GO 이미지 애니메이션 재생");
-                await PlayGoImageAnimationAsync();
+                m_uiViewModel.SetGoState(true);
             }
 
-            Debug.Log("[FloorTransitionService] 사용자 입력 대기 중... (클릭하세요)");
-            await ClickToProceedAsync();
-            Debug.Log("[FloorTransitionService] 클릭 감지 - 계속 진행");
+            // 2. 사용자 클릭 대기
+            Debug.Log("[FloorTransitionService] 사용자 클릭 대기 중...");
+            await WaitForClickAsync();
+            
+            if (m_uiViewModel != null)
+            {
+                m_uiViewModel.SetGoState(false); // GO 이미지 끔
+            }
 
-            Debug.Log("[FloorTransitionService] 플레이어 퇴장 애니메이션");
-            await PlayerExitAnimationAsync();
+            // 3. 플레이어 오른쪽으로 대시 퇴장
+            Debug.Log("[FloorTransitionService] 플레이어 퇴장 (오른쪽 대시)");
+            if (m_playerSpawnService != null)
+            {
+                // DashExitAsync 구현이 필요함 (가칭)
+                await DashExitAsync();
+            }
 
+            // 4. 지면 하강 연출
             Debug.Log("[FloorTransitionService] 플랫폼 하강 애니메이션");
             await PlatformDropAnimationAsync();
 
-            Debug.Log("[FloorTransitionService] 플레이어 입장 애니메이션");
-            await PlayerEnterAnimationAsync();
+            // 5. 플랫폼 교체
+            SwapPlatforms();
 
-            OnTransitionComplete?.Invoke();
-
-            if (m_platformPool != null)
+            // 6. 플레이어 왼쪽 스폰 지점에서 대시 등장
+            Debug.Log("[FloorTransitionService] 플레이어 입장 (왼쪽 대시)");
+            if (m_playerSpawnService != null)
             {
-                if (m_currentPlatform != null)
-                {
-                    m_platformPool.ReturnPlatform(m_currentPlatform);
-                }
-
-                if (m_nextPlatform != null)
-                {
-                    m_platformPool.ReturnPlatform(m_nextPlatform);
-                }
-
-                Debug.Log($"[FloorTransitionService] 플랫폼 활성화 - 현재: {m_currentFloorNumber}, 다음: {m_nextFloorNumber}");
-                m_currentPlatform = m_platformPool.GetPlatform(m_currentFloorNumber);
-                m_nextPlatform = m_platformPool.GetPlatform(m_nextFloorNumber);
+                await m_playerSpawnService.PlaySpawnAnimationAsync();
             }
 
+            OnTransitionComplete?.Invoke();
+            
             Debug.Log($"[FloorTransitionService] 플랫폼 활성화 알림 - 층: {m_currentFloorNumber}");
             OnPlatformReady?.Invoke(m_currentFloorNumber);
 
@@ -162,121 +144,99 @@ namespace TowerBreakers.Tower.Service
         public async UniTask ActivateFirstFloorPlatformAsync()
         {
             OnTransitionStarted?.Invoke();
-
             Debug.Log("[FloorTransitionService] ===== 첫 번째 층 플랫폼 활성화 =====");
-
-            if (m_goImage != null)
-            {
-                await PlayGoImageAnimationAsync();
-            }
-
-            OnTransitionComplete?.Invoke();
 
             if (m_platformPool != null)
             {
-                Debug.Log($"[FloorTransitionService] 플랫폼 활성화 - 현재: {m_currentFloorNumber}");
-                m_currentPlatform = m_platformPool.GetPlatform(m_currentFloorNumber);
+            m_currentPlatform = m_platformPool.GetPlatform(m_currentFloorNumber);
                 m_nextPlatform = m_platformPool.GetPlatform(m_currentFloorNumber + 1);
+                m_thirdPlatform = m_platformPool.GetPlatform(m_currentFloorNumber + 2); // [추가]: n+2 층
             }
+
+            // [추가]: 모든 플랫폼 참조 변수가 할당된 "후"에 이벤트를 발생시켜 GameController의 참조 오류 방지
+            OnTransitionComplete?.Invoke();
+            Debug.Log($"[FloorTransitionService] 모든 초기 플랫폼 준비 완료 알림 - 현재 층: {m_currentFloorNumber}");
+            OnPlatformReady?.Invoke(m_currentFloorNumber);
 
             Debug.Log("[FloorTransitionService] ===== 첫 번째 층 플랫폼 활성화 완료 =====");
         }
 
-        private async UniTask PlayGoImageAnimationAsync()
+        private async UniTask WaitForClickAsync()
         {
-            if (m_goImage == null)
+            bool clicked = false;
+            Action onClick = () => clicked = true;
+            
+            if (m_uiViewModel != null)
             {
-                return;
+                m_uiViewModel.OnScreenClicked += onClick;
             }
 
-            m_goImage.gameObject.SetActive(true);
+            await UniTask.WaitUntil(() => clicked);
 
-            var canvasGroup = m_goImage.GetComponent<CanvasGroup>();
-            if (canvasGroup == null)
+            if (m_uiViewModel != null)
             {
-                canvasGroup = m_goImage.gameObject.AddComponent<CanvasGroup>();
+                m_uiViewModel.OnScreenClicked -= onClick;
             }
-
-            canvasGroup.alpha = 0;
-
-            await canvasGroup.DOFade(1f, 0.3f).SetEase(Ease.OutQuad).ToUniTask();
-
-            await UniTask.Delay((int)(m_waitDuration * 1000));
-
-            await canvasGroup.DOFade(0f, 0.3f).SetEase(Ease.InQuad).ToUniTask();
-
-            m_goImage.gameObject.SetActive(false);
         }
 
-        private async UniTask ClickToProceedAsync()
+        private async UniTask DashExitAsync()
         {
-#if ENABLE_INPUT_SYSTEM
-            await UniTask.WaitUntil(() => UnityEngine.InputSystem.Mouse.current.leftButton.wasPressedThisFrame);
-#else
-            await UniTask.WaitUntil(() => Input.GetMouseButtonDown(0));
-#endif
-            Debug.Log("[FloorTransitionService] 클릭 감지");
+            if (m_playerTransform == null) return;
+
+            // 오른쪽으로 멀리 대시하여 화면 밖으로 나감
+            Vector3 targetPos = m_playerTransform.position + Vector3.right * 15f;
+            await m_playerTransform.DOMove(targetPos, 0.5f).SetEase(Ease.InQuad).ToUniTask();
         }
 
-        private async UniTask PlayerExitAnimationAsync()
+        private void SwapPlatforms()
         {
-            if (m_playerTransform == null)
-            {
-                return;
-            }
+            if (m_platformPool == null) return;
 
-            var originalPosition = m_playerTransform.position;
-
-            await m_playerTransform.DOMoveX(m_playerExitX, m_transitionDuration)
-                .SetEase(Ease.InQuad)
-                .ToUniTask();
-
-            m_playerTransform.position = new Vector3(m_playerEnterX, originalPosition.y, originalPosition.z);
+            if (m_currentPlatform != null) m_platformPool.ReturnPlatform(m_currentPlatform);
+            
+            // 한 단계씩 앞으로 당김
+            m_currentPlatform = m_nextPlatform;
+            m_nextPlatform = m_thirdPlatform;
+            
+            // 새로운 n+2 층 플랫폼 획득 (스폰 시 기본적으로 +20 위치에 생성됨)
+            m_thirdPlatform = m_platformPool.GetPlatform(m_currentFloorNumber + 2);
+            
+            Debug.Log($"[FloorTransitionService-Diag] SwapPlatforms 완료. Current: {m_currentPlatform?.name} (Y:{m_currentPlatform?.transform.position.y}), Next: {m_nextPlatform?.name} (Y:{m_nextPlatform?.transform.position.y}), Third: {m_thirdPlatform?.name} (Y:{m_thirdPlatform?.transform.position.y})");
         }
 
         private async UniTask PlatformDropAnimationAsync()
         {
-            if (m_currentPlatform == null)
+            var dropTasks = new System.Collections.Generic.List<UniTask>();
+            
+            Debug.Log($"[FloorTransitionService-Diag] PlatformDropAnimation 시작. DropHeight: {m_platformDropHeight}");
+
+            // 현재 플랫폼 하강 (화면 밖으로 사라짐)
+            if (m_currentPlatform != null)
             {
-                return;
+                var pt = m_currentPlatform.transform;
+                Debug.Log($"[FloorTransitionService-Diag] Current Platform ({pt.name}) Drop: {pt.position.y} -> {pt.position.y - m_platformDropHeight}");
+                dropTasks.Add(pt.DOMoveY(pt.position.y - m_platformDropHeight, 0.8f).SetEase(Ease.InCubic).ToUniTask());
             }
 
-            var platformTransform = m_currentPlatform.transform;
-            var originalPosition = platformTransform.position;
-
-            await platformTransform.DOMoveY(originalPosition.y - m_platformDropHeight, m_transitionDuration * 0.5f)
-                .SetEase(Ease.OutQuad)
-                .ToUniTask();
-
-            await platformTransform.DOMoveY(originalPosition.y, m_transitionDuration * 0.5f)
-                .SetEase(Ease.InQuad)
-                .ToUniTask();
-        }
-
-        private async UniTask PlayerEnterAnimationAsync()
-        {
-            if (m_playerTransform == null)
+            // 다음 플랫폼 하강 (화면으로 들어와 Y=0 이 됨)
+            if (m_nextPlatform != null)
             {
-                return;
+                var pt = m_nextPlatform.transform;
+                Debug.Log($"[FloorTransitionService-Diag] Next Platform ({pt.name}) Drop: {pt.position.y} -> {pt.position.y - m_platformDropHeight}");
+                dropTasks.Add(pt.DOMoveY(pt.position.y - m_platformDropHeight, 0.8f).SetEase(Ease.InCubic).ToUniTask());
             }
 
-            var targetPosition = new Vector3(0f, m_playerTransform.position.y, m_playerTransform.position.z);
-
-            await m_playerTransform.DOMoveX(targetPosition.x, m_transitionDuration)
-                .SetEase(Ease.OutQuad)
-                .ToUniTask();
-        }
-
-        public void SkipTransition()
-        {
-            DOTween.KillAll();
-
-            if (m_goImage != null)
+            // 다다음 플랫폼 하강 (+20 에서 +10 으로)
+            if (m_thirdPlatform != null)
             {
-                m_goImage.gameObject.SetActive(false);
+                var pt = m_thirdPlatform.transform;
+                Debug.Log($"[FloorTransitionService-Diag] Third Platform ({pt.name}) Drop: {pt.position.y} -> {pt.position.y - m_platformDropHeight}");
+                dropTasks.Add(pt.DOMoveY(pt.position.y - m_platformDropHeight, 0.8f).SetEase(Ease.InCubic).ToUniTask());
             }
 
-            OnTransitionComplete?.Invoke();
+            await UniTask.WhenAll(dropTasks);
+            
+            Debug.Log("[FloorTransitionService-Diag] PlatformDropAnimation 종료.");
         }
     }
 }

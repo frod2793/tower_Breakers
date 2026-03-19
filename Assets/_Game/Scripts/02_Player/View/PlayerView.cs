@@ -203,14 +203,25 @@ namespace TowerBreakers.Player.View
 
         private void PushAndStunEnemies(float range, float duration, float pushForce)
         {
-            // [수정]: 사용자의 요청에 따라 거리와 상관없이 "Enemy" 태그를 가진 모든 오브젝트(군집 전체)에게 효과 동시 적용
-            var enemyGos = GameObject.FindGameObjectsWithTag("Enemy");
-            Debug.Log($"[PlayerView] 패링 발동 - 군집 전체({enemyGos.Length}명) 대상 효과 동시 적용 (Knockback: {pushForce})");
-
-            foreach (var go in enemyGos)
+            // [수정]: 태그로 모든 적을 찾은 후, 현재 플레이어와 동일한 층(Y값 유사)에 있는 적만 필터링
+            var allEnemies = GameObject.FindGameObjectsWithTag("Enemy");
+            var currentFloorEnemies = new System.Collections.Generic.List<GameObject>();
+            
+            float playerY = transform.position.y;
+            foreach (var enemy in allEnemies)
             {
-                if (go == null) continue;
+                if (enemy == null) continue;
+                // 층간 간격이 10이므로 오차 범위를 2 정도로 설정하여 안전하게 필터링
+                if (Mathf.Abs(enemy.transform.position.y - playerY) < 2.0f)
+                {
+                    currentFloorEnemies.Add(enemy);
+                }
+            }
 
+            Debug.Log($"[PlayerView] 패링 발동 - 현재 층 적({currentFloorEnemies.Count}명) 대상 효과 적용 (전체 검색: {allEnemies.Length}명)");
+
+            foreach (var go in currentFloorEnemies)
+            {
                 // EnemyPushController가 있는 경우 스턴 및 넉백 적용
                 var enemyPush = go.GetComponent<EnemyPushController>();
                 if (enemyPush != null)

@@ -26,7 +26,7 @@ namespace TowerBreakers.Core.Scene
 
         private void SetupTransitionManager()
         {
-            var managers = GameObject.FindObjectsOfType<TransitionManager>();
+            var managers = GameObject.FindObjectsByType<TransitionManager>(FindObjectsSortMode.None);
             if (managers.Length > 0)
             {
                 m_transitionManager = managers[0];

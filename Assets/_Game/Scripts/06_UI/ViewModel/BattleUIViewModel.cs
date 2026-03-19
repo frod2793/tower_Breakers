@@ -21,6 +21,10 @@ namespace TowerBreakers.UI.ViewModel
         #region 프로퍼티 (상태값)
         public event Action<string, float> OnCooldownChanged;
         public event Action<string> OnSkillTriggered;
+        public event Action<string> OnRewardMessageReceived;
+        public event Action<bool> OnGoStateChanged; // [추가]: GO 이미지 점멸 상태 변경
+        public event Action<bool> OnInteractionChanged; // [추가]: 모든 버튼 활성/비활성 변경
+        public event Action OnScreenClicked; // [추가]: 전체 화면 클릭 이벤트
         #endregion
 
         #region 초기화 및 바인딩 로직
@@ -32,6 +36,30 @@ namespace TowerBreakers.UI.ViewModel
         #endregion
 
         #region 공개 메서드
+        /// <summary>
+        /// [설명]: GO 이미지의 점멸 상태를 설정하고 모든 인터랙션을 제어합니다.
+        /// </summary>
+        public void SetGoState(bool active)
+        {
+            OnGoStateChanged?.Invoke(active);
+            SetInteractionEnabled(!active);
+        }
+
+        /// <summary>
+        /// [설명]: 모든 버튼의 활성/비활성 상태를 설정합니다.
+        /// </summary>
+        public void SetInteractionEnabled(bool enabled)
+        {
+            OnInteractionChanged?.Invoke(enabled);
+        }
+
+        /// <summary>
+        /// [설명]: 화면 클릭이 발생했음을 알립니다. (FloorTransitionService에서 대기용)
+        /// </summary>
+        public void NotifyScreenClicked()
+        {
+            OnScreenClicked?.Invoke();
+        }
         /// <summary>
         /// [설명]: 외부에서 스킬 사용을 시도할 때 호출합니다.
         /// </summary>
@@ -74,6 +102,11 @@ namespace TowerBreakers.UI.ViewModel
         public bool IsOnCooldown(string skillName)
         {
             return m_cooldownRemaining.ContainsKey(skillName) && m_cooldownRemaining[skillName] > 0;
+        }
+
+        public void ShowRewardMessage(string message)
+        {
+            OnRewardMessageReceived?.Invoke(message);
         }
         #endregion
 
