@@ -7,6 +7,7 @@ using TowerBreakers.Player.Stat;
 using TowerBreakers.UI;
 using TowerBreakers.Tower.Service;
 using Cysharp.Threading.Tasks;
+using TowerBreakers.Battle;
 using TowerBreakers.UI.ViewModel;
 
 namespace TowerBreakers.Player.View
@@ -63,7 +64,6 @@ namespace TowerBreakers.Player.View
             m_logic.OnDashStarted += () => PlayAnimation(PlayerState.ATTACK);
             m_logic.OnParryStarted += StartParrySequence;
             m_logic.OnAttackStarted += StartAttackSequence;
-            m_logic.OnHit += (target) => PlayAnimation(PlayerState.ATTACK);
             m_logic.OnDamaged += OnPlayerDamaged;
             m_logic.OnDeath += OnPlayerDeath;
 
@@ -80,50 +80,37 @@ namespace TowerBreakers.Player.View
         private void HandleUISkill(string skillName)
         {
             Debug.Log($"[PlayerView] UI 스킬 입력 수신: {skillName}");
+            
             if (skillName == "Dash")
             {
-                float enemyFrontX = GetEnemyFrontX();
-                float distanceToEnemy = enemyFrontX - transform.position.x;
-
-                if (distanceToEnemy > m_config.DashMinDistance)
+                if (!m_logic.TryDash(Time.time))
                 {
-                    float targetX = enemyFrontX - 1.5f;
-                    if (!m_logic.TryDash(Time.time, targetX))
-                    {
-                        Debug.Log("[PlayerView] 대시 발동 실패 (로직 내부 거부)");
-                    }
-                }
-                else
-                {
-                    Debug.Log($"[PlayerView] 대시 무시 - 적까지 거리({distanceToEnemy})가 최소 거리({m_config.DashMinDistance}) 이하시");
+                    Debug.Log("[PlayerView] 대시 발동 실패 (로직 내부 거부)");
                 }
             }
             else if (skillName == "Parry")
             {
-                // [개선]: 기획 요구사항에 따라 설정된 거리(ParryActivationRange) 내에 적이 있을 때만 패링 발동
-                if (IsAnyEnemyInRange(m_config.ParryActivationRange))
+                if (!m_logic.TryParry(Time.time))
                 {
-                    m_logic.TryParry(Time.time);
-                }
-                else
-                {
-                    Debug.Log($"[PlayerView] 패링 발동 실패: 활성화 거리({m_config.ParryActivationRange}) 내에 적이 없음");
+                    Debug.Log("[PlayerView] 패링 발동 실패 (로직 내부 거부)");
                 }
             }
-            else if (skillName == "Attack") m_logic.TryAttack(Time.time);
+            else if (skillName == "Attack")
+            {
+                m_logic.TryAttack(Time.time);
+            }
+        }
+
+        private GameObject GetFrontEnemy()
+        {
+            // [기반 수정]: View에서 직접 검색하는 대신 로직에서 제공하는 최전방 적 정보를 사용
+            return m_logic.GetFrontEnemy();
         }
 
         private float GetEnemyFrontX()
         {
-            var enemies = FindObjectsOfType<EnemyPushController>();
-            if (enemies == null || enemies.Length == 0) return transform.position.x + 5f;
-
-            float minX = float.MaxValue;
-            foreach (var enemy in enemies)
-            {
-                if (enemy != null && enemy.transform.position.x < minX) minX = enemy.transform.position.x;
-            }
-            return minX;
+            // [기반 수정]: View에서 직접 계산하는 대신 로직에서 계산된 위치를 사용
+            return m_logic.GetFrontEnemyX();
         }
         #endregion
 
@@ -133,21 +120,12 @@ namespace TowerBreakers.Player.View
             if (m_logic == null) return;
 
             m_logic.Update(Time.time, Time.deltaTime);
-            UpdateFacingDirection();
+            // [수정]: 플레이어는 항상 오른쪽만 바라보도록 고정 (UpdateFacingDirection 제거)
             UpdateVisualMovement();
         }
 
-        private void UpdateFacingDirection()
-        {
-            float enemyFrontX = GetEnemyFrontX();
-            float direction = enemyFrontX - transform.position.x;
-
-            if (Mathf.Abs(direction) > 0.01f)
-            {
-                float scaleX = Mathf.Abs(transform.localScale.x) * (direction > 0 ? 1 : -1);
-                transform.localScale = new Vector3(scaleX, transform.localScale.y, transform.localScale.z);
-            }
-        }
+        // [삭제]: 사용자의 요청에 따라 더 이상 방향 전환을 하지 않음
+        // private void UpdateFacingDirection() { ... }
 
         private void UpdateVisualMovement()
         {
@@ -205,28 +183,17 @@ namespace TowerBreakers.Player.View
         }
         #endregion
 
-        private bool IsAnyEnemyInRange(float range)
-        {
-            var enemies = FindObjectsOfType<EnemyPushController>();
-            foreach (var enemy in enemies)
-            {
-                if (enemy == null) continue;
-                
-                float dist = Vector2.Distance(transform.position, enemy.transform.position);
-                if (dist <= range) return true;
-            }
-            return false;
-        }
+
 
         #region 내부 시퀀스
         private async void StartParrySequence()
         {
+            // [개선]: 액션 캔슬 시 시각적으로 현재 위치를 로직에 동기화하여 대쉬 이동을 즉시 멈춤
+            m_logic.SetPosition(transform.position);
+            
             PlayAnimation(PlayerState.ATTACK);
 
             PushAndStunEnemies(m_config.ParryRange, m_config.EnemyStopDuration, m_config.ParryPushForce);
-
-            m_logic.SetPosition(new Vector2(m_config.LeftWallX + 1f, transform.position.y));
-            m_logic.StartRetreat();
 
             // [개선]: 패링 시간 이후에 반드시 EndAction을 호출하여 'IsBusy' 상태가 무한 루프 도는 것을 방지
             await UniTask.Delay((int)(m_config.ParryDuration * 1000));
@@ -236,19 +203,27 @@ namespace TowerBreakers.Player.View
 
         private void PushAndStunEnemies(float range, float duration, float pushForce)
         {
-            // [개선]: 사거리 기반이 아닌, 씬 내의 모든 활성화된 적 군집을 대상으로 효과 적용 (요구사항 반영)
-            var enemies = FindObjectsOfType<EnemyPushController>();
-            Debug.Log($"[PlayerView] 패링 발동 - 군집 전체({enemies.Length}명) 대상 효과 적용");
+            // [수정]: 사용자의 요청에 따라 거리와 상관없이 "Enemy" 태그를 가진 모든 오브젝트(군집 전체)에게 효과 동시 적용
+            var enemyGos = GameObject.FindGameObjectsWithTag("Enemy");
+            Debug.Log($"[PlayerView] 패링 발동 - 군집 전체({enemyGos.Length}명) 대상 효과 동시 적용 (Knockback: {pushForce})");
 
-            foreach (var enemyPush in enemies)
+            foreach (var go in enemyGos)
             {
+                if (go == null) continue;
+
+                // EnemyPushController가 있는 경우 스턴 및 넉백 적용
+                var enemyPush = go.GetComponent<EnemyPushController>();
                 if (enemyPush != null)
                 {
-                    // 1. 경직(스턴) 적용 및 중첩
                     enemyPush.Stun(duration);
-
-                    // 2. 넉백(밀기) 적용 및 중첩
                     enemyPush.ApplyKnockback(Vector2.right, pushForce);
+                }
+                
+                // 보상 상자가 타겟인 경우
+                var chest = go.GetComponent<RewardChestView>();
+                if (chest != null)
+                {
+                    chest.TakeDamage(1f);
                 }
             }
         }
@@ -304,22 +279,55 @@ namespace TowerBreakers.Player.View
 
         private GameObject FindNearestEnemy()
         {
-            var colliders = Physics2D.OverlapCircleAll(transform.position, m_config.AttackRange);
-            GameObject nearestEnemy = null;
+            // [기반 수정]: 타격 판정 시 프레임 지연이나 적의 미세 이동으로 인한 '씹힘' 방지를 위해 사거리 여유값(0.2f) 추가
+            float searchRange = m_config.AttackRange + 0.2f;
+            
+            // [기반 수정]: 사용자의 요구사항에 따라 최전방 적(Leader)이 있다면 해당 적을 최우선 타겟으로 삼음
+            GameObject frontEnemy = GetFrontEnemy();
+            if (frontEnemy != null)
+            {
+                float distance = Vector2.Distance(transform.position, frontEnemy.transform.position);
+                if (distance <= searchRange)
+                {
+                    return frontEnemy;
+                }
+            }
+
+            // [개선]: 레이어 마스크를 사용하여 배경이나 UI 콜라이더의 간섭을 차단 (Enemy, Object 레이어 대상)
+            int layerMask = LayerMask.GetMask("Enemy", "Object");
+            var colliders = Physics2D.OverlapCircleAll(transform.position, searchRange, layerMask);
+            
             float nearestDistance = float.MaxValue;
+            GameObject nearestEnemy = null;
 
             foreach (var collider in colliders)
             {
-                if (collider.GetComponent<IEnemyController>() != null)
+                // [개선]: 자식 오브젝트의 콜라이더가 검출되더라도 부모의 IEnemyController나 태그를 확인하여 타겟으로 인정
+                var enemyController = collider.GetComponent<IEnemyController>() ?? collider.GetComponentInParent<IEnemyController>();
+                bool isEnemy = enemyController != null || collider.CompareTag("Enemy") || (collider.transform.root.CompareTag("Enemy"));
+
+                if (isEnemy)
                 {
-                    float distance = Vector2.Distance(transform.position, collider.transform.position);
+                    // 실제 거리 계산은 루트 객체(또는 컨트롤러가 있는 객체) 기준으로 수행하는 것이 정확함
+                    Transform targetTransform = (enemyController != null) ? ((MonoBehaviour)enemyController).transform : collider.transform;
+                    float distance = Vector2.Distance(transform.position, targetTransform.position);
+                    
                     if (distance < nearestDistance)
                     {
                         nearestDistance = distance;
-                        nearestEnemy = collider.gameObject;
+                        nearestEnemy = targetTransform.gameObject;
                     }
                 }
             }
+
+            // [디버그]: 타격 실패 시 주변에 인식된 오브젝트가 있는지 로그로 남겨 물리적 '씹힘' 원인 추적
+            if (nearestEnemy == null && colliders.Length > 0)
+            {
+                string info = "";
+                foreach(var c in colliders) info += $"[{c.name}(Layer:{c.gameObject.layer})] ";
+                Debug.Log($"[PlayerView] 타격 판정 범위 내 오브젝트는 있으나 유효한 적 없음 (검출: {info})");
+            }
+
             return nearestEnemy;
         }
 

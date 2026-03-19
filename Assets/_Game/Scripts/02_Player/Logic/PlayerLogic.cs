@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using TowerBreakers.Player.DTO;
 using TowerBreakers.Player.Stat;
+using TowerBreakers.Player.Service;
 using Cysharp.Threading.Tasks;
 
 namespace TowerBreakers.Player.Logic
@@ -17,6 +18,7 @@ namespace TowerBreakers.Player.Logic
         private readonly PlayerConfigDTO m_config;
         private readonly PlayerStateDTO m_state;
         private readonly IPlayerStatService m_statService;
+        private readonly IEnemyDetectionService m_enemyDetection;
         #endregion
 
         #region 프로퍼티
@@ -26,16 +28,16 @@ namespace TowerBreakers.Player.Logic
         public event Action OnDashStarted;
         public event Action OnParryStarted;
         public event Action OnAttackStarted;
-        public event Action<GameObject> OnHit;
         public event Action OnDamaged;
         public event Action OnDeath;
         #endregion
 
         #region 초기화
-        public PlayerLogic(PlayerConfigDTO config, IPlayerStatService statService)
+        public PlayerLogic(PlayerConfigDTO config, IPlayerStatService statService, IEnemyDetectionService enemyDetection)
         {
             m_config = config ?? new PlayerConfigDTO();
             m_statService = statService;
+            m_enemyDetection = enemyDetection;
             m_state = new PlayerStateDTO();
         }
         #endregion
@@ -46,7 +48,7 @@ namespace TowerBreakers.Player.Logic
             // 실제 이동은 View에서 진행하지만 상태 계산에 필요한 업데이트 수행
         }
 
-        public bool TryDash(float time, float targetX)
+        public bool TryDash(float time)
         {
             if (time - m_state.LastDashTime < m_config.DashCooldown)
             {
@@ -54,10 +56,27 @@ namespace TowerBreakers.Player.Logic
                 return false;
             }
 
-            if (IsBusy())
+            if (m_state.IsDashing || m_state.IsRetreating)
             {
-                Debug.Log($"[PlayerLogic] 대시 실패 - 현재 바쁜 상태 (Dashing: {m_state.IsDashing}, Parrying: {m_state.IsParrying}, Attacking: {m_state.IsAttacking}, Retreating: {m_state.IsRetreating})");
+                Debug.Log($"[PlayerLogic] 대시 실패 - 이미 이동 중 (Dashing: {m_state.IsDashing}, Retreating: {m_state.IsRetreating})");
                 return false;
+            }
+
+            // [기반 수정]: 대시 타겟 위치를 로직 내부에서 직접 계산 (Detection Service 활용)
+            float frontEnemyX = GetFrontEnemyX();
+            float targetX = frontEnemyX - m_config.DashStopDistance;
+
+            if (targetX <= m_state.Position.x)
+            {
+                Debug.Log($"[PlayerLogic] 대시 무시 - 이미 적 앞에 도달함 (TargetX: {targetX:F2})");
+                return false;
+            }
+
+            // [개선]: 공격 중이거나 패링 중일 때 대쉬 입력 시 이전 액션 캔슬 허용
+            if (m_state.IsAttacking || m_state.IsParrying)
+            {
+                Debug.Log("[PlayerLogic] 대시 발동 - 이전 액션(공격/패링) 캔슬");
+                EndAction();
             }
 
             m_state.LastDashTime = time;
@@ -76,10 +95,25 @@ namespace TowerBreakers.Player.Logic
                 return false;
             }
 
-            if (IsBusy())
+            if (m_state.IsParrying || m_state.IsRetreating)
             {
-                Debug.Log($"[PlayerLogic] 패링 실패 - 현재 바쁜 상태 (Dashing: {m_state.IsDashing}, Parrying: {m_state.IsParrying}, Attacking: {m_state.IsAttacking}, Retreating: {m_state.IsRetreating})");
+                Debug.Log($"[PlayerLogic] 패링 실패 - 이미 패링/퇴격 중 (Parrying: {m_state.IsParrying}, Retreating: {m_state.IsRetreating})");
                 return false;
+            }
+
+            // [기반 수정]: 패링 발동 가능 거리 판정을 로직 내부에서 수행
+            float distanceToFront = m_enemyDetection.GetDistanceToFrontEnemy(m_state.Position);
+            if (distanceToFront > m_config.ParryActivationRange)
+            {
+                Debug.Log($"[PlayerLogic] 패링 발동 실패: 최전방 적과의 거리({distanceToFront:F2})가 활성화 사거리({m_config.ParryActivationRange})보다 멂");
+                return false;
+            }
+
+            // [개선]: 대쉬 중이거나 공격 중일 때 패링 입력 시 즉시 캔슬하고 패링 실행
+            if (m_state.IsDashing || m_state.IsAttacking)
+            {
+                Debug.Log("[PlayerLogic] 패링 발동 - 이전 액션(대쉬/공격) 캔슬");
+                EndAction();
             }
 
             m_state.LastParryTime = time;
@@ -97,7 +131,9 @@ namespace TowerBreakers.Player.Logic
                 return false;
             }
 
-            // [개선]: 핵앤슬래쉬 장르 특성상 공격 중이더라도 다른 행동(대쉬, 패링 등)이 아니라면 연타 가능하도록 허용
+            // [기반 수정]: 공격 시퀀스가 이미 진행 중이면 중복 실행을 막아 비동기 시퀀스 중단(Cancellation) 방지 (Atomic Attack 보장)
+            if (m_state.IsAttacking) return false;
+
             if (m_state.IsDashing || m_state.IsParrying || m_state.IsRetreating)
             {
                 Debug.Log($"[PlayerLogic] 공격 실패 - 현재 조작 불가 상태 (Dashing: {m_state.IsDashing}, Parrying: {m_state.IsParrying}, Retreating: {m_state.IsRetreating})");
@@ -109,6 +145,17 @@ namespace TowerBreakers.Player.Logic
             Debug.Log("[PlayerLogic] 공격 발동 성공");
             OnAttackStarted?.Invoke();
             return true;
+        }
+
+        public float GetFrontEnemyX()
+        {
+            var frontEnemy = m_enemyDetection.GetFrontEnemy(m_state.Position);
+            return frontEnemy != null ? frontEnemy.transform.position.x : m_state.Position.x;
+        }
+
+        public GameObject GetFrontEnemy()
+        {
+            return m_enemyDetection.GetFrontEnemy(m_state.Position);
         }
 
         /// <summary>
@@ -150,14 +197,14 @@ namespace TowerBreakers.Player.Logic
         }
 
         /// <summary>
-        /// [설명]: 외부에서 가해지는 밀림 힘을 계산하여 위치에 반영합니다.
+        /// [설명]: 외부에서 가해지는 밀림 속도(Velocity)를 계산하여 위치에 반영합니다.
         /// </summary>
-        /// <param name="force">외부 힘 (저항력이 적용된 값)</param>
-        public void ApplyExternalPush(Vector2 force)
+        /// <param name="velocity">외부 속도 (저항력이 적용된 값)</param>
+        public void ApplyExternalPush(Vector2 velocity)
         {
-            // [참고]: force에는 이미 View/Receiver 레벨에서 저항력이 곱해져서 전달됨
+            // [참고]: velocity에는 이미 View/Receiver 레벨에서 저항력이 곱해져서 전달됨
             Vector2 currentPos = m_state.Position;
-            float newX = currentPos.x + force.x * Time.deltaTime;
+            float newX = currentPos.x + velocity.x * Time.deltaTime;
             
             // 왼쪽 벽 제한 및 위치 갱신
             float clampedX = Math.Max(newX, m_config.LeftWallX);
