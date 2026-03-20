@@ -20,6 +20,7 @@ using Cysharp.Threading.Tasks;
 using TowerBreakers.Core.DI;
 using TowerBreakers.Enemy.DTO;
 using TowerBreakers.Battle;
+using TowerBreakers.Enemy.Service;
 using TowerBreakers.Player.Data;
 
 namespace TowerBreakers.Core.Battle
@@ -27,7 +28,7 @@ namespace TowerBreakers.Core.Battle
     /// <summary>
     /// [기능]: 인게임 전투 흐름 및 캐릭터 상태 제어기
     /// </summary>
-    public class GameController : IStartable
+    public class GameController : IStartable, ITickable
     {
         #region 내부 변수
         private readonly CustomSPUMManager m_characterManager;
@@ -54,6 +55,26 @@ namespace TowerBreakers.Core.Battle
         private readonly RewardChestView m_rewardChestPrefab;
         private readonly EquipmentDatabase m_equipmentDatabase;
         private readonly Transform m_rewardChestSpawnPoint;
+        private readonly CombatSystem m_combatSystem;
+        #endregion
+
+        #region 유니티 생명주기
+        /// <summary>
+        /// [설명]: VContainer의 ITickable 인터페이스 구현체입니다. 
+        /// MonoBehaviour의 Update와 같이 매 프레임 실행됩니다.
+        /// </summary>
+        public void Tick()
+        {
+            if (m_enemyDetectionService != null && m_enemySpawnService != null)
+            {
+                // [멀티 스레드 탐지용]: 현재 활성화된 적 군집 리스트 전달
+                m_enemyDetectionService.UpdateEnemyLists(
+                    m_enemySpawnService.NormalEnemies,
+                    m_enemySpawnService.EliteEnemies,
+                    m_enemySpawnService.BossEnemies
+                );
+            }
+        }
         #endregion
 
         #region 초기화
@@ -78,6 +99,8 @@ namespace TowerBreakers.Core.Battle
             BattleUIDTO uiConfig,
             EnemyConfigDTO enemyConfig,
             EquipmentDatabase equipmentDatabase,
+            IEnemyDetectionService enemyDetectionService,
+            CombatSystem combatSystem, // [추가]
             RewardChestView rewardChestPrefab = null,
             Transform rewardChestSpawnPoint = null)
         {
@@ -101,9 +124,13 @@ namespace TowerBreakers.Core.Battle
             m_uiConfig = uiConfig;
             m_enemyConfig = enemyConfig;
             m_equipmentDatabase = equipmentDatabase;
+            m_enemyDetectionService = enemyDetectionService;
+            m_combatSystem = combatSystem; // [추가]
             m_rewardChestPrefab = rewardChestPrefab;
             m_rewardChestSpawnPoint = rewardChestSpawnPoint;
         }
+
+        private readonly IEnemyDetectionService m_enemyDetectionService; // [추가]
 
         /// <summary>
         /// [설명]: 씬 시작 시 호출되어 초기화 로직을 수행합니다.
@@ -261,8 +288,8 @@ namespace TowerBreakers.Core.Battle
 
             if (m_playerPushReceiver != null && m_playerStatService != null)
             {
-                // [설명]: DTO와 로직을 주입하여 초기화 (PushResistance 등은 DTO 내부에 있음)
-                m_playerPushReceiver.Initialize(m_playerStatService.TotalHealth, m_playerConfig, m_playerLogic);
+                // [설명]: DTO와 로직, 그리고 전투 시스템을 주입하여 초기화
+                m_playerPushReceiver.Initialize(m_playerStatService.TotalHealth, m_playerConfig, m_playerLogic, m_combatSystem);
                 m_playerPushReceiver.OnPlayerDeath += OnPlayerDeath;
             }
         }

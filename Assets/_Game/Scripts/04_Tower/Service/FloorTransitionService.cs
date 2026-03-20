@@ -8,235 +8,290 @@ using TowerBreakers.UI.ViewModel;
 namespace TowerBreakers.Tower.Service
 {
     /// <summary>
-    /// [기능]: 층 이동 트랜지션 서비스 (DOTween 활용)
+    /// [설명]: 층 이동 트랜지션 연출 및 플랫폼 관리를 담당하는 서비스 클래스입니다.
+    /// DOTween을 활용하여 플랫폼 하강 및 플레이어 대시 연출을 수행합니다.
     /// </summary>
     public class FloorTransitionService
     {
+        #region 내부 필드
         private readonly Transform m_playerTransform;
         private readonly Transform m_cameraTransform;
         private readonly BattleUIViewModel m_uiViewModel;
         private readonly PlayerSpawnService m_playerSpawnService;
+        private readonly Transform m_exitTransform;
         
-        [Header("설정")]
         private float m_transitionDuration = 2f;
-        private float m_waitDuration = 1f;
         private PlatformPool m_platformPool;
         private GameObject m_currentPlatform;
         private GameObject m_nextPlatform;
         private GameObject m_thirdPlatform;
-
-        [Header("위치 설정")]
         private float m_platformDropHeight = 10f;
 
+        private int m_currentFloorNumber = 1;
+        #endregion
+
+        #region 프로퍼티
         public event Action OnTransitionComplete;
         public event Action OnTransitionStarted;
         public event Action<int> OnPlatformReady;
 
+        /// <summary>
+        /// [설명]: 트랜지션 연출 지속 시간입니다.
+        /// </summary>
         public float TransitionDuration
         {
             get => m_transitionDuration;
             set => m_transitionDuration = value;
         }
+        #endregion
 
+        #region 초기화 로직
+        /// <summary>
+        /// [설명]: 서비스에 필요한 의존성을 주입받아 초기화합니다.
+        /// </summary>
         public FloorTransitionService(
             Transform playerTransform, 
             Transform cameraTransform, 
             BattleUIViewModel uiViewModel,
             PlayerSpawnService playerSpawnService,
+            Transform exitTransform,
             float transitionDuration)
         {
             m_playerTransform = playerTransform;
             m_cameraTransform = cameraTransform;
             m_uiViewModel = uiViewModel;
             m_playerSpawnService = playerSpawnService;
+            m_exitTransform = exitTransform;
             m_transitionDuration = transitionDuration;
         }
 
+        /// <summary>
+        /// [설명]: 플랫폼 생성을 위한 풀을 설정하고 연출 파라미터를 동기화합니다.
+        /// </summary>
+        /// <param name="pool">플랫폼 오브젝트 풀</param>
         public void SetPlatformPool(PlatformPool pool)
         {
             m_platformPool = pool;
             
             if (m_platformPool != null)
             {
-                // [수정]: Pool 내부의 자동 이벤트 대신 서비스에서 명시적으로 상태를 제어함
+                m_platformDropHeight = m_platformPool.FloorSpacing;
+                Debug.Log($"[FloorTransitionService] 플랫폼 풀 설정 완료 - 하강 높이 동기화: {m_platformDropHeight}");
             }
         }
+        #endregion
 
-        // [삭제]: Pool 이벤트를 직접 구독하는 대신 필요한 시점에 수동으로 호출함
-
-        private int m_currentFloorNumber = 1;
-        private int m_nextFloorNumber = 2;
-
+        #region 공개 메서드
+        /// <summary>
+        /// [설명]: 현재 활성화된 플랫폼의 번호를 설정합니다.
+        /// </summary>
+        /// <param name="floorNumber">현재 층 번호</param>
         public void SetCurrentPlatform(int floorNumber)
         {
             m_currentFloorNumber = floorNumber;
-            m_nextFloorNumber = floorNumber + 1;
-            
             Debug.Log($"[FloorTransitionService] 플랫폼 번호 설정 - 현재: {floorNumber}, 다음: {floorNumber + 1}");
         }
 
+        /// <summary>
+        /// [설명]: 현재 층 플랫폼의 트랜스폼을 반환합니다.
+        /// </summary>
         public Transform GetCurrentPlatformTransform()
         {
-            return m_currentPlatform != null ? m_currentPlatform.transform : null;
+            if (m_currentPlatform == null) return null;
+            return m_currentPlatform.transform;
         }
 
+        /// <summary>
+        /// [설명]: 다음 층 플랫폼의 트랜스폼을 반환합니다.
+        /// </summary>
         public Transform GetNextPlatformTransform()
         {
-            return m_nextPlatform != null ? m_nextPlatform.transform : null;
+            if (m_nextPlatform == null) return null;
+            return m_nextPlatform.transform;
         }
 
+        /// <summary>
+        /// [설명]: 다다음 층 플랫폼의 트랜스폼을 반환합니다.
+        /// </summary>
         public Transform GetThirdPlatformTransform()
         {
-            return m_thirdPlatform != null ? m_thirdPlatform.transform : null;
+            if (m_thirdPlatform == null) return null;
+            return m_thirdPlatform.transform;
         }
 
+        /// <summary>
+        /// [설명]: 층 이동 트랜지션 시퀀스를 비동기로 실행합니다.
+        /// </summary>
         public async UniTask PlayTransitionAsync()
         {
             OnTransitionStarted?.Invoke();
 
             Debug.Log("[FloorTransitionService] ===== 트랜지션 시작 =====");
 
-            // 1. GO 이미지 점멸 및 버튼 비활성화
+            // 1. UI 연출 및 클릭 대기
             if (m_uiViewModel != null)
             {
                 m_uiViewModel.SetGoState(true);
             }
 
-            // 2. 사용자 클릭 대기
+            // [추가]: 트랜지션 시작 시 플레이어 부모 해제 (Root로 복귀)
+            if (m_playerTransform != null)
+            {
+                m_playerTransform.SetParent(null);
+                Debug.Log("[FloorTransitionService] 플레이어 부모 해제 (Root 복구)");
+            }
+
             Debug.Log("[FloorTransitionService] 사용자 클릭 대기 중...");
             await WaitForClickAsync();
             
             if (m_uiViewModel != null)
             {
-                m_uiViewModel.SetGoState(false); // GO 이미지 끔
+                m_uiViewModel.SetGoState(false);
             }
 
-            // 3. 플레이어 오른쪽으로 대시 퇴장
-            Debug.Log("[FloorTransitionService] 플레이어 퇴장 (오른쪽 대시)");
-            if (m_playerSpawnService != null)
-            {
-                // DashExitAsync 구현이 필요함 (가칭)
-                await DashExitAsync();
-            }
+            // 2. 플레이어 퇴장 연출
+            Debug.Log("[FloorTransitionService] 플레이어 퇴장 시퀀스");
+            await DashExitAsync();
 
-            // 4. 지면 하강 연출
+            // 3. 지면 하강 및 플랫폼 교체
             Debug.Log("[FloorTransitionService] 플랫폼 하강 애니메이션");
             await PlatformDropAnimationAsync();
-
-            // 5. 플랫폼 교체
             SwapPlatforms();
 
-            // 6. 플레이어 왼쪽 스폰 지점에서 대시 등장
-            Debug.Log("[FloorTransitionService] 플레이어 입장 (왼쪽 대시)");
+            // 4. 플레이어 입장 연출
+            Debug.Log("[FloorTransitionService] 플레이어 입장 시퀀스");
             if (m_playerSpawnService != null)
             {
                 await m_playerSpawnService.PlaySpawnAnimationAsync();
+                
+                // [핵심 추가]: 플레이어 입장 완료 후 현재 플랫폼의 자식으로 설정 (계층 구조 통합)
+                if (m_playerTransform != null && m_currentPlatform != null)
+                {
+                    m_playerTransform.SetParent(m_currentPlatform.transform);
+                    Debug.Log($"[FloorTransitionService] 플레이어 부모 설정 완료: {m_currentPlatform.name} (WorldX:{m_currentPlatform.transform.position.x:F2})");
+                }
             }
 
             OnTransitionComplete?.Invoke();
-            
-            Debug.Log($"[FloorTransitionService] 플랫폼 활성화 알림 - 층: {m_currentFloorNumber}");
             OnPlatformReady?.Invoke(m_currentFloorNumber);
 
             Debug.Log("[FloorTransitionService] ===== 트랜지션 완료 =====");
         }
 
+        /// <summary>
+        /// [설명]: 게임 시작 시 첫 번째 층의 플랫폼들을 미리 생성하고 배치합니다.
+        /// </summary>
         public async UniTask ActivateFirstFloorPlatformAsync()
         {
             OnTransitionStarted?.Invoke();
-            Debug.Log("[FloorTransitionService] ===== 첫 번째 층 플랫폼 활성화 =====");
+            Debug.Log("[FloorTransitionService] ===== 초기 플랫폼 활성화 =====");
 
             if (m_platformPool != null)
             {
-            m_currentPlatform = m_platformPool.GetPlatform(m_currentFloorNumber);
+                m_currentPlatform = m_platformPool.GetPlatform(m_currentFloorNumber);
                 m_nextPlatform = m_platformPool.GetPlatform(m_currentFloorNumber + 1);
-                m_thirdPlatform = m_platformPool.GetPlatform(m_currentFloorNumber + 2); // [추가]: n+2 층
+                m_thirdPlatform = m_platformPool.GetPlatform(m_currentFloorNumber + 2);
+
+                // [추가]: 초기 씬 로드 시에도 플레이어를 첫 번째 플랫폼의 자식으로 설정
+                if (m_playerTransform != null && m_currentPlatform != null)
+                {
+                    m_playerTransform.SetParent(m_currentPlatform.transform);
+                    Debug.Log($"[FloorTransitionService] 초기 플레이어 부모 설정 완료: {m_currentPlatform.name}");
+                }
             }
 
-            // [추가]: 모든 플랫폼 참조 변수가 할당된 "후"에 이벤트를 발생시켜 GameController의 참조 오류 방지
             OnTransitionComplete?.Invoke();
-            Debug.Log($"[FloorTransitionService] 모든 초기 플랫폼 준비 완료 알림 - 현재 층: {m_currentFloorNumber}");
             OnPlatformReady?.Invoke(m_currentFloorNumber);
-
-            Debug.Log("[FloorTransitionService] ===== 첫 번째 층 플랫폼 활성화 완료 =====");
         }
+        #endregion
 
+        #region 내부 로직
+        /// <summary>
+        /// [설명]: 화면 클릭이 발생할 때까지 대기합니다.
+        /// </summary>
         private async UniTask WaitForClickAsync()
         {
-            bool clicked = false;
-            Action onClick = () => clicked = true;
-            
-            if (m_uiViewModel != null)
+            if (m_uiViewModel == null) return;
+
+            var tcs = new UniTaskCompletionSource();
+            Action onClick = () => 
             {
-                m_uiViewModel.OnScreenClicked += onClick;
+                Debug.Log("[FloorTransitionService] 클릭 이벤트 감지");
+                tcs.TrySetResult();
+            };
+            
+            m_uiViewModel.OnScreenClicked += onClick;
+
+            try
+            {
+                await tcs.Task;
             }
-
-            await UniTask.WaitUntil(() => clicked);
-
-            if (m_uiViewModel != null)
+            finally
             {
                 m_uiViewModel.OnScreenClicked -= onClick;
             }
         }
 
+        /// <summary>
+        /// [설명]: 플레이어를 화면 밖(퇴장 지점)으로 이동시키고 비활성화합니다.
+        /// </summary>
         private async UniTask DashExitAsync()
         {
             if (m_playerTransform == null) return;
 
-            // 오른쪽으로 멀리 대시하여 화면 밖으로 나감
-            Vector3 targetPos = m_playerTransform.position + Vector3.right * 15f;
+            Vector3 targetPos = m_exitTransform != null 
+                ? m_exitTransform.position 
+                : m_playerTransform.position + Vector3.right * 15f;
+            
             await m_playerTransform.DOMove(targetPos, 0.5f).SetEase(Ease.InQuad).ToUniTask();
+            
+            m_playerTransform.gameObject.SetActive(false);
+            Debug.Log("[FloorTransitionService] 플레이어 비활성화 완료");
         }
 
+        /// <summary>
+        /// [설명]: 플랫폼들의 참조를 한 단계씩 당기고 새로운 플랫폼을 보충합니다.
+        /// </summary>
         private void SwapPlatforms()
         {
             if (m_platformPool == null) return;
 
-            if (m_currentPlatform != null) m_platformPool.ReturnPlatform(m_currentPlatform);
+            if (m_currentPlatform != null)
+            {
+                m_platformPool.ReturnPlatform(m_currentPlatform);
+            }
             
-            // 한 단계씩 앞으로 당김
             m_currentPlatform = m_nextPlatform;
             m_nextPlatform = m_thirdPlatform;
             
-            // 새로운 n+2 층 플랫폼 획득 (스폰 시 기본적으로 +20 위치에 생성됨)
+            // 새 플랫폼 획득 및 좌표 보정 (누적 오차 방지)
             m_thirdPlatform = m_platformPool.GetPlatform(m_currentFloorNumber + 2);
-            
-            Debug.Log($"[FloorTransitionService-Diag] SwapPlatforms 완료. Current: {m_currentPlatform?.name} (Y:{m_currentPlatform?.transform.position.y}), Next: {m_nextPlatform?.name} (Y:{m_nextPlatform?.transform.position.y}), Third: {m_thirdPlatform?.name} (Y:{m_thirdPlatform?.transform.position.y})");
+            if (m_thirdPlatform != null)
+            {
+                float targetY = 2 * m_platformPool.FloorSpacing;
+                var pos = m_thirdPlatform.transform.position;
+                m_thirdPlatform.transform.position = new Vector3(pos.x, targetY, pos.z);
+            }
         }
 
+        /// <summary>
+        /// [설명]: 현재 활성화된 모든 플랫폼을 동시에 아래로 이동시킵니다.
+        /// </summary>
         private async UniTask PlatformDropAnimationAsync()
         {
             var dropTasks = new System.Collections.Generic.List<UniTask>();
             
-            Debug.Log($"[FloorTransitionService-Diag] PlatformDropAnimation 시작. DropHeight: {m_platformDropHeight}");
-
-            // 현재 플랫폼 하강 (화면 밖으로 사라짐)
             if (m_currentPlatform != null)
-            {
-                var pt = m_currentPlatform.transform;
-                Debug.Log($"[FloorTransitionService-Diag] Current Platform ({pt.name}) Drop: {pt.position.y} -> {pt.position.y - m_platformDropHeight}");
-                dropTasks.Add(pt.DOMoveY(pt.position.y - m_platformDropHeight, 0.8f).SetEase(Ease.InCubic).ToUniTask());
-            }
+                dropTasks.Add(m_currentPlatform.transform.DOMoveY(m_currentPlatform.transform.position.y - m_platformDropHeight, 0.8f).SetEase(Ease.InCubic).ToUniTask());
 
-            // 다음 플랫폼 하강 (화면으로 들어와 Y=0 이 됨)
             if (m_nextPlatform != null)
-            {
-                var pt = m_nextPlatform.transform;
-                Debug.Log($"[FloorTransitionService-Diag] Next Platform ({pt.name}) Drop: {pt.position.y} -> {pt.position.y - m_platformDropHeight}");
-                dropTasks.Add(pt.DOMoveY(pt.position.y - m_platformDropHeight, 0.8f).SetEase(Ease.InCubic).ToUniTask());
-            }
+                dropTasks.Add(m_nextPlatform.transform.DOMoveY(m_nextPlatform.transform.position.y - m_platformDropHeight, 0.8f).SetEase(Ease.InCubic).ToUniTask());
 
-            // 다다음 플랫폼 하강 (+20 에서 +10 으로)
             if (m_thirdPlatform != null)
-            {
-                var pt = m_thirdPlatform.transform;
-                Debug.Log($"[FloorTransitionService-Diag] Third Platform ({pt.name}) Drop: {pt.position.y} -> {pt.position.y - m_platformDropHeight}");
-                dropTasks.Add(pt.DOMoveY(pt.position.y - m_platformDropHeight, 0.8f).SetEase(Ease.InCubic).ToUniTask());
-            }
+                dropTasks.Add(m_thirdPlatform.transform.DOMoveY(m_thirdPlatform.transform.position.y - m_platformDropHeight, 0.8f).SetEase(Ease.InCubic).ToUniTask());
 
             await UniTask.WhenAll(dropTasks);
-            
-            Debug.Log("[FloorTransitionService-Diag] PlatformDropAnimation 종료.");
         }
+        #endregion
     }
 }

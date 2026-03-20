@@ -1,6 +1,7 @@
 using UnityEngine;
 using DG.Tweening;
 using System;
+using TowerBreakers.Enemy.Service;
 using TowerBreakers.Tower.Data;
 using TowerBreakers.Tower.Service;
 

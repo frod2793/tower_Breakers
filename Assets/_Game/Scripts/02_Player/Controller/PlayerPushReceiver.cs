@@ -13,6 +13,7 @@ namespace TowerBreakers.Player.Controller
         #region 내부 변수
         private PlayerLogic m_playerLogic;
         private PlayerConfigDTO m_config;
+        private TowerBreakers.Battle.CombatSystem m_combatSystem;
         private float m_lastDamageTime;
         #endregion
 
@@ -41,11 +42,16 @@ namespace TowerBreakers.Player.Controller
         /// <param name="maxHealth">최대 체력</param>
         /// <param name="config">플레이어 설정 DTO</param>
         /// <param name="playerLogic">플레이어 로직 인스턴스</param>
-        public void Initialize(int maxHealth, PlayerConfigDTO config, PlayerLogic playerLogic)
+        /// <param name="combatSystem">전투 시스템</param>
+        public void Initialize(int maxHealth, PlayerConfigDTO config, PlayerLogic playerLogic, TowerBreakers.Battle.CombatSystem combatSystem)
         {
             m_config = config;
             m_playerLogic = playerLogic;
+            m_combatSystem = combatSystem;
             
+            // [개선]: 스폰 즉시 벽 데미지를 입지 않도록 마지막 데미지 시간을 현재로 초기화
+            m_lastDamageTime = Time.time;
+
             if (m_playerLogic != null)
             {
                 m_playerLogic.InitializeHealth(maxHealth);
@@ -71,13 +77,13 @@ namespace TowerBreakers.Player.Controller
 
             if (m_playerLogic != null)
             {
-                // 밀림 저항력을 적용하여 로직에 전달
-                m_playerLogic.ApplyExternalPush(force * (1.0f - m_config.PushResistance));
+                // [수정]: PushResistance 제거됨. 외부 힘을 100% 그대로 전달.
+                m_playerLogic.ApplyExternalPush(force);
             }
             else
             {
                 // 로직이 없는 경우의 폴백
-                transform.Translate(force * (1.0f - m_config.PushResistance) * Time.deltaTime);
+                transform.Translate(force * Time.deltaTime);
             }
         }
         #endregion
@@ -90,8 +96,11 @@ namespace TowerBreakers.Player.Controller
         {
             if (m_config == null) return;
 
-            // 좌측 벽 충돌 체크 (센서 역할)
-            if (transform.position.x <= m_config.LeftWallX)
+            // [안전성]: Unity Object ?. 사용 금지 표준 준수
+            // [정밀화]: 시각적 위치(Transform)가 아닌 논리 좌표(Logic.State.Position)를 기준으로 벽 도달 판정
+            // 뷰 보간(Lerp)에 의한 미세한 오차나 딜레이로 인해 데미지 판정이 튀는 현상 방지
+            float logicalX = m_playerLogic.State.Position.x;
+            if (logicalX <= m_config.LeftWallX)
             {
                 if (Time.time - m_lastDamageTime >= m_config.DamageCooldown)
                 {
@@ -105,15 +114,18 @@ namespace TowerBreakers.Player.Controller
         /// </summary>
         private void TakeDamage()
         {
-            if (m_config == null) return;
+            if (m_config == null || m_combatSystem == null) return;
             m_lastDamageTime = Time.time;
 
+            // [리팩토링]: 전투 판정 로직을 전담 시스템으로 위임
+            m_combatSystem.HandleWallCrush();
+            
+            // [참고]: HUD 갱신 등은 이제 EventBus(OnPlayerDamaged)를 통해 처리되지만,
+            // 기존 델리게이트 호환성을 위해 유지합니다.
             if (m_playerLogic != null)
             {
-                m_playerLogic.TakeDamage(m_config.DamagePerHit);
+                OnHealthChanged?.Invoke(m_playerLogic.State.Health);
             }
-
-            OnHealthChanged?.Invoke(m_playerLogic?.State.Health ?? 0);
         }
 
         private void Die()

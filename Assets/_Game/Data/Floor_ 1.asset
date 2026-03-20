@@ -20,6 +20,7 @@ MonoBehaviour:
     m_count: 5
     m_spawnDelay: 0
     m_positionOffsetX: 0
+    m_positionOffsetY: 0
     m_trainIndex: 0
     m_trainSpacing: 0
   - m_enemyType: 0
@@ -27,6 +28,7 @@ MonoBehaviour:
     m_count: 0
     m_spawnDelay: 0
     m_positionOffsetX: 0
+    m_positionOffsetY: 0
     m_trainIndex: 0
     m_trainSpacing: 0
   - m_enemyType: 0
@@ -34,6 +36,7 @@ MonoBehaviour:
     m_count: 0
     m_spawnDelay: 0
     m_positionOffsetX: 0
+    m_positionOffsetY: 0
     m_trainIndex: 0
     m_trainSpacing: 0
   m_clearReward:

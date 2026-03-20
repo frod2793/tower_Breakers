@@ -15,7 +15,6 @@ MonoBehaviour:
   m_towerName: 
   m_description: 
   m_floors:
-  - {fileID: 11400000, guid: d53e62434e93346538019bb552030e9c, type: 2}
   - {fileID: 11400000, guid: 865a213c64f6f4bf89263a1cf6f79063, type: 2}
   - {fileID: 11400000, guid: 3bd436651d4eb4d5593c534d62326abb, type: 2}
   - {fileID: 11400000, guid: 742a673b9a7854f0595ff9156c536252, type: 2}

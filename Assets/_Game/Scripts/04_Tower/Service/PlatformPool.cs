@@ -91,6 +91,8 @@ namespace TowerBreakers.Tower.Service
         private void SetPlatformPosition(GameObject platform, int floorNumber)
         {
             // [설명]: 1층(floorNumber == 1)일 때 Y 좌표가 0이 되도록 (floorNumber - 1)을 곱합니다.
+            // 주의: 이 메서드는 절대 좌표를 기준으로 배치합니다. 
+            // 층 이동 연출(플랫폼 하강)을 사용하는 경우 FloorTransitionService에서 슬롯 기반으로 좌표를 보정해야 합니다.
             float targetY = (floorNumber - 1) * m_floorSpacing;
             platform.transform.position = new Vector3(platform.transform.position.x, targetY, platform.transform.position.z);
         }

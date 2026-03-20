@@ -6,6 +6,7 @@ using TowerBreakers.Core.Scene;
 using TowerBreakers.Core.Battle;
 using TowerBreakers.Tower.Data;
 using TowerBreakers.Tower.Service;
+using TowerBreakers.Enemy.Service;
 using TowerBreakers.Player.Data;
 using TowerBreakers.Player.Model;
 using TowerBreakers.Player.Service;
@@ -62,13 +63,6 @@ namespace TowerBreakers.Core.DI
         [SerializeField, Tooltip("플레이어 설정 (밀림 저항, 벽 데미지 등)")]
         private PlayerConfigDTO m_playerConfig = new PlayerConfigDTO();
 
-        [Header("플레이어 직접 설정 (Override)")]
-        [SerializeField, Tooltip("패링 사거리 (판정 범위) - 이름 변경을 통해 이전 1.0 데이터를 강제 폐기합니다.")]
-        private float m_parryActivationRange_Final = 2.0f;
-
-        [SerializeField, Tooltip("대시 정지 거리 (적 앞의 해당 거리에서 멈춤)")]
-        private float m_dashStopDistance_Final = 1.5f;
-
         [Header("보상 상자")]
         [SerializeField, Tooltip("보상 상자 프리팹")]
         private RewardChestView m_rewardChestPrefab;
@@ -107,6 +101,9 @@ namespace TowerBreakers.Core.DI
         [SerializeField, Tooltip("플레이어 도착 포인트")]
         private Transform m_playerArrivalPoint;
 
+        [SerializeField, Tooltip("플레이어 퇴장 포인트 (대시 목표)")]
+        private Transform m_playerExitPoint;
+
         [SerializeField, Tooltip("플레이어 스폰 서비스")]
         private PlayerSpawnService m_playerSpawnService;
 
@@ -140,6 +137,7 @@ namespace TowerBreakers.Core.DI
         #region 초기화 및 바인딩 로직
         /// <summary>
         /// [설명]: 순수 데이터 및 설정 DTO를 컨테이너에 등록합니다.
+        /// 인스펙터의 '플레이어 직접 설정' 섹션에 값이 입력된 경우, DTO의 기본값을 오버라이드합니다.
         /// </summary>
         private void RegisterData(IContainerBuilder builder)
         {
@@ -147,15 +145,11 @@ namespace TowerBreakers.Core.DI
             builder.RegisterInstance(m_playerStatsData);
             builder.RegisterInstance(m_equipmentDatabase);
 
-            // DTO 등록 (생성자 주입용)
-            // [기반 수정]: 인스턴스 이름과 ID를 함께 출력하여 중복 실행 여부 및 대상을 명확히 식별함
-            Debug.Log($"[BattleLifetimeScope] 할당 전 Inspector 값 ({gameObject.name} ID:{gameObject.GetInstanceID()}) - m_parryActivationRange_Final: {m_parryActivationRange_Final}, m_dashStopDistance_Final: {m_dashStopDistance_Final}");
-
-            m_playerConfig.ParryRange = m_parryActivationRange_Final;
-            m_playerConfig.ParryActivationRange = m_parryActivationRange_Final; // 발동 거리도 동일하게 동기화
-            m_playerConfig.DashStopDistance = m_dashStopDistance_Final;
-            
-            Debug.Log($"[BattleLifetimeScope] DTO 할당 후 - ParryRange: {m_playerConfig.ParryRange}, Activation: {m_playerConfig.ParryActivationRange}, DashStop: {m_playerConfig.DashStopDistance}, EnemySpawnY: {m_enemyConfig.SpawnYOffset}");
+            // [핵심]: 인스펙터에서 설정한 DTO 인스턴스를 직접 등록하여 값을 유지함
+            if (m_playerConfig != null)
+            {
+                Debug.Log($"[BattleLifetimeScope] 플레이어 설정 등록 완료: Hash={m_playerConfig.GetHashCode()}");
+            }
             
             builder.RegisterInstance(m_enemyConfig);
             builder.RegisterInstance(m_playerConfig);
@@ -175,11 +169,19 @@ namespace TowerBreakers.Core.DI
             builder.Register<SceneTransitionService>(Lifetime.Scoped);
             builder.Register<BattleResultService>(Lifetime.Scoped);
             builder.Register<TowerFloorService>(Lifetime.Scoped);
+            
+            // [추가]: 전투 시스템 등록 (IInitializable 기반 자동 초기화)
+            builder.Register<CombatSystem>(Lifetime.Scoped).AsImplementedInterfaces().AsSelf();
+
+            // [추가]: 적 팩토리 및 풀링 시스템 등록
+            builder.Register<EnemyFactory>(Lifetime.Scoped)
+                .WithParameter("enemyPrefab", m_enemyPrefab);
 
             builder.Register<FloorTransitionService>(Lifetime.Scoped)
                 .WithParameter("playerTransform", m_playerTransform)
                 .WithParameter("cameraTransform", m_cameraTransform)
-                .WithParameter("transitionDuration", m_transitionDuration); // [개선]: 생성자 파라미터에 따라 자동 주입됨
+                .WithParameter("exitTransform", m_playerExitPoint)
+                .WithParameter("transitionDuration", m_transitionDuration);
 
             builder.Register<IPlayerStatService, PlayerStatService>(Lifetime.Scoped);
 
@@ -218,7 +220,7 @@ namespace TowerBreakers.Core.DI
             }
 
             // 핵심 로직 POCO
-            builder.Register<BattleUIViewModel>(Lifetime.Scoped);
+            builder.Register<BattleUIViewModel>(Lifetime.Scoped).AsImplementedInterfaces().AsSelf();
             builder.Register<PlayerLogic>(Lifetime.Scoped);
 
             // View 컴포넌트

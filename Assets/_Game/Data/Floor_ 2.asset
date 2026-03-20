@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a2f92be2ac2e44e0b6058a22749fea0, type: 3}
   m_Name: Floor_ 2
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Data.FloorData
-  m_floorNumber: 1
+  m_floorNumber: 2
   m_floorName: 
   m_enemies:
   - m_enemyType: 0
@@ -20,6 +20,7 @@ MonoBehaviour:
     m_count: 5
     m_spawnDelay: 0
     m_positionOffsetX: 0
+    m_positionOffsetY: 0
     m_trainIndex: 0
     m_trainSpacing: 0
   - m_enemyType: 0
@@ -27,6 +28,7 @@ MonoBehaviour:
     m_count: 0
     m_spawnDelay: 0
     m_positionOffsetX: 0
+    m_positionOffsetY: 0
     m_trainIndex: 0
     m_trainSpacing: 0
   - m_enemyType: 0
@@ -34,6 +36,7 @@ MonoBehaviour:
     m_count: 0
     m_spawnDelay: 0
     m_positionOffsetX: 0
+    m_positionOffsetY: 0
     m_trainIndex: 0
     m_trainSpacing: 0
   m_clearReward:

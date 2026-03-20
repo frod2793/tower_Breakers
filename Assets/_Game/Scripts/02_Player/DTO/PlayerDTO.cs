@@ -41,7 +41,7 @@ namespace TowerBreakers.Player.DTO
         public float ParryPushForce = 10f;
 
         [Tooltip("패링 발동 가능 최소 거리 (적이 이 거리 안에 있어야 패링이 작동)")]
-        public float ParryActivationRange = 3.0f;
+        public float ParryActivationRange = 8.0f;
 
         [Header("공격 설정")]
         [Tooltip("공격 범위")]
@@ -58,8 +58,6 @@ namespace TowerBreakers.Player.DTO
         [Tooltip("패링 범위")]
         public float ParryRange = 2.0f;
 
-        [Tooltip("밀림 저항력 (0.0: 완전 밀림, 1.0: 밀리지 않음)")]
-        public float PushResistance = 0.5f;
 
         [Tooltip("벽 도달 시 체력 감소량")]
         public int DamagePerHit = 1;
@@ -75,9 +73,12 @@ namespace TowerBreakers.Player.DTO
     public class PlayerStateDTO
     {
         public Vector2 Position;
+        public Vector2 LocalPosition; // [추가]: 로컬 좌표 로그 출력을 위한 필드
+        public Vector2 TargetPosition; // [추가]: 이동형 액션(Dash, Retreat)의 목표 좌표
         public bool IsDashing;
         public bool IsParrying;
         public bool IsAttacking;
+        public bool IsBeingPushed;
         public bool IsRetreating;
         public float LastDashTime = -100f;
         public float LastParryTime = -100f;

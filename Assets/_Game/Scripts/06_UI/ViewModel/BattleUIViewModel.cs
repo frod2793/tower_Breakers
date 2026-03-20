@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer.Unity;
+using TowerBreakers.Core.Events;
 
 namespace TowerBreakers.UI.ViewModel
 {
@@ -10,11 +12,12 @@ namespace TowerBreakers.UI.ViewModel
     /// <summary>
     /// [설명]: 전투 UI의 상태 관리 및 쿨다운 로직을 담당하는 뷰모델입니다.
     /// </summary>
-    public class BattleUIViewModel
+    public class BattleUIViewModel : IInitializable, IDisposable
     {
         #region 내부 필드
         private readonly BattleUIDTO m_dto;
         private readonly PlayerConfigDTO m_playerConfig;
+        private readonly IEventBus m_eventBus;
         private readonly Dictionary<string, float> m_cooldownRemaining = new Dictionary<string, float>();
         #endregion
 
@@ -22,16 +25,60 @@ namespace TowerBreakers.UI.ViewModel
         public event Action<string, float> OnCooldownChanged;
         public event Action<string> OnSkillTriggered;
         public event Action<string> OnRewardMessageReceived;
-        public event Action<bool> OnGoStateChanged; // [추가]: GO 이미지 점멸 상태 변경
-        public event Action<bool> OnInteractionChanged; // [추가]: 모든 버튼 활성/비활성 변경
-        public event Action OnScreenClicked; // [추가]: 전체 화면 클릭 이벤트
+        public event Action<bool> OnGoStateChanged; 
+        public event Action<bool> OnInteractionChanged; 
+        public event Action OnScreenClicked; 
+        
+        // [추가]: 체력바 동기화를 위한 프로퍼티
+        public event Action<float> OnHpRatioChanged;
         #endregion
 
         #region 초기화 및 바인딩 로직
-        public BattleUIViewModel(BattleUIDTO dto, PlayerConfigDTO playerConfig)
+        public BattleUIViewModel(BattleUIDTO dto, PlayerConfigDTO playerConfig, IEventBus eventBus)
         {
             m_dto = dto ?? new BattleUIDTO();
             m_playerConfig = playerConfig ?? new PlayerConfigDTO();
+            m_eventBus = eventBus;
+        }
+
+        public void Initialize()
+        {
+            SubscribeEvents();
+        }
+
+        private void SubscribeEvents()
+        {
+            if (m_eventBus == null) return;
+            
+            // [리팩토링]: 이벤트 버스 구독을 통해 상태 동기화
+            m_eventBus.Subscribe<OnPlayerDamaged>(HandlePlayerDamaged);
+            m_eventBus.Subscribe<OnEnemyKilled>(HandleEnemyKilled);
+        }
+
+        public void Dispose()
+        {
+            UnsubscribeEvents();
+        }
+
+        private void UnsubscribeEvents()
+        {
+            if (m_eventBus == null) return;
+            m_eventBus.Unsubscribe<OnPlayerDamaged>(HandlePlayerDamaged);
+            m_eventBus.Unsubscribe<OnEnemyKilled>(HandleEnemyKilled);
+        }
+        #endregion
+
+        #region 이벤트 핸들러
+        private void HandlePlayerDamaged(OnPlayerDamaged evt)
+        {
+            float ratio = (float)evt.CurrentHealth / evt.MaxHealth;
+            OnHpRatioChanged?.Invoke(ratio);
+        }
+
+        private void HandleEnemyKilled(OnEnemyKilled evt)
+        {
+            // 적 처치 시 간단한 메시지 연출 (예시)
+            // ShowRewardMessage($"적 처치! (+골드)");
         }
         #endregion
 

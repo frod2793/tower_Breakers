@@ -43,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -121,7 +121,73 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: "\uC2A4\uD06C\uB9B0\uC0F7 2026-03-15 \uC624\uD6C4 6.31.40-Photoroom_0"
+      rect:
+        serializedVersion: 2
+        x: 246
+        y: 378
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0bbfa1f9f2dad884891df124bf4457d6
+      internalID: 445893300
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\uC2A4\uD06C\uB9B0\uC0F7 2026-03-15 \uC624\uD6C4 6.31.40-Photoroom_1"
+      rect:
+        serializedVersion: 2
+        x: 270
+        y: 72
+        width: 606
+        height: 480
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a0cd9bca9034d9443b22ba8c7d211a68
+      internalID: 6640859
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\uC2A4\uD06C\uB9B0\uC0F7 2026-03-15 \uC624\uD6C4 6.31.40-Photoroom_2"
+      rect:
+        serializedVersion: 2
+        x: 258
+        y: 366
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1f6941ce52ff6db4d91fe41d6e31ee7a
+      internalID: 1449411719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -134,8 +200,13 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      "\uC2A4\uD06C\uB9B0\uC0F7 2026-03-15 \uC624\uD6C4 6.31.40-Photoroom_0": 445893300
+      "\uC2A4\uD06C\uB9B0\uC0F7 2026-03-15 \uC624\uD6C4 6.31.40-Photoroom_1": 6640859
+      "\uC2A4\uD06C\uB9B0\uC0F7 2026-03-15 \uC624\uD6C4 6.31.40-Photoroom_2": 1449411719
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

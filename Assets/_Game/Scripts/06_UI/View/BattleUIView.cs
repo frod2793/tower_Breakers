@@ -88,8 +88,20 @@ namespace TowerBreakers.UI.View
             // [추가]: 전체 화면 클릭 바인딩
             if (m_screenClickArea != null)
             {
-                m_screenClickArea.onClick.AddListener(() => m_viewModel.NotifyScreenClicked());
+                m_screenClickArea.onClick.RemoveAllListeners();
+                m_screenClickArea.onClick.AddListener(() => 
+                {
+                    Debug.Log("[BattleUIView] 전체 화면 클릭 감지됨!");
+                    m_viewModel.NotifyScreenClicked();
+                });
                 m_screenClickArea.gameObject.SetActive(false); // 기본은 비활성
+                
+                // [개선]: Raycast Target이 켜져 있는지 확인 (코드에서는 설정 불가하나 로그로 유도)
+                var img = m_screenClickArea.GetComponent<UnityEngine.UI.Image>();
+                if (img != null && !img.raycastTarget)
+                {
+                    Debug.LogWarning("[BattleUIView] m_screenClickArea의 Image Raycast Target이 꺼져 있습니다! 클릭을 감지할 수 없습니다.");
+                }
             }
 
             // 뷰모델 상태 변경 구독
@@ -102,17 +114,23 @@ namespace TowerBreakers.UI.View
         {
             if (m_goImage == null) return;
 
-            m_goImage.gameObject.SetActive(active);
             if (m_goTween != null) m_goTween.Kill();
 
             if (active)
             {
+                m_goImage.gameObject.SetActive(true);
+                // [개선]: 점멸 시작 전 컬러(알파) 초기화
+                Color c = m_goImage.color;
+                c.a = 1f;
+                m_goImage.color = c;
+
                 // [연출]: 0.5초 주기로 점멸하는 루프 애니메이션
                 m_goTween = m_goImage.DOFade(0.2f, 0.5f).SetLoops(-1, DG.Tweening.LoopType.Yoyo);
                 if (m_screenClickArea != null) m_screenClickArea.gameObject.SetActive(true);
             }
             else
             {
+                m_goImage.gameObject.SetActive(false);
                 if (m_screenClickArea != null) m_screenClickArea.gameObject.SetActive(false);
             }
         }

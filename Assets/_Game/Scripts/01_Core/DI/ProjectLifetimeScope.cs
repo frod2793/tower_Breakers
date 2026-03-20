@@ -4,6 +4,7 @@ using VContainer.Unity;
 using TowerBreakers.Player.Data;
 using TowerBreakers.Player.Model;
 using TowerBreakers.Player.Service;
+using TowerBreakers.Core.Events;
 
 namespace TowerBreakers.Core.DI
 {
@@ -19,6 +20,9 @@ namespace TowerBreakers.Core.DI
 
         protected override void Configure(IContainerBuilder builder)
         {
+            // [코어]: 이벤트 버스 싱글톤 등록
+            builder.Register<IEventBus, EventBus>(Lifetime.Singleton);
+
             // 데이터 모델 등록
             builder.Register<UserSessionModel>(Lifetime.Singleton);
 
