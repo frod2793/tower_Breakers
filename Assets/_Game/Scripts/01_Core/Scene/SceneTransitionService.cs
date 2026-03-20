@@ -11,6 +11,7 @@ namespace TowerBreakers.Core.Scene
     {
         private TransitionManager m_transitionManager;
         private readonly SceneContextDTO m_currentContext;
+        private bool m_isNavigating;
 
         public event Action OnTransitionBegin;
         public event Action OnTransitionCutPoint;
@@ -44,31 +45,49 @@ namespace TowerBreakers.Core.Scene
             {
                 m_transitionManager.onTransitionBegin += () => OnTransitionBegin?.Invoke();
                 m_transitionManager.onTransitionCutPointReached += () => OnTransitionCutPoint?.Invoke();
-                m_transitionManager.onTransitionEnd += () => OnTransitionEnd?.Invoke();
+                m_transitionManager.onTransitionEnd += () =>
+                {
+                    m_isNavigating = false;
+                    OnTransitionEnd?.Invoke();
+                };
             }
         }
 
         public void LoadScene(string sceneName, TransitionSettings transition, float delay = 0f)
         {
+            if (m_isNavigating)
+            {
+                Debug.LogWarning($"[SceneTransitionService] 이미 씬 전환 중입니다: {sceneName} 요청 무시");
+                return;
+            }
+
             if (m_transitionManager == null)
             {
                 Debug.LogError("[SceneTransitionManager] TransitionManager가 없습니다.");
                 return;
             }
 
-            Debug.Log($"[SceneTransitionService] 씬 전환: {sceneName}");
+            m_isNavigating = true;
+            Debug.Log($"[SceneTransitionService] 씬 전환 시작: {sceneName}");
             m_transitionManager.Transition(sceneName, transition, delay);
         }
 
         public void LoadScene(int sceneIndex, TransitionSettings transition, float delay = 0f)
         {
+            if (m_isNavigating)
+            {
+                Debug.LogWarning($"[SceneTransitionService] 이미 씬 전환 중입니다: {sceneIndex} 요청 무시");
+                return;
+            }
+
             if (m_transitionManager == null)
             {
                 Debug.LogError("[SceneTransitionManager] TransitionManager가 없습니다.");
                 return;
             }
 
-            Debug.Log($"[SceneTransitionService] 씬 전환: 인덱스 {sceneIndex}");
+            m_isNavigating = true;
+            Debug.Log($"[SceneTransitionService] 씬 전환 시작: 인덱스 {sceneIndex}");
             m_transitionManager.Transition(sceneIndex, transition, delay);
         }
 
