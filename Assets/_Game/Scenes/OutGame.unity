@@ -2123,25 +2123,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2259016813592298886, guid: 9097df29531aa42a790fb305b234725a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2040513747}
-    - targetCorrespondingSourceObject: {fileID: 2259016813592298886, guid: 9097df29531aa42a790fb305b234725a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2040513748}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9097df29531aa42a790fb305b234725a, type: 3}
---- !u!114 &1684485493 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 92938023494105849, guid: 9097df29531aa42a790fb305b234725a, type: 3}
-  m_PrefabInstance: {fileID: 1684485492}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2040513742}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 28ac21711b0ec40a0812d33a586eb7ec, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1706791128
 GameObject:
   m_ObjectHideFlags: 0
@@ -2574,37 +2557,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
---- !u!1 &2040513742 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2259016813592298886, guid: 9097df29531aa42a790fb305b234725a, type: 3}
+--- !u!114 &2040513747 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5061319781282821104, guid: 9097df29531aa42a790fb305b234725a, type: 3}
   m_PrefabInstance: {fileID: 1684485492}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2040513747
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2040513742}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c1b7c83bc8f8c4b908da07f0dd2cb96d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.SPUM.CustomSPUMManager
---- !u!114 &2040513748
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2040513742}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9e3260ba5f6cb410198ebc32a8f7f658, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.SPUM.SPUM_CharacterManager
-  m_spumPrefabs: {fileID: 1684485493}
-  m_unitType: Player
 --- !u!1001 &2054595025
 PrefabInstance:
   m_ObjectHideFlags: 0

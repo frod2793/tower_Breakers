@@ -11,9 +11,9 @@ namespace TowerBreakers.Core.DI
     /// </summary>
     public class LobbyLifetimeScope : LifetimeScope
     {
-        [SerializeField] private TowerBreakers.UI.View.EquipmentView m_equipmentView;
+        [SerializeField] private UI.View.EquipmentView m_equipmentView;
         [SerializeField, Tooltip("로비에 배치된 플레이어 캐릭터")] 
-        private TowerBreakers.SPUM.CustomSPUMManager m_lobbyCharacterManager;
+        private SPUM.CustomSPUMManager m_lobbyCharacterManager;
 
         protected override void Configure(IContainerBuilder builder)
         {

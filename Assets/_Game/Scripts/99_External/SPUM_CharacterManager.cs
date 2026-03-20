@@ -35,39 +35,38 @@ namespace TowerBreakers.SPUM
             if (m_spumPrefabs != null)
             {
                 Debug.Log($"[SPUM_CharacterManager] 프리팹 연결 성공: {m_spumPrefabs.gameObject.name}");
+                // 프리팹 내부 구조 진단 로그
+                DiagnosePrefabStructure();
             }
             else
             {
                 Debug.LogError("[SPUM_CharacterManager] SPUM_Prefabs를 찾을 수 없습니다!");
             }
 
-            SubscribeEvents();
             UpdateAllEquipment();
         }
 
-        private void SubscribeEvents()
+        private void DiagnosePrefabStructure()
         {
-            if (m_userSession != null)
+            var matchingTables = m_spumPrefabs.GetComponentsInChildren<SPUM_MatchingList>(true);
+            Debug.Log($"<color=white>[진단] 프리팹 내 MatchingList 개수: {matchingTables.Length}</color>");
+            
+            foreach (var mt in matchingTables)
             {
-                m_userSession.OnEquipmentChanged += OnEquipmentChanged;
+                foreach (var target in mt.matchingTables)
+                {
+                    if (target.renderer != null)
+                    {
+                        Debug.Log($"[진단] 사용 가능한 렌더러: PartType={target.PartType}, Structure={target.Structure}, Name={target.renderer.name}");
+                    }
+                }
             }
         }
 
-        private void UnsubscribeEvents()
+        public void UpdateAllEquipment()
         {
-            if (m_userSession != null)
-            {
-                m_userSession.OnEquipmentChanged -= OnEquipmentChanged;
-            }
-        }
+            if (m_userSession == null || m_equipmentService == null) return;
 
-        private void OnEquipmentChanged(EquipmentType type, string itemId)
-        {
-            UpdateEquipmentAppearance(type, itemId);
-        }
-
-        private void UpdateAllEquipment()
-        {
             m_currentMatchingElements.Clear();
 
             foreach (EquipmentType type in System.Enum.GetValues(typeof(EquipmentType)))
@@ -92,10 +91,8 @@ namespace TowerBreakers.SPUM
 
         public void UpdateEquipmentAppearance(EquipmentType type, string itemId)
         {
-            // [강제 로그]: 이 로그가 안 찍힌다면 호출 자체가 안 된 것
-            Debug.Log($"<color=yellow>[SPUM_CharacterManager] UpdateAppearance 호출됨 - Type: {type}, ID: {itemId}</color>");
+            Debug.Log($"<color=cyan>[SPUM_CharacterManager] 외형 업데이트 시작 - 부위: {type}, ID: {itemId}</color>");
             
-            // 기존 해당 부위 제거
             m_currentMatchingElements.RemoveAll(e => e.PartSubType == type.ToString());
 
             if (!string.IsNullOrEmpty(itemId) && m_equipmentService != null)
@@ -103,27 +100,15 @@ namespace TowerBreakers.SPUM
                 var equipmentData = m_equipmentService.GetEquipmentData(itemId);
                 if (equipmentData != null)
                 {
-                    Debug.Log($"[SPUM_CharacterManager] 에셋 로드 성공: {equipmentData.ItemName} (Parts: {equipmentData.SpumParts.Count})");
                     foreach (var part in equipmentData.SpumParts)
                     {
                         var element = CreateMatchingElement(type, part);
-                        if (element != null) 
-                        {
-                            m_currentMatchingElements.Add(element);
-                            Debug.Log($"[SPUM_CharacterManager] 부위 등록: {part.Structure}");
-                        }
+                        if (element != null) m_currentMatchingElements.Add(element);
                     }
                 }
             }
 
             ApplyMatchingElements();
-        }
-
-        private bool IsMatchingType(PreviewMatchingElement element, EquipmentType type)
-        {
-            // Weapon 타입은 SpumStructure로 세부 구분 가능하나, 여기서는 단순 타입 비교
-            // 실무에서는 element.PartSubType 등에 타입 정보를 저장하여 정확히 필터링
-            return element.PartSubType == type.ToString();
         }
 
         private PreviewMatchingElement CreateMatchingElement(EquipmentType type, EquipmentData.SpumPartInfo part)
@@ -134,7 +119,7 @@ namespace TowerBreakers.SPUM
             {
                 UnitType = m_unitType,
                 PartType = GetPartType(type),
-                PartSubType = GetPartType(type), // SPUM 내부 매칭용
+                PartSubType = type.ToString(),
                 Dir = "Right",
                 Structure = part.Structure,
                 ItemPath = part.SpritePath,
@@ -148,14 +133,10 @@ namespace TowerBreakers.SPUM
         {
             switch (type)
             {
-                case EquipmentType.Weapon:
-                    return "Weapons";
-                case EquipmentType.Armor:
-                    return "Cloth"; // 기본적으로 상의(Cloth) 매칭
-                case EquipmentType.Helmet:
-                    return "Helmet";
-                default:
-                    return "Weapons";
+                case EquipmentType.Weapon: return "Weapons";
+                case EquipmentType.Armor: return "Cloth";
+                case EquipmentType.Helmet: return "Helmet";
+                default: return "Weapons";
             }
         }
 
@@ -163,75 +144,177 @@ namespace TowerBreakers.SPUM
         {
             if (m_spumPrefabs == null) return;
 
-            // 1. 프리팹 내부 데이터 갱신
             m_spumPrefabs.ImageElement.Clear();
             m_spumPrefabs.ImageElement.AddRange(m_currentMatchingElements);
 
-            // 2. 하위 MatchingList들을 찾아 실제 렌더러에 스프라이트 적용
             var matchingTables = m_spumPrefabs.GetComponentsInChildren<SPUM_MatchingList>(true);
-            var allTargetElements = matchingTables.SelectMany(mt => mt.matchingTables).ToList();
+            int matchedCount = 0;
 
-            foreach (var target in allTargetElements)
+            // 데이터 정보 로그
+            foreach(var data in m_currentMatchingElements)
             {
-                // [개선]: UnitType과 PartSubType 조건을 제외하고 Structure와 PartType으로만 매칭 (더 유연함)
-                var match = m_currentMatchingElements.FirstOrDefault(ie => 
-                    ie.PartType == target.PartType && 
-                    ie.Structure == target.Structure);
-
-                if (match != null)
+                Debug.Log($"<color=orange>[매칭시도] 데이터: PartType={data.PartType}, Structure={data.Structure}, Path={data.ItemPath}</color>");
+            }
+            
+            foreach (var mt in matchingTables)
+            {
+                foreach (var target in mt.matchingTables)
                 {
-                    var sprite = LoadSpriteFromPath(match.ItemPath, match.Structure);
-                    if (sprite != null)
+                    if (target.renderer == null) continue;
+
+                    string rendererName = target.renderer.name;
+
+                    // 정밀 매칭 검사
+                    bool isMatch = false;
+                    foreach (var ie in m_currentMatchingElements)
                     {
-                        target.renderer.sprite = sprite;
-                        target.renderer.color = match.Color;
-                        target.renderer.gameObject.SetActive(true);
+                        // 1. 방패 여부 확인 (Structure나 Path에 Shield 포함 여부)
+                        bool isShieldItem = ie.Structure.Contains("Shield") || ie.ItemPath.Contains("Shield");
+
+                        // 2. 카테고리 매칭 (Type)
+                        bool typeMatch = (ie.PartType == target.PartType || 
+                                          target.PartType.Contains(ie.PartType) || 
+                                          ie.PartType.Contains(target.PartType));
+                        
+                        // Armor 특수 케이스: Cloth와 Armor 카테고리 상호 호환
+                        if (!typeMatch)
+                        {
+                            if ((ie.PartType == "Cloth" || ie.PartType == "Armor") && 
+                                (target.PartType == "Cloth" || target.PartType == "Armor"))
+                            {
+                                typeMatch = true;
+                            }
+                        }
+
+                        if (!typeMatch) continue;
+
+                        // [슬롯 제한 로직]
+                        if (target.PartType.Contains("Weapon"))
+                        {
+                            if (isShieldItem)
+                            {
+                                // 방패는 R_Shield 슬롯에만 장착
+                                if (rendererName != "R_Shield") continue;
+                            }
+                            else
+                            {
+                                // 무기는 L_Weapon 슬롯에만 장착 (사용자 요청: "오른쪽 L_Weapon")
+                                if (rendererName != "L_Weapon") continue;
+                            }
+                        }
+
+                        // 3. 구조 매칭 (Structure)
+                        bool structMatch = false;
+
+                        // 방패의 경우 슬롯 이름 매칭으로 갈음
+                        if (isShieldItem && rendererName == "R_Shield")
+                        {
+                            structMatch = true;
+                        }
+                        // 완전 일치 또는 상호 포함 (예: "4_Helmet" <-> "Helmet")
+                        else if (ie.Structure == target.Structure || 
+                            ie.Structure.Contains(target.Structure) || 
+                            target.Structure.Contains(ie.Structure))
+                        {
+                            structMatch = true;
+                        }
+                        // 특정 카테고리의 경우 기본 매칭 허용 (단일 슬롯인 경우가 많음)
+                        else if (target.PartType == "Helmet" || target.PartType.Contains("Weapon"))
+                        {
+                            structMatch = true;
+                        }
+                        // 접미사 및 방향성 매칭 (예: Armor_L -> Left, Shoulder_R -> Right)
+                        else if (target.Structure == "Left" && (ie.Structure.EndsWith("_L") || ie.Structure.ToLower().Contains("left")))
+                        {
+                            structMatch = true;
+                        }
+                        else if (target.Structure == "Right" && (ie.Structure.EndsWith("_R") || ie.Structure.ToLower().Contains("right")))
+                        {
+                            structMatch = true;
+                        }
+                        // 몸통 매칭 (예: 7_Armor -> Body)
+                        else if (target.Structure == "Body" && (ie.Structure.Contains("Armor") || ie.Structure.Contains("Cloth")))
+                        {
+                            structMatch = true;
+                        }
+
+                        if (structMatch)
+                        {
+                            var sprite = LoadSpriteFromPath(ie.ItemPath, ie.Structure);
+                            if (sprite != null)
+                            {
+                                target.renderer.sprite = sprite;
+                                target.renderer.color = ie.Color;
+                                target.renderer.gameObject.SetActive(true);
+                                matchedCount++;
+                                isMatch = true;
+                                Debug.Log($"<color=lime>[성공] 매칭됨! 프리팹({target.PartType}/{target.Structure}/{rendererName}) <-> 데이터({ie.PartType}/{ie.Structure})</color>");
+                                break;
+                            }
+                            else
+                            {
+                                Debug.LogError($"[실패] 리소스 로드 실패: {ie.ItemPath} (Structure: {ie.Structure})");
+                            }
+                        }
+                    }
+
+                    // 옷(Cloth/Armor)은 매칭되지 않더라도 비활성화하지 않고 기본 외형 유지
+                    if (!isMatch && IsEquipmentPart(target.PartType))
+                    {
+                        if (target.PartType.Contains("Cloth") || target.PartType.Contains("Armor"))
+                        {
+                            // 유지
+                        }
+                        else
+                        {
+                            target.renderer.gameObject.SetActive(false);
+                        }
                     }
                 }
             }
 
-            Debug.Log($"[SPUM_CharacterManager] 외형 적용 완료 (매칭된 엘리먼트: {m_currentMatchingElements.Count})");
+            Debug.Log($"<color=yellow>[결과] 데이터 개수: {m_currentMatchingElements.Count}, 실제 렌더러 적용 성공: {matchedCount}</color>");
+        }
+
+        private bool IsEquipmentPart(string partType)
+        {
+            return partType.Contains("Weapon") || partType.Contains("Helmet") || partType.Contains("Shield");
         }
 
         private Sprite LoadSpriteFromPath(string path, string spriteName)
         {
             if (string.IsNullOrEmpty(path)) return null;
 
-            // [핵심 수정]: 'Assets/Resources/' 문자열을 제거하고 확장자를 없애야 Resources.Load가 작동함
-            string resourcePath = path;
-            int resIndex = path.IndexOf("Resources/");
-            if (resIndex != -1)
+            string resourcePath = path.Replace("\\", "/");
+            int resIndex = resourcePath.IndexOf("Resources/");
+            if (resIndex != -1) resourcePath = resourcePath.Substring(resIndex + 10);
+            
+            int dotIndex = resourcePath.LastIndexOf(".");
+            string fileName = "";
+            if (dotIndex != -1)
             {
-                resourcePath = path.Substring(resIndex + 10); // "Resources/" 다음부터 시작
+                int slashIndex = resourcePath.LastIndexOf("/");
+                fileName = resourcePath.Substring(slashIndex + 1, dotIndex - slashIndex - 1);
+                resourcePath = resourcePath.Substring(0, dotIndex);
             }
-            resourcePath = resourcePath.Replace(".png", "").Replace(".jpg", "");
 
             var sprites = Resources.LoadAll<Sprite>(resourcePath);
-            if (sprites == null || sprites.Length == 0) 
-            {
-                Debug.LogWarning($"[SPUM_CharacterManager] 리소스를 찾을 수 없음: {resourcePath}");
-                return null;
-            }
+            if (sprites == null || sprites.Length == 0) return null;
 
-            // 이름이 일치하는 스프라이트 탐색, 없으면 첫 번째 반환
-            return System.Array.Find(sprites, s => s.name == spriteName) ?? sprites[0];
+            // 1. 구조 이름으로 찾기 (예: 4_Helmet)
+            var result = System.Array.Find(sprites, s => s.name == spriteName);
+            // 2. 파일 이름으로 찾기 (예: Helmet_6)
+            if (result == null) result = System.Array.Find(sprites, s => s.name == fileName);
+            // 3. 첫 번째 스프라이트 사용
+            if (result == null) result = sprites[0];
+
+            return result;
         }
-
-
 
         public void UpdateSpumAppearance(EquipmentData data)
         {
-            if (data == null)
-            {
-                return;
-            }
-
+            if (data == null) return;
             UpdateEquipmentAppearance(data.Type, data.ID);
-        }
-
-        private void OnDestroy()
-        {
-            UnsubscribeEvents();
         }
     }
 }

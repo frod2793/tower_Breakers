@@ -1443,6 +1443,8 @@ GameObject:
   - component: {fileID: 903858773943774178}
   - component: {fileID: 8297276178084552577}
   - component: {fileID: 7474188019039943448}
+  - component: {fileID: 5061319781282821104}
+  - component: {fileID: 3724200722528093367}
   m_Layer: 9
   m_Name: player
   m_TagString: Player
@@ -4630,12 +4632,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 158070d5e7a8c42f1a2f5fa06c723f81, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Controller.PlayerPushReceiver
-  m_resistance: 0.5
-  m_leftWallX: -8
-  m_damagePerHit: 1
-  m_damageCooldown: 1
-  m_currentHealth: 0
-  m_lastDamageTime: 0
 --- !u!114 &7474188019039943448
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4649,6 +4645,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.View.PlayerView
   m_spumPrefabs: {fileID: 92938023494105849}
+--- !u!114 &5061319781282821104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2259016813592298886}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1b7c83bc8f8c4b908da07f0dd2cb96d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.SPUM.CustomSPUMManager
+--- !u!114 &3724200722528093367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2259016813592298886}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e3260ba5f6cb410198ebc32a8f7f658, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.SPUM.SPUM_CharacterManager
+  m_spumPrefabs: {fileID: 92938023494105849}
+  m_unitType: Player
 --- !u!1 &2333811413061753725
 GameObject:
   m_ObjectHideFlags: 0
