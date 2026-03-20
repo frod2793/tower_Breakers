@@ -68,6 +68,7 @@ namespace TowerBreakers.Enemy.Service
         public bool CanAdvance => m_canAdvance;
         public bool IsActivelyMoving => m_isMoving && m_canAdvance && !m_shouldStop && !m_isStunned && !m_isDead;
         public EnemyPushController AheadEnemy => m_aheadEnemy;
+        public EnemyType Type => m_enemyType; // [추가]
         #endregion
 
         #region 초기화 및 설정
@@ -354,7 +355,15 @@ namespace TowerBreakers.Enemy.Service
 
         public void ApplyKnockback(Vector2 direction, float force)
         {
-            Vector3 targetPos = transform.position + (Vector3)(direction.normalized * force * 0.3f);
+            if (m_isDead || m_enemyData == null) return;
+
+            // [핵심 해결]: 넉백 저항성 반영 (1.0이면 완전 면역, 0.0이면 전체 밀림)
+            float resistanceMultiplier = 1f - m_enemyData.KnockbackResistance;
+            float finalForce = force * resistanceMultiplier;
+
+            if (finalForce <= 0.05f) return; // 너무 작으면 무시
+
+            Vector3 targetPos = transform.position + (Vector3)(direction.normalized * finalForce * 0.3f);
             targetPos.z = transform.position.z;
 
             transform.DOComplete();

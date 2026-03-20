@@ -19,26 +19,10 @@ MonoBehaviour:
     m_enemy: {fileID: 11400000, guid: 689fef021d5e04f0aa6b3dbe4ac6b5e5, type: 2}
     m_count: 5
     m_spawnDelay: 0
-    m_positionOffsetX: 0
-    m_positionOffsetY: 0
-    m_trainIndex: 0
-    m_trainSpacing: 0
   - m_enemyType: 0
-    m_enemy: {fileID: 11400000, guid: 689fef021d5e04f0aa6b3dbe4ac6b5e5, type: 2}
-    m_count: 0
+    m_enemy: {fileID: 11400000, guid: e05f432edbbd9b741bf649a821c4588f, type: 2}
+    m_count: 5
     m_spawnDelay: 0
-    m_positionOffsetX: 0
-    m_positionOffsetY: 0
-    m_trainIndex: 0
-    m_trainSpacing: 0
-  - m_enemyType: 0
-    m_enemy: {fileID: 11400000, guid: 689fef021d5e04f0aa6b3dbe4ac6b5e5, type: 2}
-    m_count: 0
-    m_spawnDelay: 0
-    m_positionOffsetX: 0
-    m_positionOffsetY: 0
-    m_trainIndex: 0
-    m_trainSpacing: 0
   m_clearReward:
     m_gold: 0
     m_itemIds: []

@@ -30,6 +30,11 @@ namespace TowerBreakers.Core.Events
     /// [이벤트]: 플레이어가 벽에 압착되었을 때 발행됩니다.
     /// </summary>
     public struct OnWallCrushOccurred { }
+
+    /// <summary>
+    /// [이벤트]: 플레이어가 패링을 성공적으로 수행했을 때 발행됩니다.
+    /// </summary>
+    public struct OnParryPerformed { }
     #endregion
 
     #region 타워 및 적 관련 이벤트
@@ -50,11 +55,29 @@ namespace TowerBreakers.Core.Events
     }
 
     /// <summary>
-    /// [이벤트]: 적이 사망했을 때 발행됩니다.
+    /// [이벤트]: 적 사망 시 발행됩니다.
     /// </summary>
     public struct OnEnemyKilled
     {
         public UnityEngine.GameObject EnemyObject;
+        public TowerBreakers.Tower.Data.EnemyType EnemyType; // [추가]
+    }
+
+    /// <summary>
+    /// [이벤트]: 남은 적 개수가 변경되었을 때 발행됩니다. (상세 아이콘 표시용)
+    /// </summary>
+    public struct OnEnemyCountChanged
+    {
+        public int NormalRemaining;
+        public int NormalTotal;
+        public int EliteRemaining;
+        public int EliteTotal;
+        public int BossRemaining;
+        public int BossTotal;
+
+        public int TotalRemaining => NormalRemaining + EliteRemaining + BossRemaining;
+        public int TotalTotal => NormalTotal + EliteTotal + BossTotal;
     }
     #endregion
-}
+    }
+

@@ -2446,11 +2446,11 @@ GameObject:
   m_Component:
   - component: {fileID: 3050362866919167329}
   - component: {fileID: 822109664338435265}
-  - component: {fileID: 3593129044969331287}
-  - component: {fileID: 2328460195681235663}
   - component: {fileID: 8085166074728724548}
   - component: {fileID: 8591692404161385391}
-  - component: {fileID: 8312876278262892060}
+  - component: {fileID: 2740504523785817158}
+  - component: {fileID: 9123181592105349968}
+  - component: {fileID: 2733504277140229039}
   m_Layer: 7
   m_Name: orc
   m_TagString: Enemy
@@ -5429,31 +5429,6 @@ MonoBehaviour:
   - {fileID: 7400000, guid: 4c70df3312bb83346a1bf065b30d3467, type: 2}
   - {fileID: 7400000, guid: 1ef525d53ae254f7d82ef364ced85490, type: 2}
   - {fileID: 7400000, guid: fabe4f140fdb9cb448bc941c7c93e8b6, type: 2}
---- !u!114 &3593129044969331287
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3833152262839618907}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c7e2675c859a4b5bbf5ceabbe52bbca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.View.EnemyView
-  m_spumPrefabs: {fileID: 822109664338435265}
---- !u!114 &2328460195681235663
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3833152262839618907}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 64513172cf01546c8816059ecc4c3d75, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Logic.EnemyPushLogic
 --- !u!70 &8085166074728724548
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -5499,7 +5474,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3833152262839618907}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -5518,7 +5493,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &8312876278262892060
+--- !u!114 &2740504523785817158
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -5527,9 +5502,46 @@ MonoBehaviour:
   m_GameObject: {fileID: 3833152262839618907}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9db7404a231704dd5b07e8afd3dcae10, type: 3}
+  m_Script: {fileID: 11500000, guid: eaaac2598ede94d8cbb91ca2601135f5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Logic.EnemyController
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Service.EnemyController
+  m_data: {fileID: 11400000, guid: e05f432edbbd9b741bf649a821c4588f, type: 2}
+  m_currentHealth: 0
+  m_spumPrefabs: {fileID: 822109664338435265}
+  m_vfxController: {fileID: 2733504277140229039}
+--- !u!114 &9123181592105349968
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3833152262839618907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29d77f667d9cc41f799437d3fb20a45d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Service.EnemyPushController
+  m_moveSpeed: 2
+  m_pushRange: 1.5
+  m_playerTag: Player
+  m_enemyData: {fileID: 11400000, guid: e05f432edbbd9b741bf649a821c4588f, type: 2}
+--- !u!114 &2733504277140229039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3833152262839618907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9ca06512987848a59df6f1312bb9e00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Service.EnemyVFXController
+  m_flashColor: {r: 1, g: 0, b: 0, a: 1}
+  m_flashDuration: 0.1
+  m_explodeForce: 5
+  m_rotationForce: 360
+  m_fadeOutDuration: 1
 --- !u!1 &3853180743973904218
 GameObject:
   m_ObjectHideFlags: 0

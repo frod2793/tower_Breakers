@@ -49,10 +49,7 @@ namespace TowerBreakers.Core.DI
         #endregion
 
         #region 적 설정
-        [Header("적 프리팹 및 스폰")]
-        [SerializeField, Tooltip("적 프리팹")]
-        private GameObject m_enemyPrefab;
-
+        [Header("적 스폰")]
         [SerializeField, Tooltip("적 스폰 포인트")]
         private Transform[] m_spawnPoints;
 
@@ -174,8 +171,7 @@ namespace TowerBreakers.Core.DI
             builder.Register<CombatSystem>(Lifetime.Scoped).AsImplementedInterfaces().AsSelf();
 
             // [추가]: 적 팩토리 및 풀링 시스템 등록
-            builder.Register<EnemyFactory>(Lifetime.Scoped)
-                .WithParameter("enemyPrefab", m_enemyPrefab);
+            builder.Register<EnemyFactory>(Lifetime.Scoped);
 
             builder.Register<FloorTransitionService>(Lifetime.Scoped)
                 .WithParameter("playerTransform", m_playerTransform)
@@ -189,7 +185,6 @@ namespace TowerBreakers.Core.DI
             builder.Register<EnemySpawnService>(Lifetime.Scoped)
                 .As<EnemySpawnService>()
                 .As<IEnemyProvider>()
-                .WithParameter(m_enemyPrefab)
                 .WithParameter(m_spawnPoints)
                 .WithParameter(m_targetPlatform);
 

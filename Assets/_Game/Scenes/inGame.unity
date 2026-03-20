@@ -172,7 +172,6 @@ MonoBehaviour:
   m_towerData: {fileID: 11400000, guid: de9bddb0278a74243b03f09ff936f1ee, type: 2}
   m_playerStatsData: {fileID: 11400000, guid: b91ad7d4113054cc6ac16c6ea79e0515, type: 2}
   m_equipmentDatabase: {fileID: 11400000, guid: 2afa5feb30a554b318313d4426c45952, type: 2}
-  m_enemyPrefab: {fileID: 7359377293411260106, guid: da7416bb022334ae984a65ecf216288c, type: 3}
   m_spawnPoints:
   - {fileID: 1358896344}
   m_enemyConfig:
@@ -386,6 +385,7 @@ GameObject:
   - component: {fileID: 256461494}
   - component: {fileID: 256461496}
   - component: {fileID: 256461495}
+  - component: {fileID: 256461497}
   m_Layer: 5
   m_Name: EnemyiconGroup_nor
   m_TagString: Untagged
@@ -450,6 +450,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eac8dec4b1c74084b352e62ba4c3561, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.UI.Common.StatusIconGroup
+--- !u!114 &256461497
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 256461493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6474034f4c4539743afba2752c143e44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.UI.View.BattleIconGroup
+  m_iconPrefab: {fileID: 1967672555924826899, guid: 17e3e79d1a1854ab3a9b7f9a6f2f8cdb, type: 3}
+  m_poolSize: 20
 --- !u!1 &261424644
 GameObject:
   m_ObjectHideFlags: 0
@@ -1434,6 +1448,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d6c1ede0a700b7488b90e21ebcd9648, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.UI.View.BattleUIView
+  m_healthIconGroup: {fileID: 1765277430}
+  m_normalEnemyIconGroup: {fileID: 256461497}
+  m_eliteEnemyIconGroup: {fileID: 1466559890}
+  m_enemyCountText: {fileID: 0}
   m_dashButton: {fileID: 646852968}
   m_parryButton: {fileID: 1760800171}
   m_attackButton: {fileID: 1021304647}
@@ -2593,6 +2611,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1466559888}
   - component: {fileID: 1466559889}
+  - component: {fileID: 1466559890}
   m_Layer: 5
   m_Name: EnemyiconGroup_sp
   m_TagString: Untagged
@@ -2645,6 +2664,20 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &1466559890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1466559887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6474034f4c4539743afba2752c143e44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.UI.View.BattleIconGroup
+  m_iconPrefab: {fileID: 8241408624773466900, guid: cf4aab39a1e1446dc9d2c7216ef0af10, type: 3}
+  m_poolSize: 20
 --- !u!1 &1532194422
 GameObject:
   m_ObjectHideFlags: 0
@@ -3450,6 +3483,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1765277428}
   - component: {fileID: 1765277429}
+  - component: {fileID: 1765277430}
   m_Layer: 5
   m_Name: Heart_Container
   m_TagString: Untagged
@@ -3502,6 +3536,20 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &1765277430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1765277427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6474034f4c4539743afba2752c143e44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.UI.View.BattleIconGroup
+  m_iconPrefab: {fileID: 4938176225064992247, guid: 87cd8ee0289334d5abfb1dce96cd3d80, type: 3}
+  m_poolSize: 20
 --- !u!1 &1768410530
 GameObject:
   m_ObjectHideFlags: 0

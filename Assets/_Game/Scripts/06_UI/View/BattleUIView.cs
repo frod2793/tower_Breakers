@@ -5,16 +5,32 @@ using TowerBreakers.UI.ViewModel;
 using TowerBreakers.UI.DTO;
 using TowerBreakers.Player.DTO;
 using DG.Tweening;
+using TMPro;
+using TowerBreakers.Core.Events;
 
 namespace TowerBreakers.UI.View
 {
     /// <summary>
-    /// [설명]: 전투 UI의 시각적 요소를 담당하는 뷰 클래스입니다.
-    /// MVVM 패턴을 따르며 BattleUIViewModel과 바인딩됩니다.
+    /// [클래스]: 전투 UI의 시각적 요소를 담당하는 뷰 클래스입니다.
+    /// 체력과 적 수량을 시각적인 아이콘 리스트(BattleIconGroup)로 표시합니다.
     /// </summary>
     public class BattleUIView : MonoBehaviour
     {
         #region 에디터 설정
+        [Header("플레이어 상태 UI (아이콘)")]
+        [SerializeField, Tooltip("플레이어 체력(생명) 아이콘 그룹")]
+        private BattleIconGroup m_healthIconGroup;
+
+        [Header("적 상태 UI (아이콘)")]
+        [SerializeField, Tooltip("노멀 적 아이콘 그룹")]
+        private BattleIconGroup m_normalEnemyIconGroup;
+        
+        [SerializeField, Tooltip("엘리트 적 아이콘 그룹")]
+        private BattleIconGroup m_eliteEnemyIconGroup;
+
+        [Header("보조 텍스트")]
+        [SerializeField] private TextMeshProUGUI m_enemyCountText;
+
         [Header("스킬 버튼")]
         [SerializeField] private Button m_dashButton;
         [SerializeField] private Button m_parryButton;
@@ -33,8 +49,8 @@ namespace TowerBreakers.UI.View
         [SerializeField] private Image m_skill3CooldownImage;
 
         [Header("특수 효과")]
-        [SerializeField] private Image m_goImage; // [추가]: 층 클리어 시 점멸할 GO 이미지
-        [SerializeField] private Button m_screenClickArea; // [추가]: 전체 화면 클릭 영역 (투명 버튼)
+        [SerializeField] private Image m_goImage;
+        [SerializeField] private Button m_screenClickArea;
         #endregion
 
         #region 내부 필드
@@ -50,7 +66,7 @@ namespace TowerBreakers.UI.View
             if (viewModel == null) return;
             m_viewModel = viewModel;
 
-            // 스킬 버튼 리스트화 (일괄 활성/비활성용)
+            // 스킬 버튼 리스트화
             m_skillButtons.Clear();
             if (m_dashButton != null) m_skillButtons.Add(m_dashButton);
             if (m_parryButton != null) m_skillButtons.Add(m_parryButton);
@@ -71,7 +87,6 @@ namespace TowerBreakers.UI.View
             if (m_dashButton != null) m_dashButton.onClick.AddListener(() => m_viewModel.ExecuteSkill(dto.DashSkill.Name));
             if (m_parryButton != null) m_parryButton.onClick.AddListener(() => m_viewModel.ExecuteSkill(dto.ParrySkill.Name));
             
-            // [개선]: 공격 버튼은 홀드와 연타가 가능하도록 HoldableButton 이벤트를 사용
             if (m_attackHoldBtn != null) 
             {
                 m_attackHoldBtn.OnExecute += () => m_viewModel.ExecuteSkill(dto.AttackSkill.Name);
@@ -85,47 +100,60 @@ namespace TowerBreakers.UI.View
             if (m_skill2Button != null) m_skill2Button.onClick.AddListener(() => m_viewModel.ExecuteSkill(dto.Skill2.Name));
             if (m_skill3Button != null) m_skill3Button.onClick.AddListener(() => m_viewModel.ExecuteSkill(dto.Skill3.Name));
 
-            // [추가]: 전체 화면 클릭 바인딩
             if (m_screenClickArea != null)
             {
                 m_screenClickArea.onClick.RemoveAllListeners();
-                m_screenClickArea.onClick.AddListener(() => 
-                {
-                    Debug.Log("[BattleUIView] 전체 화면 클릭 감지됨!");
-                    m_viewModel.NotifyScreenClicked();
-                });
-                m_screenClickArea.gameObject.SetActive(false); // 기본은 비활성
-                
-                // [개선]: Raycast Target이 켜져 있는지 확인 (코드에서는 설정 불가하나 로그로 유도)
-                var img = m_screenClickArea.GetComponent<UnityEngine.UI.Image>();
-                if (img != null && !img.raycastTarget)
-                {
-                    Debug.LogWarning("[BattleUIView] m_screenClickArea의 Image Raycast Target이 꺼져 있습니다! 클릭을 감지할 수 없습니다.");
-                }
+                m_screenClickArea.onClick.AddListener(() => m_viewModel.NotifyScreenClicked());
+                m_screenClickArea.gameObject.SetActive(false);
             }
 
             // 뷰모델 상태 변경 구독
             m_viewModel.OnCooldownChanged += UpdateCooldownValue;
             m_viewModel.OnGoStateChanged += OnGoStateChanged;
             m_viewModel.OnInteractionChanged += OnInteractionChanged;
+            
+            // [리팩토링]: 아이콘 기반 상태 UI 구독
+            m_viewModel.OnHealthChanged += UpdateHealthIcons;
+            m_viewModel.OnRemainingEnemyChanged += UpdateEnemyCountText;
+            m_viewModel.OnDetailedEnemyCountChanged += UpdateEnemyIcons;
+
+            // [추가]: 구독 완료 후 초기 상태 요청 (게임 시작 시 UI 즉시 반영)
+            m_viewModel.RequestInitialState();
+        }
+
+        private void UpdateHealthIcons(int current, int max)
+        {
+            // [리팩토링]: 슬라이더 대신 아이콘 그룹의 개수 설정 (1:1 매칭)
+            if (m_healthIconGroup != null)
+            {
+                m_healthIconGroup.SetCount(current);
+            }
+        }
+
+        private void UpdateEnemyCountText(int remaining, int total)
+        {
+            if (m_enemyCountText != null)
+            {
+                m_enemyCountText.text = $"ENEMIES: {remaining}/{total}";
+                m_enemyCountText.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f);
+            }
+        }
+
+        private void UpdateEnemyIcons(OnEnemyCountChanged evt)
+        {
+            if (m_normalEnemyIconGroup != null) m_normalEnemyIconGroup.SetCount(evt.NormalRemaining);
+            if (m_eliteEnemyIconGroup != null) m_eliteEnemyIconGroup.SetCount(evt.EliteRemaining);
         }
 
         private void OnGoStateChanged(bool active)
         {
             if (m_goImage == null) return;
-
             if (m_goTween != null) m_goTween.Kill();
 
             if (active)
             {
                 m_goImage.gameObject.SetActive(true);
-                // [개선]: 점멸 시작 전 컬러(알파) 초기화
-                Color c = m_goImage.color;
-                c.a = 1f;
-                m_goImage.color = c;
-
-                // [연출]: 0.5초 주기로 점멸하는 루프 애니메이션
-                m_goTween = m_goImage.DOFade(0.2f, 0.5f).SetLoops(-1, DG.Tweening.LoopType.Yoyo);
+                m_goTween = m_goImage.DOFade(0.2f, 0.5f).SetLoops(-1, LoopType.Yoyo);
                 if (m_screenClickArea != null) m_screenClickArea.gameObject.SetActive(true);
             }
             else
@@ -137,12 +165,7 @@ namespace TowerBreakers.UI.View
 
         private void OnInteractionChanged(bool enabled)
         {
-            foreach (var btn in m_skillButtons)
-            {
-                if (btn != null) btn.interactable = enabled;
-            }
-            
-            // [개선]: HoldableButton 컴포넌트도 개별적으로 처리 필요할 경우 추가
+            foreach (var btn in m_skillButtons) if (btn != null) btn.interactable = enabled;
             if (m_attackHoldBtn != null) m_attackHoldBtn.enabled = enabled;
         }
 
@@ -161,6 +184,9 @@ namespace TowerBreakers.UI.View
                 m_viewModel.OnCooldownChanged -= UpdateCooldownValue;
                 m_viewModel.OnGoStateChanged -= OnGoStateChanged;
                 m_viewModel.OnInteractionChanged -= OnInteractionChanged;
+                m_viewModel.OnHealthChanged -= UpdateHealthIcons;
+                m_viewModel.OnRemainingEnemyChanged -= UpdateEnemyCountText;
+                m_viewModel.OnDetailedEnemyCountChanged -= UpdateEnemyIcons;
             }
             if (m_goTween != null) m_goTween.Kill();
         }

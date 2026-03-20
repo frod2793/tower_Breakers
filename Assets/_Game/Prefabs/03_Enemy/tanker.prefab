@@ -3234,11 +3234,11 @@ GameObject:
   m_Component:
   - component: {fileID: 7077132387408331104}
   - component: {fileID: 2667572177022315733}
-  - component: {fileID: -3607207485275839740}
-  - component: {fileID: 2494471746928077193}
-  - component: {fileID: 3222883755917555540}
   - component: {fileID: -2222951228229027461}
   - component: {fileID: -8350920016156361849}
+  - component: {fileID: 2113237115096145002}
+  - component: {fileID: 611284933320436458}
+  - component: {fileID: 8863198886592422443}
   m_Layer: 7
   m_Name: tanker
   m_TagString: Enemy
@@ -6407,43 +6407,6 @@ MonoBehaviour:
   - {fileID: 7400000, guid: 4c70df3312bb83346a1bf065b30d3467, type: 2}
   - {fileID: 7400000, guid: 1ef525d53ae254f7d82ef364ced85490, type: 2}
   - {fileID: 7400000, guid: fabe4f140fdb9cb448bc941c7c93e8b6, type: 2}
---- !u!114 &-3607207485275839740
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6354791451217383224}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c7e2675c859a4b5bbf5ceabbe52bbca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.View.EnemyView
-  m_spumPrefabs: {fileID: 2667572177022315733}
---- !u!114 &2494471746928077193
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6354791451217383224}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 64513172cf01546c8816059ecc4c3d75, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Logic.EnemyPushLogic
---- !u!114 &3222883755917555540
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6354791451217383224}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9db7404a231704dd5b07e8afd3dcae10, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Logic.EnemyController
 --- !u!70 &-2222951228229027461
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -6489,7 +6452,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6354791451217383224}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -6508,6 +6471,55 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &2113237115096145002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6354791451217383224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eaaac2598ede94d8cbb91ca2601135f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Service.EnemyController
+  m_data: {fileID: 11400000, guid: 8fb70aaa71159fd44a85bfe12d3bca95, type: 2}
+  m_currentHealth: 0
+  m_spumPrefabs: {fileID: 2667572177022315733}
+  m_vfxController: {fileID: 8863198886592422443}
+--- !u!114 &611284933320436458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6354791451217383224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29d77f667d9cc41f799437d3fb20a45d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Enemy.Service.EnemyPushController
+  m_moveSpeed: 2
+  m_pushRange: 1.5
+  m_playerTag: Player
+  m_enemyData: {fileID: 11400000, guid: 8fb70aaa71159fd44a85bfe12d3bca95, type: 2}
+--- !u!114 &8863198886592422443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6354791451217383224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9ca06512987848a59df6f1312bb9e00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Service.EnemyVFXController
+  m_flashColor: {r: 1, g: 0, b: 0, a: 1}
+  m_flashDuration: 0.1
+  m_explodeForce: 5
+  m_rotationForce: 360
+  m_fadeOutDuration: 1
 --- !u!1 &6383648667817934370
 GameObject:
   m_ObjectHideFlags: 0

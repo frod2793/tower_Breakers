@@ -9,9 +9,6 @@ namespace TowerBreakers.Tower.Data
     [System.Serializable]
     public class EnemySpawnInfo
     {
-        [Tooltip("적 타입")]
-        [SerializeField] private EnemyType m_enemyType = EnemyType.Normal;
-
         [Tooltip("적 데이터")]
         [SerializeField] private EnemyData m_enemy;
 
@@ -21,36 +18,20 @@ namespace TowerBreakers.Tower.Data
         [Tooltip("생성 지연 시간 (초)")]
         [SerializeField] private float m_spawnDelay = 0f;
 
-        [Tooltip("생성 위치 오프셋 (X)")]
-        [SerializeField] private float m_positionOffsetX;
-
-        [Tooltip("생성 위치 오프셋 (Y)")]
-        [SerializeField] private float m_positionOffsetY;
-
-        [Tooltip("기차 행렬에서의 순서 (일반 몹만 사용)")]
-        [SerializeField] private int m_trainIndex;
-
-        [Tooltip("행렬 간격 (일반 몹만 사용)")]
-        [SerializeField] private float m_trainSpacing = 1.5f;
-
         public EnemyType EnemyType
         {
             get
             {
-                if (m_enemyType == EnemyType.Normal && m_enemy != null)
+                if (m_enemy != null)
                 {
-                    return (EnemyType)m_enemy.Grade;
+                    return m_enemy.Grade;
                 }
-                return m_enemyType;
+                return EnemyType.Normal;
             }
         }
         public EnemyData Enemy => m_enemy;
         public int Count => m_count;
         public float SpawnDelay => m_spawnDelay;
-        public float PositionOffsetX => m_positionOffsetX;
-        public float PositionOffsetY => m_positionOffsetY;
-        public int TrainIndex => m_trainIndex;
-        public float TrainSpacing => m_trainSpacing;
     }
 
     /// <summary>

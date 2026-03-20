@@ -17,7 +17,6 @@ namespace TowerBreakers.Enemy.Service
     {
         #region 내부 필드
         private readonly Transform[] m_spawnPoints;
-        private readonly GameObject m_enemyPrefab;
         private readonly EnemyConfigDTO m_config;
         private readonly PlayerLogic m_playerLogic;
         private readonly EnemyFactory m_enemyFactory;
@@ -51,7 +50,6 @@ namespace TowerBreakers.Enemy.Service
         /// BattleLifetimeScope를 통해 의존성을 주입받습니다.
         /// </summary>
         public EnemySpawnService(
-            GameObject enemyPrefab, 
             Transform[] spawnPoints, 
             Transform parentTransform, 
             EnemyConfigDTO config,
@@ -59,7 +57,6 @@ namespace TowerBreakers.Enemy.Service
             EnemyFactory enemyFactory,
             IEventBus eventBus)
         {
-            m_enemyPrefab = enemyPrefab;
             m_spawnPoints = spawnPoints;
             m_parentTransform = parentTransform;
             m_config = config ?? new EnemyConfigDTO();
@@ -213,7 +210,10 @@ namespace TowerBreakers.Enemy.Service
 
         private GameObject SpawnSingleEnemy(EnemySpawnInfo spawnInfo, EnemyType type, Transform parent, int trainIndex = -1)
         {
-            var enemy = m_enemyFactory.Get(parent);
+            if (spawnInfo.Enemy == null || spawnInfo.Enemy.Prefab == null) return null;
+
+            // [리팩토링]: 적 데이터(EnemyData)에 설정된 프리펩을 사용하여 생성
+            var enemy = m_enemyFactory.Get(spawnInfo.Enemy.Prefab, parent);
             enemy.transform.position = GetSpawnPosition(spawnInfo, type, parent, trainIndex);
             enemy.transform.rotation = Quaternion.identity;
             enemy.name = $"{spawnInfo.Enemy.EnemyName}_{type}_{trainIndex}";
@@ -246,7 +246,7 @@ namespace TowerBreakers.Enemy.Service
 
         private Vector3 GetSpawnPosition(EnemySpawnInfo spawnInfo, EnemyType type, Transform parent, int trainIndex)
         {
-            float offsetX = spawnInfo.PositionOffsetX;
+            float offsetX = 0f;
             if (type == EnemyType.Normal && trainIndex >= 0)
             {
                 offsetX += trainIndex * m_config.TrainSpacing;
@@ -263,7 +263,7 @@ namespace TowerBreakers.Enemy.Service
             }
 
             float baseY = (parent != null) ? parent.position.y : basePosition.y;
-            float finalY = baseY + m_config.SpawnYOffset + spawnInfo.PositionOffsetY;
+            float finalY = baseY + m_config.SpawnYOffset;
 
             return new Vector3(basePosition.x + offsetX, finalY, basePosition.z);
         }
@@ -276,13 +276,24 @@ namespace TowerBreakers.Enemy.Service
             if (enemyController != null) enemyController.OnDeath -= OnEnemyDeathCallback;
 
             var pushController = enemy.GetComponent<EnemyPushController>();
-            if (pushController != null) m_normalPushControllers.Remove(pushController);
+            EnemyType enemyType = EnemyType.Normal;
+            if (pushController != null)
+            {
+                enemyType = pushController.Type;
+                m_normalPushControllers.Remove(pushController);
+            }
 
             m_normalEnemies.Remove(enemy);
             m_eliteEnemies.Remove(enemy);
             m_bossEnemies.Remove(enemy);
 
-            m_eventBus.Publish(new OnEnemyKilled { EnemyObject = enemy });
+            // [리팩토링]: 타입 정보를 포함하여 사망 전파
+            m_eventBus.Publish(new OnEnemyKilled 
+            { 
+                EnemyObject = enemy,
+                EnemyType = enemyType
+            });
+
             m_onEnemyDeath?.Invoke(enemy);
             m_enemyFactory.Release(enemy);
         }

@@ -346,6 +346,12 @@ namespace TowerBreakers.Core.Battle
             var currentFloor = m_towerFloorService.GetCurrentFloorData();
             if (currentFloor != null && currentFloor.FloorNumber == floorNumber)
             {
+                // [추가]: 트랜지션 연출 종료 및 플랫폼 안착 완료 시 압착 피해 재활성화
+                if (m_combatSystem != null)
+                {
+                    m_combatSystem.SetDamageEnabled(true);
+                }
+
                 // [수정]: 동기 메서드에서 비동기 호출 시 적절한 처리
                 SpawnEnemiesForCurrentFloor(currentFloor).Forget();
             }
@@ -359,6 +365,12 @@ namespace TowerBreakers.Core.Battle
                 platformTransform = m_floorTransitionService.GetCurrentPlatformTransform();
             }
             
+            // [추가]: UI용 카운트 정보 설정
+            if (m_towerFloorService != null)
+            {
+                m_towerFloorService.SetupFloorEnemies(floor);
+            }
+
             // [핵심 리팩토링]: 자식 개수(childCount)는 환경 오브젝트 등에 의해 부정확할 수 있으므로, 서비스 내부의 스폰 상태를 확인합니다.
             bool alreadySpawned = m_enemySpawnService.IsFloorSpawned(floor.FloorNumber);
 
@@ -375,8 +387,6 @@ namespace TowerBreakers.Core.Battle
                 // 이미 스폰되어 있다면 사망 콜백만 연결
                 m_enemySpawnService.SetOnEnemyDeathCallback(OnEnemyDeath);
             }
-
-            m_towerFloorService.SetEnemyCount(floor.GetTotalEnemyCount());
 
             await SpawnNextFloorEnemies();
         }
@@ -431,12 +441,19 @@ namespace TowerBreakers.Core.Battle
 
         private void OnEnemyDeath(GameObject enemy)
         {
-            m_towerFloorService.RegisterEnemyDeath();
+            // [리팩토링]: TowerFloorService가 OnEnemyKilled 이벤트를 직접 구독하므로 여기서의 수동 호출은 제거함
         }
 
         private void OnAllEnemiesCleared()
         {
             Debug.Log("[GameController] 모든 적 처치 완료 - 보상 상자 스폰 대기");
+            
+            // [리팩토링]: 층 클리어 시 압착 피해 비활성화 (보상 획득 및 이동 연출 중 보호)
+            if (m_combatSystem != null)
+            {
+                m_combatSystem.SetDamageEnabled(false);
+            }
+
             SpawnRewardChest();
         }
 

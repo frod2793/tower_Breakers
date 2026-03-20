@@ -16,8 +16,9 @@ namespace TowerBreakers.Tower.Data
         [Tooltip("적 표시 이름")]
         [SerializeField] private string m_enemyName;
 
-        [Tooltip("적 등급 (0: 일반, 1: 엘리트, 2: 보스)")]
-        [SerializeField] private int m_grade;
+        [Tooltip("적 등급 (Normal, Elite, Boss)")]
+        [UnityEngine.Serialization.FormerlySerializedAs("m_grade")]
+        [SerializeField] private EnemyType m_enemyType = EnemyType.Normal;
 
         [Header("스탯")]
         [Tooltip("체력")]
@@ -32,10 +33,15 @@ namespace TowerBreakers.Tower.Data
         [Tooltip("이동 속도")]
         [SerializeField] private float m_moveSpeed = 2f;
 
-        [Header("보상")]
-        [Tooltip("드롭 아이템 ID 리스트")]
-        [SerializeField] private List<string> m_dropItemIds;
+        [Tooltip("넉백 저항성 (0: 전체 밀림, 1: 밀림 없음)")]
+        [Range(0f, 1f)]
+        [SerializeField] private float m_knockbackResistance = 0f;
 
+        [Header("에디터 설정")]
+        [Tooltip("적 프리펩 (SPUM 등 시각적 모델 및 컴포넌트 포함)")]
+        [SerializeField] private GameObject m_prefab;
+
+        [Header("보상")]
         [Tooltip("획득 경험치")]
         [SerializeField] private int m_experience;
 
@@ -44,12 +50,13 @@ namespace TowerBreakers.Tower.Data
 
         public string ID => m_id;
         public string EnemyName => m_enemyName;
-        public int Grade => m_grade;
+        public EnemyType Grade => m_enemyType;
         public float Health => m_health;
         public float Attack => m_attack;
         public float AttackSpeed => m_attackSpeed;
         public float MoveSpeed => m_moveSpeed;
-        public List<string> DropItemIds => m_dropItemIds;
+        public float KnockbackResistance => m_knockbackResistance;
+        public GameObject Prefab => m_prefab;
         public int Experience => m_experience;
         public int Gold => m_gold;
 

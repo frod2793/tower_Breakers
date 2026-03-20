@@ -85,18 +85,26 @@ namespace TowerBreakers.Player.Logic
                 m_pendingPushVelocityX = 0f;
             }
 
-            // 3. 강제 위치 보정 (적 리더와의 겹침 방지)
+            // 3. [개선]: 강제 위치 보정 (적 리더와의 겹침 방지 및 밀림 누락 해결)
+            // 간헐적인 밀림 누락은 물리 프레임 오차로 발생하므로, 강제 위치(forcedPushX)가 속도 기반 이동보다 우선함
             if (m_forcedPushX != float.MaxValue)
             {
+                // 적이 밀고 들어오는 경우, 플레이어는 무조건 forcedPushX 이하의 좌표에 있어야 함
                 if (m_state.Position.x > m_forcedPushX)
                 {
                     m_state.Position.x = m_forcedPushX;
                 }
+                
+                // [추가]: 밀리고 있을 때는 목표 좌표도 동기화하여 뷰 떨림 방지
+                m_state.TargetPosition.x = m_state.Position.x;
                 m_forcedPushX = float.MaxValue; // 초기화
             }
 
             // 4. 왼쪽 벽 제한 적용
-            m_state.Position.x = Math.Max(m_state.Position.x, m_config.LeftWallX);
+            if (m_state.Position.x < m_config.LeftWallX)
+            {
+                m_state.Position.x = m_config.LeftWallX;
+            }
             
             // 일반 상태일 때는 목표 위치를 현재 위치로 유지 (뷰 보간용)
             if (!m_state.IsDashing && !m_state.IsRetreating)
@@ -173,6 +181,10 @@ namespace TowerBreakers.Player.Logic
 
             m_state.LastParryTime = time;
             m_state.IsParrying = true;
+            
+            // [추가]: 패링 수행 이벤트 발행 (CombatSystem에서 압착 피해 리셋용으로 사용)
+            m_eventBus.Publish(new OnParryPerformed());
+            
             OnParryStarted?.Invoke();
             return true;
         }

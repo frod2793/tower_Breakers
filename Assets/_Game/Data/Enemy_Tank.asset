@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cff856be173de4ed3a5ab47b42599877, type: 3}
-  m_Name: Enemy_skull
+  m_Name: Enemy_Tank
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Tower.Data.EnemyData
-  m_id: Enemy_skull
-  m_enemyName: skull
-  m_grade: 0
-  m_health: 100
+  m_id: Enemy_Tank
+  m_enemyName: Tank
+  m_grade: 1
+  m_health: 200
   m_attack: 10
   m_attackSpeed: 1
-  m_moveSpeed: 2
-  m_prefab: {fileID: 7359377293411260106, guid: da7416bb022334ae984a65ecf216288c, type: 3}
+  m_moveSpeed: 1
+  m_prefab: {fileID: 6354791451217383224, guid: 643699a61b7ba436196ff20a55b9c63b, type: 3}
   m_experience: 0
   m_gold: 0
