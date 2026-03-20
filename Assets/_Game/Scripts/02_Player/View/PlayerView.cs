@@ -9,6 +9,7 @@ using TowerBreakers.Tower.Service;
 using Cysharp.Threading.Tasks;
 using TowerBreakers.Battle;
 using TowerBreakers.Enemy.Service;
+using TowerBreakers.Player.Service;
 using TowerBreakers.UI.ViewModel;
 using VContainer;
 
@@ -29,6 +30,12 @@ namespace TowerBreakers.Player.View
         #region 내부 필드
         private PlayerConfigDTO m_config;
         private PlayerLogic m_logic;
+        public PlayerLogic Logic => m_logic;
+
+        public void CheatEquip(string itemId)
+        {
+            m_equipmentService?.Equip(itemId);
+        }
         private BattleUIViewModel m_uiViewModel;
         private IPlayerStatService m_statService;
         private PlayerState m_currentAnimState = PlayerState.IDLE;
@@ -37,8 +44,11 @@ namespace TowerBreakers.Player.View
         #endregion
 
         #region 초기화 및 바인딩 로직
-        public void Initialize(PlayerLogic logic, BattleUIViewModel uiViewModel, IPlayerStatService statService)
+        private IEquipmentService m_equipmentService;
+
+        public void Initialize(PlayerLogic logic, BattleUIViewModel uiViewModel, IPlayerStatService statService, IEquipmentService equipmentService)
         {
+            m_equipmentService = equipmentService;
             if (logic == null) return;
 
             m_logic = logic;
@@ -52,6 +62,7 @@ namespace TowerBreakers.Player.View
             m_logic.OnDashStarted += () => { CancelAttackSequence(); PlayAnimation(PlayerState.MOVE); };
             m_logic.OnParryStarted += () => { CancelAttackSequence(); StartParrySequence(); };
             m_logic.OnAttackStarted += StartAttackSequence;
+            m_logic.OnWindstormSlashStarted += StartWindstormSlashSequence;
             m_logic.OnDamaged += OnPlayerDamaged;
             m_logic.OnDeath += OnPlayerDeath;
 
@@ -80,6 +91,7 @@ namespace TowerBreakers.Player.View
             if (skillName == "Dash") m_logic.TryDash(Time.time);
             else if (skillName == "Parry") m_logic.TryParry(Time.time);
             else if (skillName == "Attack") m_logic.TryAttack(Time.time);
+            else if (skillName == "Skill1") m_logic.TryWindstormSlash(Time.time);
         }
         #endregion
 
@@ -163,6 +175,29 @@ namespace TowerBreakers.Player.View
                     if (push != null) { push.Stun(duration); push.ApplyKnockback(Vector2.right, pushForce); }
                 }
             }
+        }
+
+        private async void StartWindstormSlashSequence()
+        {
+            CancelAttackSequence();
+            m_attackCts = new CancellationTokenSource();
+            try {
+                // 1. 대시 애니메이션 및 잔상 연출 시작
+                PlayAnimation(PlayerState.MOVE);
+                
+                // 2. 대시 완료 대기 (PlayerLogic에서 Position을 MoveTowards로 업데이트함)
+                // 시각적으로 대시가 끝날 때까지 약간의 대기
+                await UniTask.Delay(150, cancellationToken: m_attackCts.Token);
+                
+                // 3. 발도 타격 애니메이션
+                PlayAnimation(PlayerState.ATTACK);
+                
+                // 4. 연출용 슬로우 모션 또는 히트스탑 (필요 시)
+                
+                await UniTask.Delay(300, cancellationToken: m_attackCts.Token);
+                
+                if (m_logic != null) { m_logic.EndAction(); PlayAnimation(PlayerState.IDLE); }
+            } catch (OperationCanceledException) { }
         }
 
         private async void StartAttackSequence()

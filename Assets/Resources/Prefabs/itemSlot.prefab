@@ -367,6 +367,7 @@ MonoBehaviour:
   m_equippedText: {fileID: 5962845214370320462}
   m_statSummaryText: {fileID: 0}
   m_gradeBadge: {fileID: 0}
+  m_equipButton: {fileID: 3819806872092148388}
   m_gradeColors: []
 --- !u!1 &7881364241479611026
 GameObject:

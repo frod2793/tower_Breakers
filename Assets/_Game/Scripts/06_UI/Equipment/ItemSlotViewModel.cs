@@ -1,6 +1,7 @@
 using System;
 using TowerBreakers.Player.Data;
 using TowerBreakers.Player.Service;
+using UnityEngine;
 
 namespace TowerBreakers.UI.Equipment
 {
@@ -18,7 +19,7 @@ namespace TowerBreakers.UI.Equipment
         public string Description => m_data.Description;
         public EquipmentType Type => m_data.Type;
         public int Grade => m_data.Grade;
-        public string SpumSpriteId => m_data.SpumSpriteId;
+        public Sprite Icon => m_data.Icon;
         public StatModifiers Stats => m_data.Stats;
         public bool IsEquipped => m_isEquipped;
 

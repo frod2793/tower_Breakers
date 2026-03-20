@@ -17,6 +17,7 @@ namespace TowerBreakers.Battle
         private readonly IEventBus m_eventBus;
         private readonly PlayerLogic m_logic;
         private readonly PlayerConfigDTO m_playerConfig;
+        private readonly TowerBreakers.Tower.Service.FloorTransitionService m_transitionService;
         
         private bool m_isDamageEnabled = true;         // 스테이지 상태에 따른 전역 활성화 여부
         private bool m_hasReceivedCrushDamage = false;    // 현재 압착 중 데미지 수령 여부
@@ -24,11 +25,12 @@ namespace TowerBreakers.Battle
         #endregion
 
         #region 초기화
-        public CombatSystem(IEventBus eventBus, PlayerLogic m_logic, PlayerConfigDTO playerConfig)
+        public CombatSystem(IEventBus eventBus, PlayerLogic m_logic, PlayerConfigDTO playerConfig, TowerBreakers.Tower.Service.FloorTransitionService transitionService)
         {
             m_eventBus = eventBus;
             this.m_logic = m_logic;
             m_playerConfig = playerConfig;
+            m_transitionService = transitionService;
         }
 
         public void Initialize()
@@ -43,6 +45,12 @@ namespace TowerBreakers.Battle
             m_eventBus.Subscribe<OnFloorCleared>(HandleFloorCleared);
             m_eventBus.Subscribe<OnFloorStarted>(HandleFloorStarted);
             m_eventBus.Subscribe<OnParryPerformed>(HandleParryPerformed);
+
+            if (m_transitionService != null)
+            {
+                m_transitionService.OnTransitionStarted += () => SetDamageEnabled(false);
+                m_transitionService.OnTransitionComplete += () => SetDamageEnabled(true);
+            }
         }
 
         public void Dispose()
@@ -117,7 +125,12 @@ namespace TowerBreakers.Battle
         public void SetDamageEnabled(bool enabled)
         {
             m_isDamageEnabled = enabled;
-            if (enabled) ResetCrushDamageState();
+            if (enabled)
+            {
+                ResetCrushDamageState();
+                // [추가]: 재활성화 시 1.0초간 추가 유예 시간 부여 (연출 종료 직후의 물리 겹침 방지)
+                m_parryProtectionEndTime = Time.time + 1.0f;
+            }
         }
         #endregion
     }

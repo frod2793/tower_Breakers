@@ -68,6 +68,7 @@ namespace TowerBreakers.Enemy.Service
         public bool CanAdvance => m_canAdvance;
         public bool IsActivelyMoving => m_isMoving && m_canAdvance && !m_shouldStop && !m_isStunned && !m_isDead;
         public EnemyPushController AheadEnemy => m_aheadEnemy;
+        public EnemyPushController FollowerEnemy => m_followerEnemy;
         public EnemyType Type => m_enemyType; // [추가]
         #endregion
 

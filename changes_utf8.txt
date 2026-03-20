@@ -1,0 +1,83 @@
+Assets/_Game/Data/EquipmentDatabase.asset
+Assets/_Game/Data/Equipment_.asset
+Assets/_Game/Data/Equipment_.asset.meta
+Assets/_Game/Prefabs/08_Environment/RewardChest.prefab
+Assets/_Game/Prefabs/[ - ProjectLifetimeScope - ].prefab
+Assets/_Game/Scenes/inGame.unity
+Assets/_Game/Scripts/01_Core/Battle/GameController.cs
+Assets/_Game/Scripts/01_Core/DI/BattleLifetimeScope.cs
+Assets/_Game/Scripts/01_Core/DI/LobbyLifetimeScope.cs
+Assets/_Game/Scripts/01_Core/DI/ProjectLifetimeScope.cs
+Assets/_Game/Scripts/02_Player/DTO/PlayerDTO.cs
+Assets/_Game/Scripts/02_Player/Data/EquipmentData.cs
+Assets/_Game/Scripts/02_Player/Data/PlayerStateDTO.cs
+Assets/_Game/Scripts/02_Player/Data/PlayerStateDTO.cs.meta
+Assets/_Game/Scripts/02_Player/Logic/PlayerLogic.cs
+Assets/_Game/Scripts/02_Player/Service/EquipmentService.cs
+Assets/_Game/Scripts/02_Player/Service/IEquipmentService.cs
+Assets/_Game/Scripts/02_Player/Stat/PlayerStatService.cs
+Assets/_Game/Scripts/02_Player/View/PlayerView.cs
+Assets/_Game/Scripts/03_Enemy/Service/EnemyDetectionService.cs
+Assets/_Game/Scripts/03_Enemy/Service/EnemyPushController.cs
+Assets/_Game/Scripts/03_Enemy/Service/IEnemyDetectionService.cs
+Assets/_Game/Scripts/06_UI/Equipment/EquipmentViewModel.cs
+Assets/_Game/Scripts/06_UI/Equipment/ItemSlotView.cs
+Assets/_Game/Scripts/06_UI/Equipment/ItemSlotViewModel.cs
+Assets/_Game/Scripts/99_External/CustomSPUMManager.cs
+Assets/_Game/Scripts/99_External/SPUM_CharacterManager.cs
+Assets/_Game/Scripts/Battle/CombatSystem.cs
+ M Assets/_Game/Data/EquipmentDatabase.asset
+ D Assets/_Game/Data/Equipment_.asset
+ D Assets/_Game/Data/Equipment_.asset.meta
+ M Assets/_Game/Prefabs/08_Environment/RewardChest.prefab
+ M "Assets/_Game/Prefabs/[ - ProjectLifetimeScope - ].prefab"
+ M Assets/_Game/Scenes/inGame.unity
+ M Assets/_Game/Scripts/01_Core/Battle/GameController.cs
+ M Assets/_Game/Scripts/01_Core/DI/BattleLifetimeScope.cs
+ M Assets/_Game/Scripts/01_Core/DI/LobbyLifetimeScope.cs
+ M Assets/_Game/Scripts/01_Core/DI/ProjectLifetimeScope.cs
+ M Assets/_Game/Scripts/02_Player/DTO/PlayerDTO.cs
+ M Assets/_Game/Scripts/02_Player/Data/EquipmentData.cs
+ D Assets/_Game/Scripts/02_Player/Data/PlayerStateDTO.cs
+ D Assets/_Game/Scripts/02_Player/Data/PlayerStateDTO.cs.meta
+ M Assets/_Game/Scripts/02_Player/Logic/PlayerLogic.cs
+ M Assets/_Game/Scripts/02_Player/Service/EquipmentService.cs
+ M Assets/_Game/Scripts/02_Player/Service/IEquipmentService.cs
+ M Assets/_Game/Scripts/02_Player/Stat/PlayerStatService.cs
+ M Assets/_Game/Scripts/02_Player/View/PlayerView.cs
+ M Assets/_Game/Scripts/03_Enemy/Service/EnemyDetectionService.cs
+ M Assets/_Game/Scripts/03_Enemy/Service/EnemyPushController.cs
+ M Assets/_Game/Scripts/03_Enemy/Service/IEnemyDetectionService.cs
+ M Assets/_Game/Scripts/06_UI/Equipment/EquipmentViewModel.cs
+ M Assets/_Game/Scripts/06_UI/Equipment/ItemSlotView.cs
+ M Assets/_Game/Scripts/06_UI/Equipment/ItemSlotViewModel.cs
+ M Assets/_Game/Scripts/99_External/CustomSPUMManager.cs
+ M Assets/_Game/Scripts/99_External/SPUM_CharacterManager.cs
+ M Assets/_Game/Scripts/Battle/CombatSystem.cs
+?? Assets/_Game/Data/Equipment.meta
+?? Assets/_Game/Data/Equipment/
+?? Assets/_Game/Scripts/01_Core/Service.meta
+?? Assets/_Game/Scripts/01_Core/Service/
+?? Assets/_Game/Scripts/02_Player/Controller/PlayerDebugger.cs
+?? Assets/_Game/Scripts/02_Player/Controller/PlayerDebugger.cs.meta
+?? Assets/_Game/Scripts/02_Player/DTO/SaveDataDTO.cs
+?? Assets/_Game/Scripts/02_Player/DTO/SaveDataDTO.cs.meta
+?? Assets/_Game/Scripts/02_Player/Data/WeaponType.cs
+?? Assets/_Game/Scripts/02_Player/Data/WeaponType.cs.meta
+?? Assets/_Game/Scripts/06_UI/View/CheatEquipmentView.cs
+?? Assets/_Game/Scripts/06_UI/View/CheatEquipmentView.cs.meta
+?? Assets/_Game/Scripts/06_UI/View/EquipmentView.cs
+?? Assets/_Game/Scripts/06_UI/View/EquipmentView.cs.meta
+?? Assets/_Game/Scripts/06_UI/View/LobbyEquipmentView.cs
+?? Assets/_Game/Scripts/06_UI/View/LobbyEquipmentView.cs.meta
+?? Assets/_Game/Scripts/06_UI/View/PauseUIView.cs
+?? Assets/_Game/Scripts/06_UI/View/PauseUIView.cs.meta
+?? Assets/_Game/Scripts/06_UI/ViewModel/CheatEquipmentViewModel.cs
+?? Assets/_Game/Scripts/06_UI/ViewModel/CheatEquipmentViewModel.cs.meta
+?? Assets/_Game/Scripts/06_UI/ViewModel/PauseUIViewModel.cs
+?? Assets/_Game/Scripts/06_UI/ViewModel/PauseUIViewModel.cs.meta
+?? Assets/_Game/Scripts/Editor.meta
+?? Assets/_Game/Scripts/Editor/
+?? Assets/_Recovery.meta
+?? Assets/_Recovery/
+?? changes_utf8.txt

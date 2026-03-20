@@ -3,125 +3,94 @@ using System.Collections.Generic;
 using UnityEngine;
 using TowerBreakers.Player.Data;
 using TowerBreakers.Player.Model;
+using TowerBreakers.Core.Service;
 
 namespace TowerBreakers.Player.Service
 {
     /// <summary>
-    /// [기능]: 장비 서비스 구현체
+    /// [기능]: 장비 서비스 구현체 (저장 시스템 연동)
     /// </summary>
     public class EquipmentService : IEquipmentService
     {
+        public event Action<EquipmentType, EquipmentData> OnEquipmentChanged;
+        
         private readonly UserSessionModel m_userSession;
         private readonly EquipmentDatabase m_database;
+        private readonly DataPersistenceService m_persistenceService;
         private readonly Dictionary<string, EquipmentData> m_equipmentCache = new Dictionary<string, EquipmentData>();
 
-        public EquipmentService(UserSessionModel userSession, EquipmentDatabase database)
+        public EquipmentService(UserSessionModel userSession, EquipmentDatabase database, DataPersistenceService persistenceService)
         {
             m_userSession = userSession;
             m_database = database;
+            m_persistenceService = persistenceService;
+
             LoadEquipmentDatabase();
+            
+            // 최초 데이터 로드
+            if (m_persistenceService != null)
+            {
+                m_persistenceService.Load(m_userSession);
+            }
+
+            // 아이템 획득 시 자동 저장 구독
+            m_userSession.OnItemAdded += (id) => SaveData();
         }
 
         private void LoadEquipmentDatabase()
         {
-            if (m_database == null)
-            {
-                Debug.LogWarning("[EquipmentService] 데이터베이스가 없습니다.");
-                return;
-            }
+            if (m_database == null) return;
 
-            if (m_database.Weapons != null)
-            {
-                foreach (var weapon in m_database.Weapons)
-                {
-                    if (weapon != null)
-                    {
-                        m_equipmentCache[weapon.ID] = weapon;
-                    }
-                }
-            }
+            AddListToCache(m_database.Weapons);
+            AddListToCache(m_database.Armors);
+            AddListToCache(m_database.Helmets);
+        }
 
-            if (m_database.Armors != null)
+        private void AddListToCache(List<EquipmentData> list)
+        {
+            if (list == null) return;
+            foreach (var item in list)
             {
-                foreach (var armor in m_database.Armors)
-                {
-                    if (armor != null)
-                    {
-                        m_equipmentCache[armor.ID] = armor;
-                    }
-                }
-            }
-
-            if (m_database.Helmets != null)
-            {
-                foreach (var helmet in m_database.Helmets)
-                {
-                    if (helmet != null)
-                    {
-                        m_equipmentCache[helmet.ID] = helmet;
-                    }
-                }
+                if (item != null) m_equipmentCache[item.ID] = item;
             }
         }
 
         public void Equip(string itemId)
         {
             var data = GetEquipmentData(itemId);
-            if (data == null)
-            {
-                Debug.LogWarning($"[EquipmentService] 존재하지 않는 아이템입니다: {itemId}");
-                return;
-            }
-
-            if (!m_userSession.HasItem(itemId))
-            {
-                Debug.LogWarning($"[EquipmentService] 인벤토리에 없는 아이템입니다: {itemId}");
-                return;
-            }
+            if (data == null || !m_userSession.HasItem(itemId)) return;
 
             m_userSession.SetEquip(data.Type, itemId);
             UpdateTotalStats();
+            OnEquipmentChanged?.Invoke(data.Type, data);
+            SaveData();
 
-            Debug.Log($"[EquipmentService] 장비 교체: {data.Type} -> {data.ItemName}");
+            Debug.Log($"[EquipmentService] 장비 교체: {data.ItemName}");
         }
 
         public void Unequip(EquipmentType type)
         {
             m_userSession.Unequip(type);
             UpdateTotalStats();
+            SaveData();
 
             Debug.Log($"[EquipmentService] 장비 해제: {type}");
         }
 
-        public bool HasItem(string itemId)
+        public void SaveData()
         {
-            return m_userSession.HasItem(itemId);
+            m_persistenceService?.Save(m_userSession);
         }
+
+        public bool HasItem(string itemId) => m_userSession.HasItem(itemId);
 
         public EquipmentData GetEquipmentData(string itemId)
         {
-            if (string.IsNullOrEmpty(itemId))
-            {
-                return null;
-            }
-
-            if (m_equipmentCache.TryGetValue(itemId, out var data))
-            {
-                return data;
-            }
-
-            return null;
+            if (string.IsNullOrEmpty(itemId)) return null;
+            return m_equipmentCache.TryGetValue(itemId, out var data) ? data : null;
         }
 
-        public IReadOnlyList<EquipmentData> GetAllEquipmentData()
-        {
-            var result = new List<EquipmentData>();
-            foreach (var kvp in m_equipmentCache)
-            {
-                result.Add(kvp.Value);
-            }
-            return result;
-        }
+        public IReadOnlyList<EquipmentData> GetAllEquipmentData() => new List<EquipmentData>(m_equipmentCache.Values);
 
         public IReadOnlyList<EquipmentData> GetInventoryItems()
         {
@@ -129,10 +98,7 @@ namespace TowerBreakers.Player.Service
             foreach (var itemId in m_userSession.InventoryIds)
             {
                 var data = GetEquipmentData(itemId);
-                if (data != null)
-                {
-                    result.Add(data);
-                }
+                if (data != null) result.Add(data);
             }
             return result;
         }
@@ -146,19 +112,11 @@ namespace TowerBreakers.Player.Service
         public StatModifiers CalculateTotalStats()
         {
             var total = new StatModifiers();
-
             foreach (var kvp in m_userSession.EquippedIds)
             {
-                if (!string.IsNullOrEmpty(kvp.Value))
-                {
-                    var data = GetEquipmentData(kvp.Value);
-                    if (data != null && data.Stats != null)
-                    {
-                        total += data.Stats;
-                    }
-                }
+                var data = GetEquipmentData(kvp.Value);
+                if (data != null && data.Stats != null) total += data.Stats;
             }
-
             return total;
         }
 
@@ -166,8 +124,6 @@ namespace TowerBreakers.Player.Service
         {
             var totalStats = CalculateTotalStats();
             m_userSession.UpdateStats(totalStats);
-
-            Debug.Log($"[EquipmentService] 스탯 업데이트 - 공격력: {totalStats.Attack}, 방어력: {totalStats.Defense}, 체력: {totalStats.Health}");
         }
     }
 }

@@ -303,7 +303,7 @@ namespace TowerBreakers.Core.Battle
         {
             if (m_playerView != null)
             {
-                m_playerView.Initialize(m_playerLogic, m_uiViewModel, m_playerStatService);
+                m_playerView.Initialize(m_playerLogic, m_uiViewModel, m_playerStatService, m_equipmentService);
             }
         }
 
@@ -346,12 +346,8 @@ namespace TowerBreakers.Core.Battle
             var currentFloor = m_towerFloorService.GetCurrentFloorData();
             if (currentFloor != null && currentFloor.FloorNumber == floorNumber)
             {
-                // [추가]: 트랜지션 연출 종료 및 플랫폼 안착 완료 시 압착 피해 재활성화
-                if (m_combatSystem != null)
-                {
-                    m_combatSystem.SetDamageEnabled(true);
-                }
-
+                // [수정]: 여기서 즉시 활성화하지 않고, 적들이 전진을 시작할 때 활성화하도록 변경
+                
                 // [수정]: 동기 메서드에서 비동기 호출 시 적절한 처리
                 SpawnEnemiesForCurrentFloor(currentFloor).Forget();
             }
@@ -447,13 +443,6 @@ namespace TowerBreakers.Core.Battle
         private void OnAllEnemiesCleared()
         {
             Debug.Log("[GameController] 모든 적 처치 완료 - 보상 상자 스폰 대기");
-            
-            // [리팩토링]: 층 클리어 시 압착 피해 비활성화 (보상 획득 및 이동 연출 중 보호)
-            if (m_combatSystem != null)
-            {
-                m_combatSystem.SetDamageEnabled(false);
-            }
-
             SpawnRewardChest();
         }
 
@@ -496,13 +485,17 @@ namespace TowerBreakers.Core.Battle
             spawnPos.z = 0;
 
             var chest = GameObject.Instantiate(m_rewardChestPrefab, spawnPos, Quaternion.identity, platformTransform);
-            chest.gameObject.SetActive(true); // [기반 수정]: 프리팹이 비활성 상태일 경우를 대비하여 명시적 활성화
+            chest.gameObject.SetActive(true);
+            
+            // [추가]: 보상 상자를 적 탐지 서비스에 등록하여 플레이어가 대시 대상으로 인식하게 함
+            m_enemyDetectionService?.SetRewardChest(chest.gameObject);
             
             // [수정]: 보상 아이콘을 전달하며 초기화 (실제 지급은 개봉 콜백에서 수행)
             chest.Initialize(selectedItem.Icon, () =>
             {
                 Debug.Log($"[GameController] 상자 개봉 확인 - 아이템 지급: {selectedItem.ItemName}");
                 SubmitReward(selectedItem);
+                m_enemyDetectionService?.SetRewardChest(null);
                 CompleteFloorSequence();
             });
 

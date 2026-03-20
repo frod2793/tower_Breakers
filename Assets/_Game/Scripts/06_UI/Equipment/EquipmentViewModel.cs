@@ -18,6 +18,7 @@ namespace TowerBreakers.UI.Equipment
         private readonly List<ItemSlotViewModel> m_itemSlotViewModels = new List<ItemSlotViewModel>();
 
         public event Action<IReadOnlyList<ItemSlotViewModel>> OnInventoryUpdated;
+        public event Action<EquipmentType, ItemSlotViewModel> OnEquippedItemUpdated;
         public event Action<StatModifiers> OnStatsUpdated;
 
         public IReadOnlyList<ItemSlotViewModel> ItemSlots => m_itemSlotViewModels;
@@ -82,6 +83,30 @@ namespace TowerBreakers.UI.Equipment
         {
             var stats = m_equipmentService.CalculateTotalStats();
             OnStatsUpdated?.Invoke(stats);
+
+            // 장착된 아이템 정보들도 함께 갱신 알림
+            foreach (EquipmentType type in System.Enum.GetValues(typeof(EquipmentType)))
+            {
+                var item = GetEquippedItem(type);
+                OnEquippedItemUpdated?.Invoke(type, item);
+            }
+        }
+
+        public ItemSlotViewModel GetEquippedItem(EquipmentType type)
+        {
+            var itemData = m_equipmentService.GetEquippedItem(type);
+            if (itemData == null) return null;
+            return new ItemSlotViewModel(itemData, true, m_equipmentService);
+        }
+
+        public void EquipItem(string itemId)
+        {
+            m_equipmentService.Equip(itemId);
+        }
+
+        public void UnequipItem(EquipmentType type)
+        {
+            m_equipmentService.Unequip(type);
         }
 
         public void Dispose()

@@ -30,17 +30,15 @@ argument-hint: "[선택사항: 특정 스킬 이름 또는 집중할 영역]"
 
 | 스킬 | 설명 | 커버 파일 패턴 |
 |---|---|---|
-| `verify-lobby-navigation` | 로비 UI의 팝업 관리, 뒤로가기(ESC) 및 중복 로딩 가드 검증 | `Assets/_Game/Scripts/Lobby/**/*.cs` |
-| `verify-inventory-system` | 인벤토리 데이터 구조 및 환전 로직 검증 | `Assets/_Game/Scripts/ScriptableObjects/Inventory*.cs`, `Assets/_Game/Scripts/Lobby/InventoryManager.cs`, `Assets/_Game/Scripts/Lobby/ViewModels/InventoryViewModel.cs` |
-| `verify-ingame-core` | 인게임 핵심 시스템, 초기화 순서, UI 데이터 바인딩 및 조이스틱 경계 로직 검증 | `Assets/_Game/Scripts/InGame/Manager/*.cs`, `Assets/_Game/Scripts/InGame/UI/ViewModels/InGameViewModel.cs`, `Assets/_Game/Scripts/InGame/GameSceneCompositionRoot.cs`, `Assets/_Game/Scripts/InGame/JoystickSetter/*.cs` |
-| `verify-data-persistence` | 데이터 DTO, 서비스 의존성, 암호화 저장소 및 절대값 동기화 무결성 검증 | `Assets/Scripts/BackEnd/UserDataService.cs`, `Assets/Scripts/Login/BackEndServerManager.cs` |
+| `verify-lobby-navigation` | 로비 UI의 팝업 관리, 뒤로가기(ESC) 및 중복 로딩 가드 검증 | `Assets/_Game/Scripts/Lobby/**/*.cs`, `Assets/_Game/Scripts/06_UI/**/*.cs` |
+| `verify-inventory-system` | 장비/인벤토리 데이터 구조 및 UI 바인딩 검증 | `Assets/_Game/Scripts/02_Player/Data/EquipmentData.cs`, `Assets/_Game/Scripts/06_UI/Equipment/` |
+| `verify-ingame-core` | 인게임 핵심 시스템, DI Scope, 초기화 순서 및 씬 내비게이션 검증 | `Assets/_Game/Scripts/01_Core/DI/BattleLifetimeScope.cs`, `Assets/_Game/Scripts/Battle/CombatSystem.cs` |
+| `verify-data-persistence` | 데이터 DTO 구조, 저장소 암호화 및 POCO 명명 규칙 검증 | `Assets/_Game/Scripts/02_Player/DTO/`, `Assets/_Game/Scripts/01_Core/Service/` |
 | `verify-sound-system` | 사운드 구현 패턴 및 DI 주입 정합성 검증 (추천 방식) | `Assets/_Game/Scripts/**/*.cs` |
-| `verify-login-flow` | 타이틀 씬의 로그인 흐름(MVVM), 어드레서블 로딩 및 리모트 동기화 검증 | `Assets/Scripts/Login/LoginView.cs`, `Assets/Scripts/ViewModel/LoginViewModel.cs` |
-| `verify-remote-data` | 구글 시트 기반 리모트 데이터 동기화 및 에디터 폴백 검증 | `Assets/_Game/Scripts/Data/Services/RemoteDataService.cs`, `Assets/_Game/Scripts/Data/Managers/RemoteDataUpdateManager.cs` |
-| `verify-weapon-system` | 리팩토링된 무기 시스템의 DI 주입, POCO 전략 패턴 설계, 팩토리 생성을 검증합니다. | `Assets/_Game/Scripts/InGame/Weapon/**/*.cs` |
-| `verify-ingame-mob` | 인게임 몹(Mob) 시스템의 풀링, 컴포넌트 분리, 화명 밖 이탈 방지를 검증합니다. | `Assets/_Game/Scripts/InGame/Mob/**/*.cs` |
-| `verify-player-system` | 플레이어 컨트롤러, 자동 공격(AI) 루프, 카이팅(Kiting) 이동 및 토글 연동 무결성을 검증합니다. | `Assets/_Game/Scripts/InGame/Player/Player_Base/*.cs` |
-| `verify-ad-system` | 신규 AdMob 광고 서비스 아키텍처 및 SDK v10.7+ API 통합 상태를 검증합니다. | `Assets/Scripts/Ad/*.cs` |
+| `verify-login-flow` | 타이틀 씬의 로그인 흐름(MVVM) 및 어드레서블 로딩 검증 | `Assets/Scripts/Login/LoginView.cs`, `Assets/Scripts/ViewModel/LoginViewModel.cs` |
+| `verify-weapon-system` | 무기 시스템의 DI 주입, POCO 전략 패턴, 팩토리 생성 검증 | `Assets/_Game/Scripts/02_Player/Logic/`, `Assets/_Game/Scripts/02_Player/Data/WeaponType.cs` |
+| `verify-ingame-mob` | 인게임 몹(Mob) 풀링, 군집 이동 및 화면 이탈 방지 검증 | `Assets/_Game/Scripts/03_Enemy/Service/EnemyPushController.cs` |
+| `verify-player-system` | 플레이어 컨트롤러, 전투 루프 및 로직-뷰 분리 무결성 검증 | `Assets/_Game/Scripts/02_Player/Logic/PlayerLogic.cs`, `Assets/_Game/Scripts/02_Player/View/PlayerView.cs` |
 
 <!-- 스킬이 추가되면 아래 형식으로 등록:
 | 스킬 | 설명 | 커버 파일 패턴 |

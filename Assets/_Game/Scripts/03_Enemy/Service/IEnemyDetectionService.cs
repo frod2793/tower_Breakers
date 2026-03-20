@@ -16,6 +16,7 @@ namespace TowerBreakers.Enemy.Service
         /// <param name="elite">엘리트 적 리스트</param>
         /// <param name="boss">보스 적 리스트</param>
         void UpdateEnemyLists(IReadOnlyList<GameObject> normal, IReadOnlyList<GameObject> elite, IReadOnlyList<GameObject> boss);
+        void SetRewardChest(GameObject chest);
 
         /// <summary>
         /// [설명]: 특정 좌표에서 같은 층(Y축 기준)에 있는 가장 가까운 적을 반환합니다.

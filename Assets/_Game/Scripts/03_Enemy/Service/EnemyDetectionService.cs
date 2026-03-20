@@ -17,6 +17,7 @@ namespace TowerBreakers.Enemy.Service
         private IReadOnlyList<GameObject> m_normalEnemies;
         private IReadOnlyList<GameObject> m_eliteEnemies;
         private IReadOnlyList<GameObject> m_bossEnemies;
+        private GameObject m_rewardChest;
         
         // [추가]: GC 0 원칙을 위한 캐싱 리스트 (Zero Allocation)
         private readonly List<GameObject> m_cachedActiveEnemies = new List<GameObject>(100);
@@ -49,6 +50,11 @@ namespace TowerBreakers.Enemy.Service
             m_eliteEnemies = elite;
             m_bossEnemies = boss;
         }
+
+        public void SetRewardChest(GameObject chest)
+        {
+            m_rewardChest = chest;
+        }
         #endregion
 
         #region 공개 메서드
@@ -65,6 +71,14 @@ namespace TowerBreakers.Enemy.Service
             AddActiveFromList(m_normalEnemies, m_cachedActiveEnemies, playerY);
             AddActiveFromList(m_eliteEnemies, m_cachedActiveEnemies, playerY);
             AddActiveFromList(m_bossEnemies, m_cachedActiveEnemies, playerY);
+            
+            if (m_rewardChest != null && m_rewardChest.activeInHierarchy)
+            {
+                if (Mathf.Abs(m_rewardChest.transform.position.y - playerY) < 2.0f)
+                {
+                    m_cachedActiveEnemies.Add(m_rewardChest);
+                }
+            }
 
             int count = m_cachedActiveEnemies.Count;
             if (count == 0) return null;

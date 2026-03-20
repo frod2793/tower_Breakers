@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace TowerBreakers.Player.Data
@@ -24,6 +25,9 @@ namespace TowerBreakers.Player.Data
         [Tooltip("장비 타입")]
         [SerializeField] private EquipmentType m_type;
 
+        [Tooltip("무기 타입 (Weapon인 경우에만 유효)")]
+        [SerializeField] private WeaponType m_weaponType;
+
         [Tooltip("장비 등급 (일반, 레어, 전설)")]
         [SerializeField] private int m_grade;
 
@@ -32,29 +36,25 @@ namespace TowerBreakers.Player.Data
         [SerializeField] private StatModifiers m_stats;
 
         [Header("SPUM 연동")]
-        [Tooltip("SPUM 스프라이트 시트 식별자")]
-        [SerializeField] private string m_spumSpriteId;
-
-        [Tooltip("SPUM 방향 (Right/Left)")]
-        [SerializeField] private string m_spumDir = "Right";
-
-        [Tooltip("SPUM 무기 구조 (0_Sword, 1_Axe, 2_Bow, 6_Shield 등)")]
-        [SerializeField] private string m_spumStructure;
-
-        [Tooltip("SPUM 아이템 리소스 경로")]
-        [SerializeField] private string m_spumItemPath;
+        [SerializeField] private List<SpumPartInfo> m_spumParts = new List<SpumPartInfo>();
 
         public string ID => m_id;
         public Sprite Icon => m_icon;
         public string ItemName => m_itemName;
         public string Description => m_description;
         public EquipmentType Type => m_type;
+        public WeaponType WeaponType => m_weaponType;
         public int Grade => m_grade;
         public StatModifiers Stats => m_stats;
-        public string SpumSpriteId => m_spumSpriteId;
-        public string SpumDir => m_spumDir;
-        public string SpumStructure => m_spumStructure;
-        public string SpumItemPath => m_spumItemPath;
+        public IReadOnlyList<SpumPartInfo> SpumParts => m_spumParts;
+
+        [System.Serializable]
+        public class SpumPartInfo
+        {
+            public string Structure; // 예: 7_Armor, 8_Shoulder_L
+            public string SpritePath; // 리소스 경로
+            public Sprite Sprite;     // [추가]: 런타임 직접 참조용 스프라이트
+        }
 
         private void OnValidate()
         {

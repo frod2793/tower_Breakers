@@ -193,6 +193,9 @@ MonoBehaviour:
     ParryActivationRange: 2
     AttackRange: 2
     AttackCooldown: 0.1
+    WindstormDamageMultiplier: 2
+    WindstormMaxTargets: 5
+    WindstormCooldown: 5
     LeftWallX: -4.5
     ParryRange: 5
     DamagePerHit: 1
@@ -203,6 +206,7 @@ MonoBehaviour:
   m_platformPool: {fileID: 318021561}
   m_targetPlatform: {fileID: 0}
   m_goImage: {fileID: 1918206097}
+  m_transitionSettings: {fileID: 11400000, guid: b0126e1e0c6c2a04895d564bd230dfb9, type: 2}
   m_playerTransform: {fileID: 1084656065}
   m_playerView: {fileID: 1632754919}
   m_playerSpawnPoint: {fileID: 992580194}
@@ -230,6 +234,7 @@ MonoBehaviour:
       Name: Skill3
       CooldownTime: 15
   m_battleUIView: {fileID: 837567948}
+  m_pauseUIView: {fileID: 837567949}
 --- !u!1 &93593719
 GameObject:
   m_ObjectHideFlags: 0
@@ -1414,6 +1419,7 @@ GameObject:
   m_Component:
   - component: {fileID: 837567946}
   - component: {fileID: 837567948}
+  - component: {fileID: 837567949}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -1467,6 +1473,22 @@ MonoBehaviour:
   m_skill3CooldownImage: {fileID: 0}
   m_goImage: {fileID: 1918206097}
   m_screenClickArea: {fileID: 2042565158}
+--- !u!114 &837567949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 837567945}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7eaa05f9ab7ec14ca3715a4806af636, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.UI.View.PauseUIView
+  m_pausePanel: {fileID: 261424644}
+  m_resumeButton: {fileID: 1719224653}
+  m_lobbyButton: {fileID: 941915542}
+  m_openMenuButton: {fileID: 404932944}
 --- !u!1 &841855408
 GameObject:
   m_ObjectHideFlags: 0
@@ -1512,18 +1534,6 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 3779546771757612836, guid: 359d885cd313243cbba2d034e3fe4bb4, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3779546771757612836, guid: 359d885cd313243cbba2d034e3fe4bb4, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3779546771757612836, guid: 359d885cd313243cbba2d034e3fe4bb4, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3779546771757612836, guid: 359d885cd313243cbba2d034e3fe4bb4, type: 3}
       propertyPath: m_LocalPosition.x
       value: -16.64
       objectReference: {fileID: 0}
@@ -1562,10 +1572,6 @@ PrefabInstance:
     - target: {fileID: 3779546771757612836, guid: 359d885cd313243cbba2d034e3fe4bb4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3779546771757612836, guid: 359d885cd313243cbba2d034e3fe4bb4, type: 3}
-      propertyPath: m_ConstrainProportionsScale
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6045554645950994598, guid: 359d885cd313243cbba2d034e3fe4bb4, type: 3}
       propertyPath: m_Name
@@ -2414,6 +2420,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1330524747}
   m_CullTransparentMesh: 1
+--- !u!1 &1331543049
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1331543051}
+  - component: {fileID: 1331543050}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1331543050
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1331543049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61430b0086307cc4da3ccc8d39ae88da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EasyTransition.TransitionManager
+  transitionTemplate: {fileID: 5276914992623515724, guid: 616d511151a6c554caddf1c754e4f91d, type: 3}
+--- !u!4 &1331543051
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1331543049}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 894.8012, y: 1104.6277, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!224 &1354105412 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8977439323910629607, guid: 203755e9106ee42aea488e3072cea960, type: 3}
@@ -4261,6 +4312,9 @@ MonoBehaviour:
     ParryActivationRange: 3
     AttackRange: 2
     AttackCooldown: 0.5
+    WindstormDamageMultiplier: 2
+    WindstormMaxTargets: 5
+    WindstormCooldown: 5
     LeftWallX: -8
     ParryRange: 5
     DamagePerHit: 1
@@ -5046,3 +5100,4 @@ SceneRoots:
   - {fileID: 1796424546}
   - {fileID: 1570320595237622504}
   - {fileID: 909343814}
+  - {fileID: 1331543051}

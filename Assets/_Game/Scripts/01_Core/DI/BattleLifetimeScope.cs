@@ -1,3 +1,4 @@
+using EasyTransition;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -81,6 +82,9 @@ namespace TowerBreakers.Core.DI
 
         [SerializeField, Tooltip("GO 이미지")]
         private UnityEngine.UI.Image m_goImage;
+
+        [SerializeField, Tooltip("씬 전환 트랜지션 설정")]
+        private TransitionSettings m_transitionSettings;
         #endregion
 
         #region 플레이어/카메라 참조
@@ -116,6 +120,11 @@ namespace TowerBreakers.Core.DI
 
         [SerializeField, Tooltip("전투 UI 뷰")]
         private BattleUIView m_battleUIView;
+
+        [SerializeField, Tooltip("일시 정지 UI 뷰")]
+        private TowerBreakers.UI.View.PauseUIView m_pauseUIView;
+
+        
         #endregion
         #endregion
 
@@ -151,6 +160,11 @@ namespace TowerBreakers.Core.DI
             builder.RegisterInstance(m_enemyConfig);
             builder.RegisterInstance(m_playerConfig);
             builder.RegisterInstance(m_battleUIConfig ?? new BattleUIDTO());
+            
+            if (m_transitionSettings != null)
+            {
+                builder.RegisterInstance(m_transitionSettings);
+            }
 
             if (m_rewardChestPrefab != null)
             {
@@ -216,10 +230,12 @@ namespace TowerBreakers.Core.DI
 
             // 핵심 로직 POCO
             builder.Register<BattleUIViewModel>(Lifetime.Scoped).AsImplementedInterfaces().AsSelf();
+            builder.Register<PauseUIViewModel>(Lifetime.Scoped);
             builder.Register<PlayerLogic>(Lifetime.Scoped);
 
             // View 컴포넌트
             if (m_battleUIView != null) builder.RegisterComponent(m_battleUIView);
+            if (m_pauseUIView != null) builder.RegisterComponent(m_pauseUIView);
             if (m_playerView != null) builder.RegisterComponent(m_playerView);
 
             // 게임 전체 흐름 컨트롤러

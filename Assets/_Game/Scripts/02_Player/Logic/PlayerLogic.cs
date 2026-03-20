@@ -6,6 +6,7 @@ using TowerBreakers.Player.Service;
 using Cysharp.Threading.Tasks;
 using TowerBreakers.Enemy.Service;
 using TowerBreakers.Core.Events;
+using TowerBreakers.Player.Data;
 
 namespace TowerBreakers.Player.Logic
 {
@@ -35,6 +36,7 @@ namespace TowerBreakers.Player.Logic
         public event Action OnDashStarted;
         public event Action OnParryStarted;
         public event Action OnAttackStarted;
+        public event Action OnWindstormSlashStarted;
         public event Action OnDamaged;
         public event Action OnDeath;
         #endregion
@@ -221,6 +223,57 @@ namespace TowerBreakers.Player.Logic
         }
 
         public bool IsBusy() => m_state.IsDashing || m_state.IsParrying || m_state.IsAttacking || m_state.IsRetreating;
+
+        /// <summary>
+        /// [설명]: 질풍참 스킬을 시도합니다. 적 대열의 리더 앞으로 대시하며 다수의 적을 공격합니다.
+        /// </summary>
+        public bool TryWindstormSlash(float time)
+        {
+            if (time - m_state.LastAttackTime < m_config.WindstormCooldown) return false;
+            if (IsBusy()) return false;
+
+            GameObject frontEnemy = GetFrontEnemy();
+            if (frontEnemy == null) return false;
+
+            float targetX = frontEnemy.transform.position.x - m_config.DashStopDistance;
+            
+            m_state.LastAttackTime = time;
+            m_state.IsDashing = true;
+            m_state.TargetPosition = new Vector2(targetX, m_state.Position.y);
+
+            // [체크]: 현재 장착된 무기가 '검'인지 확인
+            var currentWeapon = m_statService is PlayerStatService service ? service.GetEquippedWeapon() : null;
+            if (currentWeapon == null || currentWeapon.WeaponType != WeaponType.Sword) return false;
+
+            var leaderPush = frontEnemy.GetComponent<EnemyPushController>();
+            float finalDamage = m_statService.TotalAttack * m_config.WindstormDamageMultiplier;
+
+            if (leaderPush != null)
+            {
+                int hitCount = 0;
+                var current = leaderPush;
+
+                while (current != null && hitCount < m_config.WindstormMaxTargets)
+                {
+                    var controller = current.GetComponent<IEnemyController>();
+                    if (controller != null)
+                    {
+                        controller.TakeDamage(finalDamage);
+                        hitCount++;
+                    }
+                    current = current.FollowerEnemy;
+                }
+            }
+            else
+            {
+                // 리더(군집 제어)가 없는 대상(보상 상자 등)은 단일 타격 처리
+                var controller = frontEnemy.GetComponent<IEnemyController>();
+                controller?.TakeDamage(finalDamage);
+            }
+
+            OnWindstormSlashStarted?.Invoke();
+            return true;
+        }
         #endregion
 
         #region 체력 및 사망 로직

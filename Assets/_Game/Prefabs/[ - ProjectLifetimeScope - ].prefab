@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3703506425425591773}
   - component: {fileID: 5465881547310523332}
+  - component: {fileID: -380959867496648716}
   m_Layer: 0
   m_Name: '[ - ProjectLifetimeScope - ]'
   m_TagString: Untagged
@@ -49,3 +50,17 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects: []
   m_equipmentDatabase: {fileID: 11400000, guid: 2afa5feb30a554b318313d4426c45952, type: 2}
+  m_playerDebugger: {fileID: -380959867496648716}
+--- !u!114 &-380959867496648716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7880467686211555369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 776c62c84ba065b4e8d02c5cee9a37d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Player.Controller.PlayerDebugger
+  m_targetItem: {fileID: 0}

@@ -62,6 +62,11 @@ namespace TowerBreakers.Player.Stat
             Debug.Log($"[PlayerStatService] 스탯 적용 - 공격력: {m_totalAttack}, 체력: {m_totalHealth}");
         }
 
+        public EquipmentData GetEquippedWeapon()
+        {
+            return m_equipmentService?.GetEquippedItem(EquipmentType.Weapon);
+        }
+
         public void ResetToBase()
         {
             if (m_baseStats == null)

@@ -5,6 +5,8 @@ using TowerBreakers.Player.Data;
 using TowerBreakers.Player.Model;
 using TowerBreakers.Player.Service;
 using TowerBreakers.Core.Events;
+using TowerBreakers.Core.Service;
+using TowerBreakers.Player.Controller;
 
 namespace TowerBreakers.Core.DI
 {
@@ -16,6 +18,9 @@ namespace TowerBreakers.Core.DI
         #region 에디터 설정
         [SerializeField, Tooltip("장비 데이터베이스 에셋")]
         private EquipmentDatabase m_equipmentDatabase;
+
+        [SerializeField, Tooltip("플레이어 디버그 도구 (선택 사항)")]
+        private PlayerDebugger m_playerDebugger;
         #endregion
 
         protected override void Configure(IContainerBuilder builder)
@@ -25,6 +30,12 @@ namespace TowerBreakers.Core.DI
 
             // 데이터 모델 등록
             builder.Register<UserSessionModel>(Lifetime.Singleton);
+            builder.Register<DataPersistenceService>(Lifetime.Singleton);
+
+            if (m_playerDebugger != null)
+            {
+                builder.RegisterComponent(m_playerDebugger);
+            }
 
             // 데이터베이스 인스턴스 등록
             if (m_equipmentDatabase != null)
@@ -37,7 +48,7 @@ namespace TowerBreakers.Core.DI
             }
 
             // 서비스 등록
-            builder.Register<IEquipmentService, EquipmentService>(Lifetime.Singleton);
+            builder.Register<IEquipmentService, TowerBreakers.Player.Service.EquipmentService>(Lifetime.Singleton);
         }
     }
 }

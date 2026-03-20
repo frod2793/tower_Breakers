@@ -9,6 +9,7 @@ namespace TowerBreakers.Player.Service
     /// </summary>
     public interface IEquipmentService
     {
+        event Action<EquipmentType, EquipmentData> OnEquipmentChanged;
         void Equip(string itemId);
         void Unequip(EquipmentType type);
         bool HasItem(string itemId);

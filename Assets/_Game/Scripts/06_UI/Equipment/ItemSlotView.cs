@@ -27,6 +27,9 @@ namespace TowerBreakers.UI.Equipment
         [Tooltip("등급 표시 이미지")]
         [SerializeField] private Image m_gradeBadge;
 
+        [Tooltip("장착/해제 버튼 (선택 사항)")]
+        [SerializeField] private Button m_equipButton;
+
         [Header("설정")]
         [Tooltip("등급별 색상")]
         [SerializeField] private Color[] m_gradeColors;
@@ -37,6 +40,12 @@ namespace TowerBreakers.UI.Equipment
         {
             m_viewModel = viewModel;
             UpdateUI();
+
+            if (m_equipButton != null)
+            {
+                m_equipButton.onClick.RemoveAllListeners();
+                m_equipButton.onClick.AddListener(OnSlotClicked);
+            }
         }
 
         private void UpdateUI()
@@ -72,32 +81,27 @@ namespace TowerBreakers.UI.Equipment
 
         private void UpdateItemImage()
         {
-            if (m_itemImage != null)
+            if (m_itemImage != null && m_viewModel != null)
             {
-                var sprite = LoadItemSprite(m_viewModel.SpumSpriteId);
+                var sprite = m_viewModel.Icon;
                 m_itemImage.sprite = sprite;
                 m_itemImage.gameObject.SetActive(sprite != null);
             }
         }
 
-        private Sprite LoadItemSprite(string spriteId)
-        {
-            if (string.IsNullOrEmpty(spriteId))
-            {
-                return null;
-            }
-
-            return Resources.Load<Sprite>($"Items/{spriteId}");
-        }
-
         public void OnSlotClicked()
         {
-            if (m_viewModel == null)
-            {
-                return;
-            }
+            if (m_viewModel == null) return;
 
-            m_viewModel.Equip();
+            if (m_viewModel.IsEquipped)
+            {
+                m_viewModel.Unequip();
+            }
+            else
+            {
+                m_viewModel.Equip();
+            }
+            
             PlayClickAnimation();
         }
 

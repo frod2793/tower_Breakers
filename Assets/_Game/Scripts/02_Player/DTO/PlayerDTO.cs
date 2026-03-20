@@ -49,6 +49,16 @@ namespace TowerBreakers.Player.DTO
 
         [Tooltip("공격 쿨타임")]
         public float AttackCooldown = 0.5f;
+
+        [Header("질풍참 설정")]
+        [Tooltip("질풍참 데미지 배율")]
+        public float WindstormDamageMultiplier = 2.0f;
+
+        [Tooltip("질풍참 최대 타격 대상 수")]
+        public int WindstormMaxTargets = 5;
+
+        [Tooltip("질풍참 쿨타임")]
+        public float WindstormCooldown = 5.0f;
         #endregion
 
         #region 이동 및 밀림 설정
