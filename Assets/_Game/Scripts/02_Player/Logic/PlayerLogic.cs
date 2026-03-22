@@ -74,8 +74,22 @@ namespace TowerBreakers.Player.Logic
                 float speed = m_state.IsDashing ? m_config.DashSpeed : m_config.RetreatSpeed;
                 m_state.Position = Vector2.MoveTowards(m_state.Position, m_state.TargetPosition, speed * deltaTime);
 
+                // [추가]: 백덤블링 중 Y축 곡선 이동 (Mathf.Sin 활용)
+                if (m_state.IsRetreating && m_state.IsBackflip)
+                {
+                    float totalDistX = Mathf.Abs(m_state.TargetPosition.x - m_state.ParryStartPosition.x);
+                    if (totalDistX > 0.1f)
+                    {
+                        float currentDistX = Mathf.Abs(m_state.Position.x - m_state.ParryStartPosition.x);
+                        float progress = Mathf.Clamp01(currentDistX / totalDistX);
+                        // Sin 곡선으로 점프 높이 계산 (0 -> 1 -> 0)
+                        m_state.Position.y = m_state.ParryStartPosition.y + Mathf.Sin(progress * Mathf.PI) * m_config.ParryJumpHeight;
+                    }
+                }
+
                 if (Vector2.Distance(m_state.Position, m_state.TargetPosition) < 0.05f)
                 {
+                    Debug.Log($"[PlayerLogic] 퇴각/대시 종료: Pos={m_state.Position}, Target={m_state.TargetPosition}");
                     EndAction();
                 }
             }
@@ -166,23 +180,52 @@ namespace TowerBreakers.Player.Logic
             return true;
         }
 
-        public bool TryParry(float time)
+        /// <summary>
+        /// [설명]: 패링을 시도합니다. 성공 시 퇴각하며, 기준점보다 오른쪽에 있을 경우 백덤블링을 수행합니다.
+        /// </summary>
+        /// <param name="time">현재 시간</param>
+        /// <param name="referenceX">백덤블링 판정 기준점 X 좌표</param>
+        public bool TryParry(float time, float referenceX)
         {
-            if (time - m_state.LastParryTime < m_config.ParryCooldown) return false;
-            if (m_state.IsParrying || m_state.IsRetreating) return false;
+            if (time - m_state.LastParryTime < m_config.ParryCooldown) 
+            {
+                Debug.Log($"[PlayerLogic] 패링 실패: 쿨타임 중 ({time - m_state.LastParryTime:F2}/{m_config.ParryCooldown})");
+                return false;
+            }
+            if (m_state.IsParrying || m_state.IsRetreating)
+            {
+                Debug.Log($"[PlayerLogic] 패링 실패: 이미 패링/퇴각 중 (IsParrying={m_state.IsParrying}, IsRetreating={m_state.IsRetreating})");
+                return false;
+            }
 
             GameObject frontEnemy = GetFrontEnemy();
-            if (frontEnemy == null) return false;
+            if (frontEnemy == null)
+            {
+                Debug.Log("[PlayerLogic] 패링 실패: 전방에 적이 없음");
+                return false;
+            }
 
             Vector2 referencePos = m_state.IsDashing ? m_state.TargetPosition : m_state.Position;
             float distance = Mathf.Abs(frontEnemy.transform.position.x - referencePos.x);
             
-            if (distance > m_config.ParryActivationRange) return false;
+            if (distance > m_config.ParryActivationRange)
+            {
+                Debug.Log($"[PlayerLogic] 패링 실패: 거리 초과 (distance={distance:F2}, Range={m_config.ParryActivationRange})");
+                return false;
+            }
 
             if (m_state.IsDashing || m_state.IsAttacking) EndAction();
 
             m_state.LastParryTime = time;
             m_state.IsParrying = true;
+            
+            // [추가]: 패링 후 퇴각 및 백덤블링 설정
+            m_state.ParryStartPosition = m_state.Position;
+            m_state.IsBackflip = m_state.Position.x > referenceX;
+            m_state.TargetPosition = new Vector2(m_config.LeftWallX, m_state.Position.y);
+            m_state.IsRetreating = true;
+            
+            Debug.Log($"[PlayerLogic] 패링 성공: Pos={m_state.Position}, Target={m_state.TargetPosition}, LeftWallX={m_config.LeftWallX}, IsBackflip={m_state.IsBackflip}");
             
             // [추가]: 패링 수행 이벤트 발행 (CombatSystem에서 압착 피해 리셋용으로 사용)
             m_eventBus.Publish(new OnParryPerformed());
@@ -219,6 +262,7 @@ namespace TowerBreakers.Player.Logic
             m_state.IsParrying = false;
             m_state.IsAttacking = false;
             m_state.IsRetreating = false;
+            m_state.IsBackflip = false; // [추가]: 백덤블링 상태 해제
             m_state.TargetPosition = m_state.Position;
         }
 

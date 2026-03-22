@@ -43,6 +43,9 @@ namespace TowerBreakers.Player.DTO
         [Tooltip("패링 발동 가능 최소 거리 (적이 이 거리 안에 있어야 패링이 작동)")]
         public float ParryActivationRange = 8.0f;
 
+        [Tooltip("패링 시 백덤블링 점프 높이")]
+        public float ParryJumpHeight = 3.0f;
+
         [Header("공격 설정")]
         [Tooltip("공격 범위")]
         public float AttackRange = 2f;
@@ -90,6 +93,8 @@ namespace TowerBreakers.Player.DTO
         public bool IsAttacking;
         public bool IsBeingPushed;
         public bool IsRetreating;
+        public bool IsBackflip; // [추가]: 백덤블링 수행 여부
+        public Vector2 ParryStartPosition; // [추가]: 패링 시작 시점의 위치
         public float LastDashTime = -100f;
         public float LastParryTime = -100f;
         public float LastAttackTime = -100f;

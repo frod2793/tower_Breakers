@@ -25,6 +25,9 @@ namespace TowerBreakers.Player.View
         [Header("캐릭터 참조")]
         [SerializeField, Tooltip("[설명]: SPUM 캐릭터 본체 참조")]
         private SPUM_Prefabs m_spumPrefabs;
+
+        // [변경]: 하드코딩 방지를 위해 BattleLifetimeScope에서 주입받습니다.
+        private Transform m_parryReference;
         #endregion
 
         #region 내부 필드
@@ -46,7 +49,7 @@ namespace TowerBreakers.Player.View
         #region 초기화 및 바인딩 로직
         private IEquipmentService m_equipmentService;
 
-        public void Initialize(PlayerLogic logic, BattleUIViewModel uiViewModel, IPlayerStatService statService, IEquipmentService equipmentService)
+        public void Initialize(PlayerLogic logic, BattleUIViewModel uiViewModel, IPlayerStatService statService, IEquipmentService equipmentService, Transform parryReference)
         {
             m_equipmentService = equipmentService;
             if (logic == null) return;
@@ -55,6 +58,7 @@ namespace TowerBreakers.Player.View
             m_config = logic.Config;
             m_uiViewModel = uiViewModel;
             m_statService = statService;
+            m_parryReference = parryReference;
 
             if (m_spumPrefabs != null) m_spumPrefabs.OverrideControllerInit();
 
@@ -89,7 +93,12 @@ namespace TowerBreakers.Player.View
         {
             if (m_logic == null) return;
             if (skillName == "Dash") m_logic.TryDash(Time.time);
-            else if (skillName == "Parry") m_logic.TryParry(Time.time);
+            else if (skillName == "Parry")
+            {
+                float refX = m_parryReference != null ? m_parryReference.position.x : float.MaxValue;
+                Debug.Log($"[PlayerView] 패링 UI 트리거: refX={refX}, PlayerX={transform.position.x}");
+                m_logic.TryParry(Time.time, refX);
+            }
             else if (skillName == "Attack") m_logic.TryAttack(Time.time);
             else if (skillName == "Skill1") m_logic.TryWindstormSlash(Time.time);
         }
@@ -115,6 +124,29 @@ namespace TowerBreakers.Player.View
             
             // 시각적 떨림 방지를 위한 매우 빠른 보간 (또는 즉시 대입)
             transform.position = Vector3.Lerp(transform.position, new Vector3(logicPos.x, logicPos.y, transform.position.z), Time.deltaTime * 100f);
+
+            // [추가]: 백덤블링 회전 처리 (2바퀴 시계 반대 방향)
+            if (m_logic.State.IsBackflip)
+            {
+                float totalDistX = Mathf.Abs(m_logic.State.TargetPosition.x - m_logic.State.ParryStartPosition.x);
+                if (totalDistX > 0.1f)
+                {
+                    float currentDistX = Mathf.Abs(transform.position.x - m_logic.State.ParryStartPosition.x);
+                    float progress = Mathf.Clamp01(currentDistX / totalDistX);
+                    // [변경]: Y축 회전 고정을 해제하고 현재 Y축 값을 유지한 채 Z축 회전(백덤블링) 수행
+                    float currentY = transform.localEulerAngles.y;
+                    transform.localRotation = Quaternion.Euler(0, currentY, progress * 720f);
+                }
+            }
+            else
+            {
+                if (transform.localRotation != Quaternion.identity)
+                {
+                    // [변경]: 기본 상태로 돌아올 때도 기존의 Y축 회전값(방향)을 유지하도록 계산
+                    float currentY = transform.localEulerAngles.y;
+                    transform.localRotation = Quaternion.Euler(0, currentY, 0);
+                }
+            }
 
             float dist = Vector2.Distance(transform.position, m_lastPos);
             m_lastPos = transform.position;
@@ -149,7 +181,17 @@ namespace TowerBreakers.Player.View
             PlayAnimation(PlayerState.ATTACK);
             GameObject target = FindNearestEnemyInRange(m_config.ParryActivationRange);
             if (target != null) PushAndStunAllEnemiesOnFloor(m_config.EnemyStopDuration, m_config.ParryPushForce);
+            
+            // 1. 최소 애니메이션/이펙트 대기
             await UniTask.Delay((int)(m_config.ParryDuration * 1000));
+            
+            // 2. [수정]: 퇴각(리코일)이 진행 중이라면 완료될 때까지 대기 (후퇴 속도에 따른 가변 시간 대응)
+            if (m_logic != null && m_logic.State.IsRetreating)
+            {
+                await UniTask.WaitUntil(() => !m_logic.State.IsRetreating);
+                Debug.Log("[PlayerView] 퇴각 완료 확인 - 패링 액션 종료");
+            }
+            
             if (m_logic != null) { m_logic.EndAction(); PlayAnimation(PlayerState.IDLE); }
         }
 

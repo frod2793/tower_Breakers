@@ -56,6 +56,7 @@ namespace TowerBreakers.Core.Battle
         private readonly EquipmentDatabase m_equipmentDatabase;
         private readonly Transform m_rewardChestSpawnPoint;
         private readonly CombatSystem m_combatSystem;
+        private readonly Transform m_parryReference; // [추가]
         #endregion
 
         #region 유니티 생명주기
@@ -102,7 +103,8 @@ namespace TowerBreakers.Core.Battle
             IEnemyDetectionService enemyDetectionService,
             CombatSystem combatSystem, // [추가]
             RewardChestView rewardChestPrefab = null,
-            Transform rewardChestSpawnPoint = null)
+            Transform rewardChestSpawnPoint = null,
+            Transform parryReference = null) // [추가]
         {
             m_characterManager = characterManager;
             m_userSession = userSession;
@@ -128,6 +130,7 @@ namespace TowerBreakers.Core.Battle
             m_combatSystem = combatSystem; // [추가]
             m_rewardChestPrefab = rewardChestPrefab;
             m_rewardChestSpawnPoint = rewardChestSpawnPoint;
+            m_parryReference = parryReference; // [추가]
         }
 
         private readonly IEnemyDetectionService m_enemyDetectionService; // [추가]
@@ -303,7 +306,7 @@ namespace TowerBreakers.Core.Battle
         {
             if (m_playerView != null)
             {
-                m_playerView.Initialize(m_playerLogic, m_uiViewModel, m_playerStatService, m_equipmentService);
+                m_playerView.Initialize(m_playerLogic, m_uiViewModel, m_playerStatService, m_equipmentService, m_parryReference);
             }
         }
 

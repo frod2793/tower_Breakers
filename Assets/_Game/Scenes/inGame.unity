@@ -191,6 +191,7 @@ MonoBehaviour:
     EnemyStopDuration: 1
     ParryPushForce: 4
     ParryActivationRange: 2
+    ParryJumpHeight: 3
     AttackRange: 2
     AttackCooldown: 0.1
     WindstormDamageMultiplier: 2
@@ -213,7 +214,8 @@ MonoBehaviour:
   m_playerArrivalPoint: {fileID: 1068083475}
   m_playerExitPoint: {fileID: 2140709055}
   m_playerSpawnService: {fileID: 1938295640}
-  m_cameraTransform: {fileID: 0}
+  m_cameraTransform: {fileID: 1652479742}
+  m_parryReference: {fileID: 1147219684}
   m_battleUIConfig:
     DashSkill:
       Name: Dash
@@ -1523,6 +1525,7 @@ Transform:
   - {fileID: 1358896344}
   - {fileID: 759982539}
   - {fileID: 2140709055}
+  - {fileID: 1147219684}
   m_Father: {fileID: 251586332}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &909343814
@@ -2234,6 +2237,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1144916551}
   m_CullTransparentMesh: 1
+--- !u!1 &1147219683
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1147219684}
+  m_Layer: 0
+  m_Name: parry
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1147219684
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1147219683}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.1, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 841855409}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1171159532
 GameObject:
   m_ObjectHideFlags: 0
@@ -2278,11 +2312,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1b7c83bc8f8c4b908da07f0dd2cb96d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.SPUM.CustomSPUMManager
-  m_spumPrefabs: {fileID: 1442287386}
-  m_weaponRenderers: []
-  m_armorRenderers: []
-  m_hairRenderers: []
-  m_spriteBasePath: SPUM/Sprites
 --- !u!1 &1330524747
 GameObject:
   m_ObjectHideFlags: 0
@@ -4310,6 +4339,7 @@ MonoBehaviour:
     EnemyStopDuration: 0.5
     ParryPushForce: 10
     ParryActivationRange: 3
+    ParryJumpHeight: 3
     AttackRange: 2
     AttackCooldown: 0.5
     WindstormDamageMultiplier: 2

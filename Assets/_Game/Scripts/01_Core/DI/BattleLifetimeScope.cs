@@ -111,6 +111,9 @@ namespace TowerBreakers.Core.DI
         [Header("카메라")]
         [SerializeField, Tooltip("카메라 트랜스폼")]
         private Transform m_cameraTransform;
+
+        [SerializeField, Tooltip("패링 백덤블링 기준점")]
+        private Transform m_parryReference;
         #endregion
 
         #region UI
@@ -240,7 +243,8 @@ namespace TowerBreakers.Core.DI
 
             // 게임 전체 흐름 컨트롤러
             builder.RegisterEntryPoint<GameController>()
-                .WithParameter("rewardChestSpawnPoint", m_rewardChestSpawnPoint);
+                .WithParameter("rewardChestSpawnPoint", m_rewardChestSpawnPoint)
+                .WithParameter("parryReference", m_parryReference);
         }
         #endregion
 
