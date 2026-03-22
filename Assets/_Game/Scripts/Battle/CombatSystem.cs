@@ -1,9 +1,11 @@
 using System;
 using TowerBreakers.Core.Events;
+using TowerBreakers.Core.Service;
 using TowerBreakers.Player.Logic;
 using TowerBreakers.Player.DTO;
 using VContainer.Unity;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 namespace TowerBreakers.Battle
 {
@@ -17,6 +19,7 @@ namespace TowerBreakers.Battle
         private readonly IEventBus m_eventBus;
         private readonly PlayerLogic m_logic;
         private readonly PlayerConfigDTO m_playerConfig;
+        private readonly IEffectService m_effectService; // Added IEffectService
         private readonly TowerBreakers.Tower.Service.FloorTransitionService m_transitionService;
         
         private bool m_isDamageEnabled = true;         // 스테이지 상태에 따른 전역 활성화 여부
@@ -25,12 +28,13 @@ namespace TowerBreakers.Battle
         #endregion
 
         #region 초기화
-        public CombatSystem(IEventBus eventBus, PlayerLogic m_logic, PlayerConfigDTO playerConfig, TowerBreakers.Tower.Service.FloorTransitionService transitionService)
+        public CombatSystem(IEventBus eventBus, PlayerLogic playerLogic, PlayerConfigDTO playerConfig, TowerBreakers.Tower.Service.FloorTransitionService transitionService, IEffectService effectService)
         {
             m_eventBus = eventBus;
-            this.m_logic = m_logic;
+            m_logic = playerLogic;
             m_playerConfig = playerConfig;
             m_transitionService = transitionService;
+            m_effectService = effectService; // Initialized IEffectService
         }
 
         public void Initialize()
@@ -82,11 +86,13 @@ namespace TowerBreakers.Battle
 
         private void HandleParryPerformed(OnParryPerformed evt)
         {
-            // [핵심]: 패링 성공 시 1초간 압착 피해 면역 부여 및 피해 기록 초기화
-            m_parryProtectionEndTime = Time.time + 1.0f;
-            m_hasReceivedCrushDamage = false;
+            // [핵심]: 패링 성공 시 설정된 시간 동안 압착 피해 면역 부여 및 피해 기록 초기화
+            float duration = m_playerConfig != null ? m_playerConfig.ParryImmunityDuration : 1.0f;
+            m_parryProtectionEndTime = Time.time + duration;
+            m_hasReceivedCrushDamage = false; 
             
-            Debug.Log($"[CombatSystem] 패링 성공 - 1초간 압착 피해 면역 활성화 (종료 예상: {m_parryProtectionEndTime:F2}s)");
+            // [연출]: 패링 성공 쉐이크
+            m_effectService?.PlayCameraShake(0.2f, 0.8f);
         }
 
         private void ResetCrushDamageState()
@@ -105,10 +111,13 @@ namespace TowerBreakers.Battle
             // [규칙 1]: 스테이지 클리어/연출 중에는 데미지 무시
             if (!m_isDamageEnabled) return;
 
-            // [규칙 2]: 패링 보호 쿨타임 중에는 데미지 무시 (1초 보호)
+            // [규칙 2]: 패링 보호 쿨타임 중에는 데미지 무시
             if (Time.time < m_parryProtectionEndTime) return;
 
-            // [규칙 3]: 이미 이번 압착에서 데미지를 입었다면 무시 (압착당 1회 제한)
+            // [규칙 3]: 특수 이동(퇴각, 대시) 중에는 데미지 무시 (판정 안정성 확보)
+            if (m_logic.State.IsRetreating || m_logic.State.IsDashing) return;
+
+            // [규칙 4]: 이미 이번 압착에서 데미지를 입었다면 무시 (압착당 1회 제한)
             if (m_hasReceivedCrushDamage) return;
 
             if (m_logic == null || m_playerConfig == null) return;
@@ -117,9 +126,11 @@ namespace TowerBreakers.Battle
             m_logic.TakeDamage(m_playerConfig.DamagePerHit);
             m_hasReceivedCrushDamage = true;
             
+            // [연출]: 카메라 쉐이크 및 경직(Hit Stop)
+            m_effectService?.PlayCameraShake(0.3f, 1.5f); // 강한 쉐이크
+            ApplyHitStop(0.15f).Forget(); // 0.15초간 경직
+
             m_eventBus.Publish(new OnWallCrushOccurred());
-            
-            Debug.Log($"[CombatSystem] 플레이어 압착 피해 발생 - 다음 패링 성공 시까지 추가 압착 피해는 발생하지 않습니다.");
         }
 
         public void SetDamageEnabled(bool enabled)
@@ -128,9 +139,23 @@ namespace TowerBreakers.Battle
             if (enabled)
             {
                 ResetCrushDamageState();
-                // [추가]: 재활성화 시 1.0초간 추가 유예 시간 부여 (연출 종료 직후의 물리 겹침 방지)
-                m_parryProtectionEndTime = Time.time + 1.0f;
+                // [추가]: 재활성화 시 설정된 면역 시간만큼 추가 유예 시간 부여
+                float duration = m_playerConfig != null ? m_playerConfig.ParryImmunityDuration : 1.0f;
+                m_parryProtectionEndTime = Time.time + duration;
             }
+        }
+
+        /// <summary>
+        /// [설명]: 짧은 시간 동안 게임 속도를 늦춰 타격감을 극대화하는 '히트스톱' 연출입니다.
+        /// </summary>
+        private async UniTaskVoid ApplyHitStop(float duration)
+        {
+            float originalTimeScale = Time.timeScale;
+            Time.timeScale = 0.05f; // 거의 멈춤 (경직 효과)
+            
+            await UniTask.Delay(TimeSpan.FromSeconds(duration), ignoreTimeScale: true);
+            
+            Time.timeScale = originalTimeScale;
         }
         #endregion
     }

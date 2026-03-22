@@ -71,7 +71,7 @@ namespace TowerBreakers.Core.Service
                     model.SetEquip(slot.Type, slot.ItemId);
                 }
 
-                Debug.Log("[Persistence] 데이터 로드 완료");
+                // 로드 완료
             }
             catch (System.Exception e)
             {

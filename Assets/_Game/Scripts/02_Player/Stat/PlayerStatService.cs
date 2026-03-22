@@ -14,6 +14,7 @@ namespace TowerBreakers.Player.Stat
         float AttackSpeed { get; }
         float MoveSpeed { get; }
         void ApplyEquipmentStats();
+        EquipmentData GetEquippedWeapon();
         void ResetToBase();
     }
 

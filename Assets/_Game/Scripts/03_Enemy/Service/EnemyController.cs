@@ -4,6 +4,9 @@ using UnityEngine;
 using TowerBreakers.Tower.Data;
 using TowerBreakers.SPUM;
 
+using TowerBreakers.Core.Service;
+using VContainer;
+
 namespace TowerBreakers.Tower.Service
 {
     /// <summary>
@@ -24,6 +27,9 @@ namespace TowerBreakers.Tower.Service
         [Header("VFX")]
         [Tooltip("VFX 컨트롤러 (피격, 사망 이펙트 전담)")]
         [SerializeField] private EnemyVFXController m_vfxController;
+
+        [Inject]
+        public IEffectService EffectService { get; set; }
 
         public event Action<GameObject> OnDeath;
 
@@ -60,7 +66,7 @@ namespace TowerBreakers.Tower.Service
             m_data = data;
             m_currentHealth = data.Health;
 
-            Debug.Log($"[EnemyController] 초기화 - {data.EnemyName}, 체력: {m_currentHealth}");
+            m_currentHealth = data.Health;
         }
 
         public void TakeDamage(float damage)
@@ -77,7 +83,8 @@ namespace TowerBreakers.Tower.Service
                 m_vfxController.FlashColor();
             }
 
-            Debug.Log($"[EnemyController] 피해 입음 - 남은 체력: {m_currentHealth}");
+            // [연출]: 히트 이펙트 재생 (ID: HitEffect)
+            EffectService?.PlaySpriteEffect("HitEffect", transform.position, Quaternion.identity);
 
             if (m_currentHealth <= 0)
             {
@@ -87,8 +94,6 @@ namespace TowerBreakers.Tower.Service
 
         private void Die()
         {
-            Debug.Log($"[EnemyController] 적 사망 - {m_data?.EnemyName}");
-
             // 사망 시 즉시 콜라이더 비활성화하여 물리 간섭 제거
             var collider = GetComponent<Collider2D>();
             if (collider != null)

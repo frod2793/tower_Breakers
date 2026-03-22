@@ -94,17 +94,27 @@ namespace TowerBreakers.Player.Controller
         /// </summary>
         private void CheckLeftWall()
         {
-            if (m_config == null) return;
+            if (m_config == null || m_playerLogic == null) return;
 
-            // [안전성]: Unity Object ?. 사용 금지 표준 준수
-            // [정밀화]: 시각적 위치(Transform)가 아닌 논리 좌표(Logic.State.Position)를 기준으로 벽 도달 판정
-            // 뷰 보간(Lerp)에 의한 미세한 오차나 딜레이로 인해 데미지 판정이 튀는 현상 방지
             float logicalX = m_playerLogic.State.Position.x;
-            if (logicalX <= m_config.LeftWallX)
+            
+            // 1. 플레이어가 왼쪽 벽 임계값 이하인지 확인
+            if (logicalX <= m_config.LeftWallX + 0.01f)
             {
-                if (Time.time - m_lastDamageTime >= m_config.DamageCooldown)
+                // 2. [추가]: 단순히 벽에 있다고 데미지를 입는 것이 아니라, 적이 근처에 있는지(압착 중인지) 확인
+                GameObject nearestEnemy = m_playerLogic.GetFrontEnemy();
+                if (nearestEnemy != null)
                 {
-                    TakeDamage();
+                    float distToEnemy = nearestEnemy.transform.position.x - logicalX;
+                    
+                    // 적과의 거리가 공격 범위 + 버퍼 이내일 때만 압착으로 판정
+                    if (distToEnemy <= m_config.AttackRange + m_config.AttackRangeBuffer + 0.1f)
+                    {
+                        if (Time.time - m_lastDamageTime >= m_config.DamageCooldown)
+                        {
+                            TakeDamage();
+                        }
+                    }
                 }
             }
         }

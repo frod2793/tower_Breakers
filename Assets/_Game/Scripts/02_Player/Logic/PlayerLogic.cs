@@ -1,235 +1,149 @@
-using System;
 using UnityEngine;
+using TowerBreakers.Core.Events;
 using TowerBreakers.Player.DTO;
 using TowerBreakers.Player.Stat;
-using TowerBreakers.Player.Service;
-using Cysharp.Threading.Tasks;
+using TowerBreakers.Core.Service;
 using TowerBreakers.Enemy.Service;
-using TowerBreakers.Core.Events;
+using System;
 using TowerBreakers.Player.Data;
 
 namespace TowerBreakers.Player.Logic
 {
-    #region 로직 클래스 (POCO)
+    #region 비즈니스 로직 (Logic)
     /// <summary>
-    /// [설명]: 플레이어의 핵심 이동 및 전투 로직을 담당하는 순수 C# 클래스입니다.
-    /// 모든 이동 연산은 이 클래스에서 완결되며, 뷰는 결과 좌표를 시각화하기만 합니다.
+    /// [설명]: 플레이어의 핵심 게임 로직(이동, 전투 판정, 상태 관리)을 담당하는 순수 C# 클래스입니다.
+    /// MonoBehaviour를 상속받지 않으며, 외부에서 주입받은 데이터를 기반으로 연산을 수행합니다.
     /// </summary>
     public class PlayerLogic
     {
         #region 내부 필드
         private readonly PlayerConfigDTO m_config;
         private readonly PlayerStateDTO m_state;
-        private readonly IPlayerStatService m_statService;
-        private readonly IEnemyDetectionService m_enemyDetection;
         private readonly IEventBus m_eventBus;
-        
-        private float m_pushTimer = 0f;
-        private float m_pendingPushVelocityX = 0f;
-        private float m_forcedPushX = float.MaxValue; // [추가]: 이번 프레임에 강제된 최소 X 좌표
+        private readonly IPlayerStatService m_statService;
+
+        public PlayerConfigDTO Config => m_config;
+        public PlayerStateDTO State => m_state;
         #endregion
 
-        #region 프로퍼티
-        public PlayerStateDTO State => m_state;
-        public PlayerConfigDTO Config => m_config;
-
+        #region 이벤트
         public event Action OnDashStarted;
         public event Action OnParryStarted;
         public event Action OnAttackStarted;
         public event Action OnWindstormSlashStarted;
-        public event Action OnDamaged;
-        public event Action OnDeath;
+        public event Action OnDamaged; // [추가]: 피격 이벤트
+        public event Action OnDeath; // [추가]: 사망 이벤트
         #endregion
 
-        #region 초기화
-        public PlayerLogic(
-            PlayerConfigDTO config, 
-            IPlayerStatService statService, 
-            IEnemyDetectionService enemyDetection,
-            IEventBus eventBus)
+        #region 초기화 및 바인딩 로직
+        public PlayerLogic(PlayerConfigDTO config, PlayerStateDTO state, IEventBus eventBus, IPlayerStatService m_statService)
         {
-            m_config = config ?? new PlayerConfigDTO();
-            m_statService = statService;
-            m_enemyDetection = enemyDetection;
+            m_config = config;
+            m_state = state;
             m_eventBus = eventBus;
-            m_state = new PlayerStateDTO();
+            this.m_statService = m_statService;
+        }
+
+        public void SetPosition(Vector2 position)
+        {
+            m_state.Position = position;
         }
         #endregion
 
-        #region 공개 메서드 (이동 및 업데이트)
-        /// <summary>
-        /// [설명]: 매 프레임 로직 상태와 위치를 업데이트합니다.
-        /// </summary>
+        #region 비즈니스 로직
         public void Update(float time, float deltaTime)
         {
-            UpdateMovement(deltaTime);
-            UpdateStates(deltaTime);
+            UpdateMovement(time, deltaTime);
+            UpdateAttack(time);
         }
 
-        private void UpdateMovement(float deltaTime)
+        private void UpdateMovement(float time, float deltaTime)
         {
             // 1. 특수 액션 이동 (대시, 퇴각)
-            if (m_state.IsDashing || m_state.IsRetreating)
+            if ((m_state.IsDashing || m_state.IsRetreating) && !m_state.IsCharging)
             {
-                float speed = m_state.IsDashing ? m_config.DashSpeed : m_config.RetreatSpeed;
+                // [수정]: 속도 우선순위 정립 (패링 후퇴 > 위드폼/대시)
+                float speed = m_config.DashSpeed;
+                
+                if (m_state.IsParrying) speed = m_config.ParryRetreatSpeed;
+                else if (m_state.IsRetreating) speed = m_config.SkillRetreatSpeed;
+                else if (m_state.IsWindstormDash) speed = m_config.WindstormDashSpeed;
+
                 m_state.Position = Vector2.MoveTowards(m_state.Position, m_state.TargetPosition, speed * deltaTime);
 
-                // [추가]: 백덤블링 중 Y축 곡선 이동 (Mathf.Sin 활용)
-                if (m_state.IsRetreating && m_state.IsBackflip)
+                // [수정]: 백덤블링 중 Y축 곡선 이동 (Mathf.Sin 활용)
+                // [조건]: 아직 목표 지점에 도달하지 않았을 때 활성화 (벽까지 유지)
+                float distToTarget = Vector2.Distance(m_state.Position, m_state.TargetPosition);
+                if (m_state.IsBackflip && distToTarget > m_config.MovementArrivalThreshold)
                 {
-                    float totalDistX = Mathf.Abs(m_state.TargetPosition.x - m_state.ParryStartPosition.x);
-                    if (totalDistX > 0.1f)
+                    float totalDist = Vector2.Distance(m_state.ParryStartPosition, m_state.TargetPosition);
+                    if (totalDist > 0.1f)
                     {
-                        float currentDistX = Mathf.Abs(m_state.Position.x - m_state.ParryStartPosition.x);
-                        float progress = Mathf.Clamp01(currentDistX / totalDistX);
-                        // Sin 곡선으로 점프 높이 계산 (0 -> 1 -> 0)
-                        m_state.Position.y = m_state.ParryStartPosition.y + Mathf.Sin(progress * Mathf.PI) * m_config.ParryJumpHeight;
+                        float currentDist = Vector2.Distance(m_state.ParryStartPosition, m_state.Position);
+                        float progress = Mathf.Clamp01(currentDist / totalDist);
+                        float height = Mathf.Sin(progress * Mathf.PI) * m_config.ParryJumpHeight;
+                        m_state.Position.y = m_state.ParryStartPosition.y + height;
                     }
                 }
-
-                if (Vector2.Distance(m_state.Position, m_state.TargetPosition) < 0.05f)
+                else if (m_state.IsBackflip)
                 {
-                    Debug.Log($"[PlayerLogic] 퇴각/대시 종료: Pos={m_state.Position}, Target={m_state.TargetPosition}");
-                    EndAction();
+                    // 목표 지점 도달 시 Y축 위치를 원래대로 복구 (착지)
+                    m_state.Position.y = m_state.ParryStartPosition.y;
+                }
+
+                if (Vector2.Distance(m_state.Position, m_state.TargetPosition) < m_config.MovementArrivalThreshold)
+                {
+                    // [핵심 복구]: 일반 대시나 퇴각은 여기서 즉시 종료 처리
+                    if (!m_state.IsWindstormDash)
+                    {
+                        EndAction();
+                    }
                 }
             }
-            // 2. 일반 밀림 이동 (EnemyPushController에 의해 예약된 속도)
-            else if (m_pendingPushVelocityX != 0)
-            {
-                float displacement = m_pendingPushVelocityX * deltaTime;
-                m_state.Position.x += displacement;
-                m_pendingPushVelocityX = 0f;
-            }
-
-            // 3. [개선]: 강제 위치 보정 (적 리더와의 겹침 방지 및 밀림 누락 해결)
-            // 간헐적인 밀림 누락은 물리 프레임 오차로 발생하므로, 강제 위치(forcedPushX)가 속도 기반 이동보다 우선함
-            if (m_forcedPushX != float.MaxValue)
-            {
-                // 적이 밀고 들어오는 경우, 플레이어는 무조건 forcedPushX 이하의 좌표에 있어야 함
-                if (m_state.Position.x > m_forcedPushX)
-                {
-                    m_state.Position.x = m_forcedPushX;
-                }
-                
-                // [추가]: 밀리고 있을 때는 목표 좌표도 동기화하여 뷰 떨림 방지
-                m_state.TargetPosition.x = m_state.Position.x;
-                m_forcedPushX = float.MaxValue; // 초기화
-            }
-
-            // 4. 왼쪽 벽 제한 적용
-            if (m_state.Position.x < m_config.LeftWallX)
-            {
-                m_state.Position.x = m_config.LeftWallX;
-            }
-            
-            // 일반 상태일 때는 목표 위치를 현재 위치로 유지 (뷰 보간용)
-            if (!m_state.IsDashing && !m_state.IsRetreating)
-            {
-                m_state.TargetPosition = m_state.Position;
-            }
         }
 
-        private void UpdateStates(float deltaTime)
+        private void UpdateAttack(float time)
         {
-            if (m_pushTimer > 0)
-            {
-                m_pushTimer -= deltaTime;
-                if (m_pushTimer <= 0) m_pushTimer = 0;
-            }
-            m_state.IsBeingPushed = m_pushTimer > 0;
+            // 필요한 공격 상태 업데이트 로직 (현재는 트리거 방식)
         }
 
-        /// <summary>
-        /// [설명]: 외부에서 가해지는 밀림 속도를 예약합니다. (중첩 방지)
-        /// </summary>
-        public void ApplyExternalPush(Vector2 velocity)
-        {
-            if (Mathf.Abs(velocity.x) > Mathf.Abs(m_pendingPushVelocityX))
-            {
-                m_pendingPushVelocityX = velocity.x;
-            }
-            m_pushTimer = 0.1f;
-        }
-
-        /// <summary>
-        /// [설명]: 적과의 물리적 겹침을 방지하기 위해 강제로 밀어낼 위치를 지정합니다.
-        /// </summary>
-        public void ForcePushPosition(float x)
-        {
-            if (x < m_forcedPushX) m_forcedPushX = x;
-        }
-        #endregion
-
-        #region 전투 스킬 로직
         public bool TryDash(float time)
         {
             if (time - m_state.LastDashTime < m_config.DashCooldown) return false;
+            if (IsBusy()) return false;
 
-            GameObject frontEnemy = GetFrontEnemy();
-            if (frontEnemy == null) return false;
+            GameObject nearestEnemy = GetFrontEnemy();
+            if (nearestEnemy == null) return false;
 
-            float frontEnemyX = frontEnemy.transform.position.x;
-            float targetX = frontEnemyX - m_config.DashStopDistance;
-            
-            if (m_state.IsAttacking || m_state.IsParrying) EndAction();
+            float distance = Vector2.Distance(m_state.Position, nearestEnemy.transform.position);
+            if (distance < m_config.DashMinDistance) return false;
 
             m_state.LastDashTime = time;
             m_state.IsDashing = true;
-            m_state.TargetPosition = new Vector2(targetX, m_state.Position.y);
+            m_state.TargetPosition = new Vector2(nearestEnemy.transform.position.x - m_config.DashStopDistance, m_state.Position.y);
+            
             OnDashStarted?.Invoke();
             return true;
         }
 
-        /// <summary>
-        /// [설명]: 패링을 시도합니다. 성공 시 퇴각하며, 기준점보다 오른쪽에 있을 경우 백덤블링을 수행합니다.
-        /// </summary>
-        /// <param name="time">현재 시간</param>
-        /// <param name="referenceX">백덤블링 판정 기준점 X 좌표</param>
         public bool TryParry(float time, float referenceX)
         {
-            if (time - m_state.LastParryTime < m_config.ParryCooldown) 
-            {
-                Debug.Log($"[PlayerLogic] 패링 실패: 쿨타임 중 ({time - m_state.LastParryTime:F2}/{m_config.ParryCooldown})");
-                return false;
-            }
-            if (m_state.IsParrying || m_state.IsRetreating)
-            {
-                Debug.Log($"[PlayerLogic] 패링 실패: 이미 패링/퇴각 중 (IsParrying={m_state.IsParrying}, IsRetreating={m_state.IsRetreating})");
-                return false;
-            }
-
-            GameObject frontEnemy = GetFrontEnemy();
-            if (frontEnemy == null)
-            {
-                Debug.Log("[PlayerLogic] 패링 실패: 전방에 적이 없음");
-                return false;
-            }
-
-            Vector2 referencePos = m_state.IsDashing ? m_state.TargetPosition : m_state.Position;
-            float distance = Mathf.Abs(frontEnemy.transform.position.x - referencePos.x);
-            
-            if (distance > m_config.ParryActivationRange)
-            {
-                Debug.Log($"[PlayerLogic] 패링 실패: 거리 초과 (distance={distance:F2}, Range={m_config.ParryActivationRange})");
-                return false;
-            }
-
-            if (m_state.IsDashing || m_state.IsAttacking) EndAction();
+            if (time - m_state.LastParryTime < m_config.ParryCooldown) return false;
+            if (IsBusy()) return false;
 
             m_state.LastParryTime = time;
             m_state.IsParrying = true;
-            
-            // [추가]: 패링 후 퇴각 및 백덤블링 설정
+            m_state.IsBackflip = m_state.Position.x > referenceX; // [수정]: 시작 지점이 기준보다 오른쪽일 때만 백덤블링 활성화
             m_state.ParryStartPosition = m_state.Position;
-            m_state.IsBackflip = m_state.Position.x > referenceX;
-            m_state.TargetPosition = new Vector2(m_config.LeftWallX, m_state.Position.y);
+            m_state.ParryReferenceX = referenceX; // [수정]: 백덤블링 연출 기준 좌표 저장
+            
+            // [수정]: 무조건 왼쪽 벽(LeftWallX)까지만 후퇴하도록 명시적 고정
             m_state.IsRetreating = true;
-            
-            Debug.Log($"[PlayerLogic] 패링 성공: Pos={m_state.Position}, Target={m_state.TargetPosition}, LeftWallX={m_config.LeftWallX}, IsBackflip={m_state.IsBackflip}");
-            
-            // [추가]: 패링 수행 이벤트 발행 (CombatSystem에서 압착 피해 리셋용으로 사용)
+            m_state.TargetPosition = new Vector2(m_config.LeftWallX, m_state.Position.y);
+
+            // [추가]: 패링 성공 즉시 시스템 이벤트 발행 (1초 무적 부여용)
             m_eventBus.Publish(new OnParryPerformed());
-            
+
             OnParryStarted?.Invoke();
             return true;
         }
@@ -237,8 +151,7 @@ namespace TowerBreakers.Player.Logic
         public bool TryAttack(float time)
         {
             if (time - m_state.LastAttackTime < m_config.AttackCooldown) return false;
-            if (m_state.IsAttacking) EndAction();
-            if (m_state.IsDashing || m_state.IsParrying || m_state.IsRetreating) return false;
+            if (IsBusy()) return false;
 
             m_state.LastAttackTime = time;
             m_state.IsAttacking = true;
@@ -246,52 +159,102 @@ namespace TowerBreakers.Player.Logic
             return true;
         }
 
-        public GameObject GetFrontEnemy() => m_enemyDetection.GetFrontEnemy(m_state.Position);
-
-        public void SetPosition(Vector2 position)
+        public GameObject GetFrontEnemy()
         {
-            m_state.Position = new Vector2(Math.Max(position.x, m_config.LeftWallX), position.y);
-            m_state.TargetPosition = m_state.Position;
-        }
+            var enemies = GameObject.FindGameObjectsWithTag("Enemy");
+            if (enemies == null || enemies.Length == 0) return null;
 
-        public void StartRetreat() => m_state.IsRetreating = true;
+            GameObject nearest = null;
+            float minDistance = float.MaxValue;
+
+            foreach (var enemy in enemies)
+            {
+                // [수정]: 동일 층(Y축 범위 내)의 적만 타겟팅하도록 명시적 필터링 추가
+                if (Mathf.Abs(enemy.transform.position.y - m_state.Position.y) > m_config.EnemyDetectionYRange) continue;
+
+                if (enemy.transform.position.x > m_state.Position.x)
+                {
+                    float dist = enemy.transform.position.x - m_state.Position.x;
+                    if (dist < minDistance)
+                    {
+                        minDistance = dist;
+                        nearest = enemy;
+                    }
+                }
+            }
+
+            return nearest;
+        }
 
         public void EndAction()
         {
+            if (m_state.IsBackflip)
+            {
+                m_state.Position.y = m_state.ParryStartPosition.y;
+            }
+
             m_state.IsDashing = false;
+            m_state.IsWindstormDash = false;
+            m_state.IsCharging = false;
             m_state.IsParrying = false;
             m_state.IsAttacking = false;
             m_state.IsRetreating = false;
-            m_state.IsBackflip = false; // [추가]: 백덤블링 상태 해제
+            m_state.IsBackflip = false;
             m_state.TargetPosition = m_state.Position;
         }
 
         public bool IsBusy() => m_state.IsDashing || m_state.IsParrying || m_state.IsAttacking || m_state.IsRetreating;
 
-        /// <summary>
-        /// [설명]: 질풍참 스킬을 시도합니다. 적 대열의 리더 앞으로 대시하며 다수의 적을 공격합니다.
-        /// </summary>
         public bool TryWindstormSlash(float time)
         {
-            if (time - m_state.LastAttackTime < m_config.WindstormCooldown) return false;
-            if (IsBusy()) return false;
+            if (time - m_state.LastAttackTime < m_config.WindstormCooldown) 
+            {
+                Debug.Log($"[PlayerLogic] 스킬 발동 실패: 쿨타임 중 (경과: {time - m_state.LastAttackTime:F2}s)");
+                return false;
+            }
+            if (IsBusy()) 
+            {
+                Debug.Log($"[PlayerLogic] 스킬 발동 실패: 플레이어가 다른 동작 중 (Busy: {IsBusy()})");
+                return false;
+            }
+
+            var currentWeapon = m_statService.GetEquippedWeapon();
+            if (currentWeapon == null || currentWeapon.WeaponType != WeaponType.Sword)
+            {
+                Debug.Log($"[PlayerLogic] 스킬 발동 실패: 유효한 검을 장비하지 않음");
+                return false;
+            }
 
             GameObject frontEnemy = GetFrontEnemy();
-            if (frontEnemy == null) return false;
+            if (frontEnemy == null) 
+            {
+                Debug.Log("[PlayerLogic] 스킬 발동 실패: 전방에 적이 없음 (GetFrontEnemy null)");
+                return false;
+            }
 
+            // [규칙]: 적의 앞까지 돌진 (DashStopDistance 활용)
             float targetX = frontEnemy.transform.position.x - m_config.DashStopDistance;
             
             m_state.LastAttackTime = time;
             m_state.IsDashing = true;
+            m_state.IsWindstormDash = true;
+            m_state.IsCharging = true;
             m_state.TargetPosition = new Vector2(targetX, m_state.Position.y);
 
-            // [체크]: 현재 장착된 무기가 '검'인지 확인
-            var currentWeapon = m_statService is PlayerStatService service ? service.GetEquippedWeapon() : null;
-            if (currentWeapon == null || currentWeapon.WeaponType != WeaponType.Sword) return false;
+            OnWindstormSlashStarted?.Invoke();
+            return true;
+        }
+
+        /// <summary>
+        /// [설명]: 애니메이션 타격 시점에 호출되어 실제 피해를 입힙니다.
+        /// 앞에서부터 최대 3명까지 피해를 입힙니다.
+        /// </summary>
+        public void ApplyWindstormDamage(float damageValue)
+        {
+            GameObject frontEnemy = GetFrontEnemy();
+            if (frontEnemy == null) return;
 
             var leaderPush = frontEnemy.GetComponent<EnemyPushController>();
-            float finalDamage = m_statService.TotalAttack * m_config.WindstormDamageMultiplier;
-
             if (leaderPush != null)
             {
                 int hitCount = 0;
@@ -302,7 +265,7 @@ namespace TowerBreakers.Player.Logic
                     var controller = current.GetComponent<IEnemyController>();
                     if (controller != null)
                     {
-                        controller.TakeDamage(finalDamage);
+                        controller.TakeDamage(damageValue);
                         hitCount++;
                     }
                     current = current.FollowerEnemy;
@@ -310,13 +273,27 @@ namespace TowerBreakers.Player.Logic
             }
             else
             {
-                // 리더(군집 제어)가 없는 대상(보상 상자 등)은 단일 타격 처리
                 var controller = frontEnemy.GetComponent<IEnemyController>();
-                controller?.TakeDamage(finalDamage);
+                controller?.TakeDamage(damageValue);
             }
+        }
 
-            OnWindstormSlashStarted?.Invoke();
-            return true;
+        public void StartWindstormDash()
+        {
+            m_state.IsCharging = false;
+        }
+
+        public void ApplyExternalPush(Vector2 force)
+        {
+            m_state.Position += force * Time.deltaTime;
+        }
+
+        public void ForcePushPosition(float x)
+        {
+            if (m_state.Position.x > x)
+            {
+                m_state.Position.x = x;
+            }
         }
         #endregion
 

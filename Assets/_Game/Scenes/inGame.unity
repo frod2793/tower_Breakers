@@ -184,19 +184,35 @@ MonoBehaviour:
     DashSpeed: 10
     DashCooldown: 0.1
     DashMinDistance: 1
-    DashStopDistance: 1
+    DashStopDistance: 1.2
     ParryCooldown: 0.2
-    RetreatSpeed: 8
+    ParryRetreatSpeed: 12
+    SkillRetreatSpeed: 8
     ParryDuration: 0.1
     EnemyStopDuration: 1
     ParryPushForce: 4
     ParryActivationRange: 2
     ParryJumpHeight: 3
+    ParryImmunityDuration: 1
     AttackRange: 2
     AttackCooldown: 0.1
     WindstormDamageMultiplier: 2
+    WindstormChargeDuration: 0.5
+    WindstormZoomFOV: 40
     WindstormMaxTargets: 5
+    WindstormDashSpeed: 25
     WindstormCooldown: 5
+    MovementArrivalThreshold: 0.05
+    PushDuration: 0.1
+    animMovementThreshold: 0.01
+    VisualLerpSpeed: 100
+    BackflipRotationDegrees: 720
+    BackflipDistanceThreshold: 0.1
+    WindstormDashDelayMs: 150
+    WindstormAttackDelayMs: 300
+    EnemyDetectionYRange: 2
+    EnemyDetectionXOffset: 0.5
+    AttackRangeBuffer: 0.2
     LeftWallX: -4.5
     ParryRange: 5
     DamagePerHit: 1
@@ -208,6 +224,7 @@ MonoBehaviour:
   m_targetPlatform: {fileID: 0}
   m_goImage: {fileID: 1918206097}
   m_transitionSettings: {fileID: 11400000, guid: b0126e1e0c6c2a04895d564bd230dfb9, type: 2}
+  m_effectManager: {fileID: 1399966834}
   m_playerTransform: {fileID: 1084656065}
   m_playerView: {fileID: 1632754919}
   m_playerSpawnPoint: {fileID: 992580194}
@@ -2262,7 +2279,7 @@ Transform:
   m_GameObject: {fileID: 1147219683}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.1, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2670,6 +2687,57 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ee18946af409b4d16865b2fe6490962c, type: 3}
+--- !u!1 &1399966832
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1399966833}
+  - component: {fileID: 1399966834}
+  m_Layer: 0
+  m_Name: EffectManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1399966833
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1399966832}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1796424546}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1399966834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1399966832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80acd0994ab3a9c4cb79e58cdb0a3eb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerBreakers.Core.Service.EffectManager
+  m_mainCamera: {fileID: 1652479742}
+  m_config:
+    DefaultShakeDuration: 0.2
+    DefaultShakeStrength: 0.5
+    Effects: []
+  m_testZoomFOV: 40
+  m_testZoomDuration: 0.5
 --- !u!114 &1442287386 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 92938023494105849, guid: 9097df29531aa42a790fb305b234725a, type: 3}
@@ -3852,6 +3920,7 @@ Transform:
   - {fileID: 318021560}
   - {fileID: 1171159533}
   - {fileID: 837567946}
+  - {fileID: 1399966833}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1820576200
@@ -4334,17 +4403,33 @@ MonoBehaviour:
     DashMinDistance: 2
     DashStopDistance: 1.5
     ParryCooldown: 3
-    RetreatSpeed: 8
+    ParryRetreatSpeed: 12
+    SkillRetreatSpeed: 8
     ParryDuration: 0.5
     EnemyStopDuration: 0.5
     ParryPushForce: 10
     ParryActivationRange: 3
     ParryJumpHeight: 3
+    ParryImmunityDuration: 1
     AttackRange: 2
     AttackCooldown: 0.5
     WindstormDamageMultiplier: 2
+    WindstormChargeDuration: 0.5
+    WindstormZoomFOV: 40
     WindstormMaxTargets: 5
+    WindstormDashSpeed: 25
     WindstormCooldown: 5
+    MovementArrivalThreshold: 0.05
+    PushDuration: 0.1
+    animMovementThreshold: 0.01
+    VisualLerpSpeed: 100
+    BackflipRotationDegrees: 720
+    BackflipDistanceThreshold: 0.1
+    WindstormDashDelayMs: 150
+    WindstormAttackDelayMs: 300
+    EnemyDetectionYRange: 2
+    EnemyDetectionXOffset: 0.5
+    AttackRangeBuffer: 0.2
     LeftWallX: -8
     ParryRange: 5
     DamagePerHit: 1

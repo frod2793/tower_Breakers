@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using TowerBreakers.Player.DTO;
@@ -8,6 +9,7 @@ using TowerBreakers.UI;
 using TowerBreakers.Tower.Service;
 using Cysharp.Threading.Tasks;
 using TowerBreakers.Battle;
+using TowerBreakers.Core.Service;
 using TowerBreakers.Enemy.Service;
 using TowerBreakers.Player.Service;
 using TowerBreakers.UI.ViewModel;
@@ -26,7 +28,6 @@ namespace TowerBreakers.Player.View
         [SerializeField, Tooltip("[설명]: SPUM 캐릭터 본체 참조")]
         private SPUM_Prefabs m_spumPrefabs;
 
-        // [변경]: 하드코딩 방지를 위해 BattleLifetimeScope에서 주입받습니다.
         private Transform m_parryReference;
         #endregion
 
@@ -35,22 +36,19 @@ namespace TowerBreakers.Player.View
         private PlayerLogic m_logic;
         public PlayerLogic Logic => m_logic;
 
-        public void CheatEquip(string itemId)
-        {
-            m_equipmentService?.Equip(itemId);
-        }
         private BattleUIViewModel m_uiViewModel;
         private IPlayerStatService m_statService;
         private PlayerState m_currentAnimState = PlayerState.IDLE;
         private Vector3 m_lastPos;
         private CancellationTokenSource m_attackCts;
+        private IEffectService m_effectService;
+        private IEquipmentService m_equipmentService;
         #endregion
 
         #region 초기화 및 바인딩 로직
-        private IEquipmentService m_equipmentService;
-
-        public void Initialize(PlayerLogic logic, BattleUIViewModel uiViewModel, IPlayerStatService statService, IEquipmentService equipmentService, Transform parryReference)
+        public void Initialize(PlayerLogic logic, BattleUIViewModel uiViewModel, IPlayerStatService statService, IEquipmentService equipmentService, Transform parryReference, IEffectService effectService)
         {
+            m_effectService = effectService;
             m_equipmentService = equipmentService;
             if (logic == null) return;
 
@@ -96,7 +94,6 @@ namespace TowerBreakers.Player.View
             else if (skillName == "Parry")
             {
                 float refX = m_parryReference != null ? m_parryReference.position.x : float.MaxValue;
-                Debug.Log($"[PlayerView] 패링 UI 트리거: refX={refX}, PlayerX={transform.position.x}");
                 m_logic.TryParry(Time.time, refX);
             }
             else if (skillName == "Attack") m_logic.TryAttack(Time.time);
@@ -108,11 +105,7 @@ namespace TowerBreakers.Player.View
         private void Update()
         {
             if (m_logic == null) return;
-
-            // [핵심]: 로직 업데이트를 먼저 수행 (이동 변위 계산)
             m_logic.Update(Time.time, Time.deltaTime);
-            
-            // [핵심]: 로직의 결과를 뷰에 반영 (Lerp 속도를 100f로 하여 거의 즉각 동기화)
             UpdateVisualMovement();
         }
 
@@ -121,28 +114,28 @@ namespace TowerBreakers.Player.View
             if (m_logic == null) return;
 
             Vector2 logicPos = m_logic.State.Position;
-            
-            // 시각적 떨림 방지를 위한 매우 빠른 보간 (또는 즉시 대입)
-            transform.position = Vector3.Lerp(transform.position, new Vector3(logicPos.x, logicPos.y, transform.position.z), Time.deltaTime * 100f);
+            float lerpSpeed = m_config.VisualLerpSpeed > 0.1f ? m_config.VisualLerpSpeed : 100f;
+            transform.position = Vector3.Lerp(transform.position, new Vector3(logicPos.x, logicPos.y, transform.position.z), Time.deltaTime * lerpSpeed);
 
-            // [추가]: 백덤블링 회전 처리 (2바퀴 시계 반대 방향)
-            if (m_logic.State.IsBackflip)
+            // [수정]: 백덤블링 연출 조건 (목표 지점에 도달하기 전까지 활성화 - 벽까지 유지)
+            float distToTargetX = Mathf.Abs(transform.position.x - m_logic.State.TargetPosition.x);
+            if (m_logic.State.IsBackflip && distToTargetX > m_config.MovementArrivalThreshold)
             {
                 float totalDistX = Mathf.Abs(m_logic.State.TargetPosition.x - m_logic.State.ParryStartPosition.x);
-                if (totalDistX > 0.1f)
+                float distThreshold = m_config.BackflipDistanceThreshold > 0.001f ? m_config.BackflipDistanceThreshold : 0.1f;
+                if (totalDistX > distThreshold)
                 {
                     float currentDistX = Mathf.Abs(transform.position.x - m_logic.State.ParryStartPosition.x);
                     float progress = Mathf.Clamp01(currentDistX / totalDistX);
-                    // [변경]: Y축 회전 고정을 해제하고 현재 Y축 값을 유지한 채 Z축 회전(백덤블링) 수행
                     float currentY = transform.localEulerAngles.y;
-                    transform.localRotation = Quaternion.Euler(0, currentY, progress * 720f);
+                    float rotDeg = m_config.BackflipRotationDegrees > 1f ? m_config.BackflipRotationDegrees : 720f;
+                    transform.localRotation = Quaternion.Euler(0, currentY, progress * -rotDeg);
                 }
             }
             else
             {
                 if (transform.localRotation != Quaternion.identity)
                 {
-                    // [변경]: 기본 상태로 돌아올 때도 기존의 Y축 회전값(방향)을 유지하도록 계산
                     float currentY = transform.localEulerAngles.y;
                     transform.localRotation = Quaternion.Euler(0, currentY, 0);
                 }
@@ -152,7 +145,7 @@ namespace TowerBreakers.Player.View
             m_lastPos = transform.position;
 
             if (m_logic.State.IsBeingPushed) PlayAnimation(PlayerState.IDLE);
-            else if (dist > 0.01f) PlayAnimation(PlayerState.MOVE);
+            else if (dist > (m_config.animMovementThreshold > 0.001f ? m_config.animMovementThreshold : 0.01f)) PlayAnimation(PlayerState.MOVE);
             else PlayAnimation(PlayerState.IDLE);
         }
 
@@ -163,7 +156,7 @@ namespace TowerBreakers.Player.View
         }
         #endregion
 
-        #region 애니메이션 및 시퀀스 (생략 없이 유지)
+        #region 애니메이션 및 시퀀스
         private void PlayAnimation(PlayerState state)
         {
             if (m_currentAnimState == state && (state == PlayerState.IDLE || state == PlayerState.MOVE)) return;
@@ -181,18 +174,7 @@ namespace TowerBreakers.Player.View
             PlayAnimation(PlayerState.ATTACK);
             GameObject target = FindNearestEnemyInRange(m_config.ParryActivationRange);
             if (target != null) PushAndStunAllEnemiesOnFloor(m_config.EnemyStopDuration, m_config.ParryPushForce);
-            
-            // 1. 최소 애니메이션/이펙트 대기
             await UniTask.Delay((int)(m_config.ParryDuration * 1000));
-            
-            // 2. [수정]: 퇴각(리코일)이 진행 중이라면 완료될 때까지 대기 (후퇴 속도에 따른 가변 시간 대응)
-            if (m_logic != null && m_logic.State.IsRetreating)
-            {
-                await UniTask.WaitUntil(() => !m_logic.State.IsRetreating);
-                Debug.Log("[PlayerView] 퇴각 완료 확인 - 패링 액션 종료");
-            }
-            
-            if (m_logic != null) { m_logic.EndAction(); PlayAnimation(PlayerState.IDLE); }
         }
 
         private GameObject FindNearestEnemyInRange(float range)
@@ -209,12 +191,30 @@ namespace TowerBreakers.Player.View
         private void PushAndStunAllEnemiesOnFloor(float duration, float pushForce)
         {
             var allEnemies = GameObject.FindGameObjectsWithTag("Enemy");
+            
+            // [최적화]: 중복 넉백/스턴 방지를 위한 HashSet 도입
+            HashSet<EnemyPushController> processedEnemies = new HashSet<EnemyPushController>();
+
             foreach (var enemy in allEnemies)
             {
-                if (Mathf.Abs(enemy.transform.position.y - transform.position.y) < 2.0f && enemy.transform.position.x > transform.position.x - 0.5f)
+                if (Mathf.Abs(enemy.transform.position.y - transform.position.y) < m_config.EnemyDetectionYRange && enemy.transform.position.x > transform.position.x - m_config.EnemyDetectionXOffset)
                 {
-                    var push = enemy.GetComponent<EnemyPushController>();
-                    if (push != null) { push.Stun(duration); push.ApplyKnockback(Vector2.right, pushForce); }
+                    var leaderPush = enemy.GetComponent<EnemyPushController>();
+                    if (leaderPush != null)
+                    {
+                        var current = leaderPush;
+                        while (current != null)
+                        {
+                            // [핵심]: 이미 처리된 적은 건너뜀 (중복 연산 및 넉백 튐 방지)
+                            if (!processedEnemies.Contains(current))
+                            {
+                                current.Stun(duration);
+                                current.ApplyKnockback(Vector2.right, pushForce);
+                                processedEnemies.Add(current);
+                            }
+                            current = current.FollowerEnemy;
+                        }
+                    }
                 }
             }
         }
@@ -223,23 +223,73 @@ namespace TowerBreakers.Player.View
         {
             CancelAttackSequence();
             m_attackCts = new CancellationTokenSource();
+            float originalTimeScale = Time.timeScale;
             try {
-                // 1. 대시 애니메이션 및 잔상 연출 시작
+                // [연출]: 기모으기 단계 - 시간 감속 및 카메라 플레이어 줌인
+                Time.timeScale = 0.2f;
+                
+                if (m_effectService != null)
+                {
+                    // [핵심]: 카메라 모드(Ortho/Persp)에 따른 줌 값 선택
+                    Camera mainCam = Camera.main;
+                    float targetZoomValue = (mainCam != null && mainCam.orthographic) 
+                        ? m_config.WindstormZoomOrthoSize 
+                        : m_config.WindstormZoomFOV;
+
+                    Debug.Log($"[PlayerView] 질풍참 시퀀스 시작. Mode: {(mainCam?.orthographic == true ? "Ortho" : "Persp")}, TargetValue: {targetZoomValue}");
+                    m_effectService.PlayCameraZoomOnTarget(transform, targetZoomValue, m_config.WindstormChargeDuration);
+                }
+                
+                await UniTask.Delay(TimeSpan.FromSeconds(m_config.WindstormChargeDuration), ignoreTimeScale: true, cancellationToken: m_attackCts.Token);
+                
+                // [연출]: 돌진 준비 - 시간 정상화 및 카메라 복구
+                Time.timeScale = originalTimeScale;
+                m_effectService?.ResetCamera(0.1f);
+                
+                // [로직]: 적 앞까지 돌진 시작
+                m_logic?.StartWindstormDash();
                 PlayAnimation(PlayerState.MOVE);
                 
-                // 2. 대시 완료 대기 (PlayerLogic에서 Position을 MoveTowards로 업데이트함)
-                // 시각적으로 대시가 끝날 때까지 약간의 대기
-                await UniTask.Delay(150, cancellationToken: m_attackCts.Token);
+                int dashDelay = m_config.WindstormDashDelayMs > 0 ? m_config.WindstormDashDelayMs : 100;
+                await UniTask.Delay(dashDelay, cancellationToken: m_attackCts.Token);
                 
-                // 3. 발도 타격 애니메이션
+                // [연출]: 타격 - 애니메이션 재생 및 화면 흔들림
                 PlayAnimation(PlayerState.ATTACK);
+                m_effectService?.PlayCameraShake(0.4f, 1.2f); 
                 
-                // 4. 연출용 슬로우 모션 또는 히트스탑 (필요 시)
-                
-                await UniTask.Delay(300, cancellationToken: m_attackCts.Token);
-                
-                if (m_logic != null) { m_logic.EndAction(); PlayAnimation(PlayerState.IDLE); }
+                // [로직]: 실제 데미지 적용 (고정 피해 150, 최대 타겟 3명)
+                if (m_logic != null)
+                {
+                    m_logic.ApplyWindstormDamage(150f);
+                }
+
+                // [연출]: 타격 이펙트 (비주얼 전용)
+                GameObject leader = m_logic?.GetFrontEnemy();
+                if (leader != null)
+                {
+                    int hitCount = 0;
+                    var currentPush = leader.GetComponent<EnemyPushController>();
+                    while (currentPush != null && hitCount < m_config.WindstormMaxTargets)
+                    {
+                        m_effectService?.PlaySpriteEffect("HitEffect", currentPush.transform.position, Quaternion.identity);
+                        hitCount++;
+                        currentPush = currentPush.FollowerEnemy;
+                    }
+                }
+
+                int attackDelay = m_config.WindstormAttackDelayMs > 0 ? m_config.WindstormAttackDelayMs : 250;
+                await UniTask.Delay(attackDelay, cancellationToken: m_attackCts.Token);
+
+                if (m_logic != null) 
+                { 
+                    m_logic.EndAction(); 
+                    PlayAnimation(PlayerState.IDLE); 
+                }
             } catch (OperationCanceledException) { }
+            finally {
+                Time.timeScale = originalTimeScale;
+                m_effectService?.ResetCamera(0.2f);
+            }
         }
 
         private async void StartAttackSequence()
@@ -250,7 +300,12 @@ namespace TowerBreakers.Player.View
                 PlayAnimation(PlayerState.ATTACK);
                 await UniTask.Delay((int)(m_config.AttackCooldown * 0.4f * 1000), cancellationToken: m_attackCts.Token);
                 GameObject nearest = FindNearestEnemy();
-                if (nearest != null) nearest.GetComponent<IEnemyController>()?.TakeDamage(m_statService.TotalAttack);
+                if (nearest != null)
+                {
+                    nearest.GetComponent<IEnemyController>()?.TakeDamage(m_statService.TotalAttack);
+                    m_effectService?.PlaySpriteEffect("HitEffect", nearest.transform.position, Quaternion.identity);
+                    m_effectService?.PlayDefaultCameraShake();
+                }
                 await UniTask.Delay((int)(m_config.AttackCooldown * 0.6f * 1000), cancellationToken: m_attackCts.Token);
                 if (m_logic != null) { m_logic.EndAction(); PlayAnimation(PlayerState.IDLE); }
             } catch (OperationCanceledException) { }
@@ -259,7 +314,7 @@ namespace TowerBreakers.Player.View
         private GameObject FindNearestEnemy()
         {
             GameObject front = m_logic?.GetFrontEnemy();
-            if (front != null && Mathf.Abs(front.transform.position.x - transform.position.x) <= m_config.AttackRange + 0.2f) return front;
+            if (front != null && Mathf.Abs(front.transform.position.x - transform.position.x) <= m_config.AttackRange + m_config.AttackRangeBuffer) return front;
             return null;
         }
 
@@ -276,5 +331,7 @@ namespace TowerBreakers.Player.View
             enabled = false;
         }
         #endregion
+        
+        public void CheatEquip(string itemId) => m_equipmentService?.Equip(itemId);
     }
 }

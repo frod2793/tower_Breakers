@@ -32,19 +32,16 @@ namespace TowerBreakers.Enemy.Service
         #endregion
 
         #region 내부 필드
-        // 대열 관리를 위한 이중 연결 리스트
         private EnemyPushController m_aheadEnemy;    // 내 앞의 적 (리더 방향)
         private EnemyPushController m_followerEnemy; // 내 뒤의 적 (꼬리 방향)
         
-        // 캐싱 시스템
-        private static int s_generation = 0;         // 대열 변화 시 증가하는 전역 세대 번호
-        private EnemyPushController m_cachedLeader;  // 캐시된 리더
-        private int m_cachedLeaderGen = -1;           // 캐시 시점의 세대 번호
+        private static int s_generation = 0;         
+        private EnemyPushController m_cachedLeader;  
+        private int m_cachedLeaderGen = -1;           
 
-        private bool m_cachedBlocked;                // 현재 프레임의 차단 여부 캐시
-        private int m_lastBlockedFrame = -1;         // 차단 판정 수행 프레임 번호
+        private bool m_cachedBlocked;                
+        private int m_lastBlockedFrame = -1;         
 
-        // 상태 변수
         private bool m_isMoving = false;
         private bool m_canAdvance = false;
         private bool m_isStunned = false;
@@ -56,11 +53,12 @@ namespace TowerBreakers.Enemy.Service
         private Vector3 m_lastPos;
         private bool m_shouldStop = false;
 
-        // 의존성
         private IEnemyController m_enemyController;
         private EnemyVFXController m_vfxController;
         private PlayerLogic m_playerLogic;
         private Collider2D m_collider;
+
+        private Tween m_knockbackTween;
         #endregion
 
         #region 프로퍼티
@@ -69,7 +67,7 @@ namespace TowerBreakers.Enemy.Service
         public bool IsActivelyMoving => m_isMoving && m_canAdvance && !m_shouldStop && !m_isStunned && !m_isDead;
         public EnemyPushController AheadEnemy => m_aheadEnemy;
         public EnemyPushController FollowerEnemy => m_followerEnemy;
-        public EnemyType Type => m_enemyType; // [추가]
+        public EnemyType Type => m_enemyType; 
         #endregion
 
         #region 초기화 및 설정
@@ -81,9 +79,6 @@ namespace TowerBreakers.Enemy.Service
             m_lastPos = transform.position;
         }
 
-        /// <summary>
-        /// [설명]: 적 푸시 컨트롤러를 초기화합니다.
-        /// </summary>
         public void Initialize(EnemyData data, List<EnemyPushController> ignoredList, EnemyType type, int trainIndex, float spacing, PlayerLogic playerLogic)
         {
             m_enemyData = data;
@@ -94,34 +89,21 @@ namespace TowerBreakers.Enemy.Service
             m_isStunned = false;
             m_stunTimer = 0f;
 
-            // [리팩토링]: 이전 리스트 기반에서 연결 리스트 기반으로 전환 준비
-            // 연결은 외부(SpawnService)에서 SetAheadEnemy를 통해 수행됩니다.
-            
-            if (m_enemyController != null)
-            {
-                m_enemyController.OnDeath += OnDeath;
-            }
-
+            if (m_enemyController != null) m_enemyController.OnDeath += OnDeath;
             UpdateColliderState();
         }
 
-        /// <summary>
-        /// [설명]: 내 앞의 적을 설정하여 연결 리스트를 구축합니다.
-        /// </summary>
         public void SetAheadEnemy(EnemyPushController ahead)
         {
             m_aheadEnemy = ahead;
-            if (m_aheadEnemy != null)
-            {
-                m_aheadEnemy.m_followerEnemy = this;
-            }
-            
+            if (m_aheadEnemy != null) m_aheadEnemy.m_followerEnemy = this;
             InvalidateLeaderCache();
             UpdateColliderState();
         }
 
         public void SetCanAdvance(bool canAdvance) => m_canAdvance = canAdvance;
 
+        // [컴파일 오류 복구]: EnemySpawnService에서 호출하는 설정 메서드 재추가
         public void SetPushSettings(float moveSpeed, float pushRange)
         {
             m_moveSpeed = moveSpeed;
@@ -133,8 +115,8 @@ namespace TowerBreakers.Enemy.Service
         private void Update()
         {
             if (m_isDead) return;
-
             if (HandleStun()) return;
+
             if (!m_isMoving || !m_canAdvance)
             {
                 UpdateAnimationState();
@@ -147,7 +129,7 @@ namespace TowerBreakers.Enemy.Service
         }
         #endregion
 
-        #region 핵심 로직 (리팩토링됨)
+        #region 핵심 로직
         private void ExecuteMovement()
         {
             if (m_playerLogic == null) return;
@@ -155,7 +137,6 @@ namespace TowerBreakers.Enemy.Service
             float playerX = m_playerLogic.State.Position.x;
             float myX = transform.position.x;
             
-            // [최적화]: 프레임 캐싱 기반 차단 판정
             m_shouldStop = CheckBlocked(playerX, myX);
 
             if (!m_shouldStop)
@@ -173,24 +154,16 @@ namespace TowerBreakers.Enemy.Service
             float leftWallX = m_playerLogic.Config.LeftWallX;
             float distToPlayer = myX - playerX;
 
-            // 1. 리더 조건: 플레이어와 닿아있고 플레이어가 벽에 있음
             if (m_aheadEnemy == null)
             {
-                if (distToPlayer <= 0.85f && playerX <= leftWallX + 0.05f)
-                {
-                    blocked = true;
-                }
+                if (distToPlayer <= 0.85f && playerX <= leftWallX + 0.05f) blocked = true;
             }
-            // 2. 팔로워 조건: 앞의 적이 막혀있고 간격이 좁음
             else
             {
                 if (m_aheadEnemy.CheckBlocked(playerX, m_aheadEnemy.transform.position.x))
                 {
                     float distToAhead = myX - m_aheadEnemy.transform.position.x;
-                    if (distToAhead <= m_trainSpacing + 0.1f)
-                    {
-                        blocked = true;
-                    }
+                    if (distToAhead <= m_trainSpacing + 0.1f) blocked = true;
                 }
             }
 
@@ -201,9 +174,7 @@ namespace TowerBreakers.Enemy.Service
 
         private void MoveForward()
         {
-            float targetX = -100f; // 기본적으로는 계속 왼쪽으로 전진 시도
-            
-            // 일반 몹인 경우 앞 적과의 간격을 유지하며 전진
+            float targetX = -100f; 
             if (m_enemyType == EnemyType.Normal && m_aheadEnemy != null)
             {
                 targetX = m_aheadEnemy.transform.position.x + m_trainSpacing;
@@ -218,7 +189,6 @@ namespace TowerBreakers.Enemy.Service
 
         private void EnforceSpacing(float playerX)
         {
-            // 플레이어를 뚫고 가지 못하게 최소 X값 강제
             float minAllowedX = playerX + 0.65f;
             if (transform.position.x < minAllowedX)
             {
@@ -228,11 +198,7 @@ namespace TowerBreakers.Enemy.Service
 
         private void HandlePushing()
         {
-            // [최적화]: 대열의 리더이거나 특수 개체만 플레이어를 실제로 밉니다 (힘 중첩 방지)
-            if (m_aheadEnemy == null || m_enemyType != EnemyType.Normal)
-            {
-                PushPlayer();
-            }
+            if (m_aheadEnemy == null || m_enemyType != EnemyType.Normal) PushPlayer();
         }
 
         private void PushPlayer()
@@ -243,15 +209,9 @@ namespace TowerBreakers.Enemy.Service
             float myX = transform.position.x;
             float distX = myX - playerX;
 
-            // [핵심 해결]: 적의 이동 경로 내에 플레이어가 들어온 경우
             if (distX > 0 && distX <= m_pushRange + 0.2f)
             {
-                // 1. 속도 기반 푸시 (기존 유지, 저항 등 연출용)
                 m_playerLogic.ApplyExternalPush(Vector2.left * m_moveSpeed);
-
-                // 2. [추가]: 위치 기반 강제 푸시 (내동댕이 방지 핵심)
-                // 적의 현재 위치를 기준으로 플레이어가 있어야 할 '최소 X 좌표'를 강제함
-                // 0.65f는 적과 플레이어 사이의 시각적 간격 유지용 오프셋
                 m_playerLogic.ForcePushPosition(myX - 0.65f);
             }
         }
@@ -261,68 +221,46 @@ namespace TowerBreakers.Enemy.Service
         private bool HandleStun()
         {
             if (!m_isStunned) return false;
-
             m_stunTimer -= Time.deltaTime;
+            if (m_stunTimer <= 0f) m_isStunned = false;
             UpdateAnimationState();
-
-            if (m_stunTimer <= 0f)
-            {
-                m_isStunned = false;
-            }
             return true;
         }
 
         private void UpdateAnimationState()
         {
             if (m_enemyController == null) return;
-
             if (m_isStunned)
             {
                 m_enemyController.PlayAnimation(PlayerState.DAMAGED);
                 return;
             }
 
-            bool shouldMove = IsActivelyMoving && !IsLeaderStopped();
-            m_enemyController.PlayAnimation(shouldMove ? PlayerState.MOVE : PlayerState.IDLE);
+            float dist = Vector3.Distance(transform.position, m_lastPos);
+            bool isActuallyMoving = dist > 0.001f;
             m_lastPos = transform.position;
-        }
 
-        private bool IsLeaderStopped()
-        {
-            var leader = GetLeader();
-            return leader != null && leader != this && !leader.IsActivelyMoving;
+            m_enemyController.PlayAnimation(isActuallyMoving ? PlayerState.MOVE : PlayerState.IDLE);
         }
 
         private void OnDeath(GameObject obj)
         {
             m_isDead = true;
+            if (m_knockbackTween != null) m_knockbackTween.Kill();
             HandleDeathCleanup();
         }
 
         private void HandleDeathCleanup()
         {
-            // [리팩토링]: 사망 시 대열 재연결 (중간 노드 제거 시 앞뒤 연결)
-            if (m_followerEnemy != null)
-            {
-                m_followerEnemy.SetAheadEnemy(m_aheadEnemy);
-            }
-            else if (m_aheadEnemy != null)
-            {
-                // 내가 꼬리였다면 리더의 follower 참조 제거 (리더가 꼬리가 될 수도 있음)
-                m_aheadEnemy.m_followerEnemy = null;
-            }
-
-            m_aheadEnemy = null;
-            m_followerEnemy = null;
+            if (m_followerEnemy != null) m_followerEnemy.SetAheadEnemy(m_aheadEnemy);
+            else if (m_aheadEnemy != null) m_aheadEnemy.m_followerEnemy = null;
+            m_aheadEnemy = null; m_followerEnemy = null;
             InvalidateLeaderCache();
         }
 
         private void UpdateColliderState()
         {
             if (m_collider == null) return;
-            
-            // [최적화]: 리더이거나 특수 개체(엘리트/보스)만 물리 콜라이더 활성화
-            // 일반 대열의 추종자들은 물리 연산을 하지 않음
             m_collider.enabled = (m_aheadEnemy == null) || (m_enemyType != EnemyType.Normal);
         }
         #endregion
@@ -330,17 +268,10 @@ namespace TowerBreakers.Enemy.Service
         #region 유틸리티
         public EnemyPushController GetLeader()
         {
-            if (m_cachedLeaderGen == s_generation && m_cachedLeader != null)
-                return m_cachedLeader;
-
+            if (m_cachedLeaderGen == s_generation && m_cachedLeader != null) return m_cachedLeader;
             var current = this;
-            while (current.m_aheadEnemy != null)
-            {
-                current = current.m_aheadEnemy;
-            }
-
-            m_cachedLeader = current;
-            m_cachedLeaderGen = s_generation;
+            while (current.m_aheadEnemy != null) current = current.m_aheadEnemy;
+            m_cachedLeader = current; m_cachedLeaderGen = s_generation;
             return current;
         }
 
@@ -349,7 +280,7 @@ namespace TowerBreakers.Enemy.Service
         public void Stun(float duration)
         {
             m_isStunned = true;
-            m_stunTimer += duration;
+            m_stunTimer = Mathf.Max(m_stunTimer, duration);
             UpdateAnimationState();
             if (m_vfxController != null) m_vfxController.FlashColor();
         }
@@ -358,17 +289,14 @@ namespace TowerBreakers.Enemy.Service
         {
             if (m_isDead || m_enemyData == null) return;
 
-            // [핵심 해결]: 넉백 저항성 반영 (1.0이면 완전 면역, 0.0이면 전체 밀림)
             float resistanceMultiplier = 1f - m_enemyData.KnockbackResistance;
             float finalForce = force * resistanceMultiplier;
+            if (finalForce <= 0.05f) return;
 
-            if (finalForce <= 0.05f) return; // 너무 작으면 무시
-
-            Vector3 targetPos = transform.position + (Vector3)(direction.normalized * finalForce * 0.3f);
-            targetPos.z = transform.position.z;
-
-            transform.DOComplete();
-            transform.DOMove(targetPos, 0.25f).SetEase(Ease.OutQuad);
+            Vector3 jumpOffset = (Vector3)(direction.normalized * finalForce * 0.4f);
+            
+            if (m_knockbackTween != null) m_knockbackTween.Kill();
+            m_knockbackTween = transform.DOBlendableMoveBy(jumpOffset, 0.3f).SetEase(Ease.OutQuad);
 
             UpdateAnimationState();
             if (m_vfxController != null) m_vfxController.FlashColor();
@@ -376,20 +304,6 @@ namespace TowerBreakers.Enemy.Service
 
         public void StartMoving() => m_isMoving = true;
         public void StopMoving() => m_isMoving = false;
-        #endregion
-
-        #region 에디터 지원
-        private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = (m_aheadEnemy == null) ? Color.red : Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, m_pushRange);
-            
-            if (m_aheadEnemy != null)
-            {
-                Gizmos.color = Color.blue;
-                Gizmos.DrawLine(transform.position, m_aheadEnemy.transform.position);
-            }
-        }
         #endregion
     }
 }

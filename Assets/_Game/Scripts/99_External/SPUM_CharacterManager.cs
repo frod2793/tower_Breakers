@@ -34,9 +34,7 @@ namespace TowerBreakers.SPUM
 
             if (m_spumPrefabs != null)
             {
-                Debug.Log($"[SPUM_CharacterManager] 프리팹 연결 성공: {m_spumPrefabs.gameObject.name}");
-                // 프리팹 내부 구조 진단 로그
-                DiagnosePrefabStructure();
+                // SPUM 초기화
             }
             else
             {
@@ -48,19 +46,7 @@ namespace TowerBreakers.SPUM
 
         private void DiagnosePrefabStructure()
         {
-            var matchingTables = m_spumPrefabs.GetComponentsInChildren<SPUM_MatchingList>(true);
-            Debug.Log($"<color=white>[진단] 프리팹 내 MatchingList 개수: {matchingTables.Length}</color>");
-            
-            foreach (var mt in matchingTables)
-            {
-                foreach (var target in mt.matchingTables)
-                {
-                    if (target.renderer != null)
-                    {
-                        Debug.Log($"[진단] 사용 가능한 렌더러: PartType={target.PartType}, Structure={target.Structure}, Name={target.renderer.name}");
-                    }
-                }
-            }
+            // 진단 로직 (필요 시 주석 해제하여 사용)
         }
 
         public void UpdateAllEquipment()
@@ -149,12 +135,6 @@ namespace TowerBreakers.SPUM
 
             var matchingTables = m_spumPrefabs.GetComponentsInChildren<SPUM_MatchingList>(true);
             int matchedCount = 0;
-
-            // 데이터 정보 로그
-            foreach(var data in m_currentMatchingElements)
-            {
-                Debug.Log($"<color=orange>[매칭시도] 데이터: PartType={data.PartType}, Structure={data.Structure}, Path={data.ItemPath}</color>");
-            }
             
             foreach (var mt in matchingTables)
             {
@@ -248,7 +228,6 @@ namespace TowerBreakers.SPUM
                                 target.renderer.gameObject.SetActive(true);
                                 matchedCount++;
                                 isMatch = true;
-                                Debug.Log($"<color=lime>[성공] 매칭됨! 프리팹({target.PartType}/{target.Structure}/{rendererName}) <-> 데이터({ie.PartType}/{ie.Structure})</color>");
                                 break;
                             }
                             else
@@ -273,7 +252,7 @@ namespace TowerBreakers.SPUM
                 }
             }
 
-            Debug.Log($"<color=yellow>[결과] 데이터 개수: {m_currentMatchingElements.Count}, 실제 렌더러 적용 성공: {matchedCount}</color>");
+            // 매칭 결과 요약 로그 제거
         }
 
         private bool IsEquipmentPart(string partType)

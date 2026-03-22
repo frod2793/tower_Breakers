@@ -1,34 +1,37 @@
-using System.Collections.Generic;
-using UnityEngine;
-using VContainer;
-using VContainer.Unity;
-using TowerBreakers.SPUM;
-using TowerBreakers.Player.Model;
-using TowerBreakers.Player.Service;
-using TowerBreakers.Player.Stat;
-using TowerBreakers.Player.Controller;
-using TowerBreakers.Tower.Data;
-using TowerBreakers.Tower.Service;
-using TowerBreakers.Core.Scene;
-using TowerBreakers.UI.View;
-using TowerBreakers.UI.ViewModel;
-using TowerBreakers.UI.DTO;
-using TowerBreakers.Player.Logic;
-using TowerBreakers.Player.View;
-using TowerBreakers.Player.DTO;
-using Cysharp.Threading.Tasks;
-using TowerBreakers.Core.DI;
-using TowerBreakers.Enemy.DTO;
-using TowerBreakers.Battle;
-using TowerBreakers.Enemy.Service;
-using TowerBreakers.Player.Data;
+    using System;
+    using System.Collections.Generic;
+    using UnityEngine;
+    using VContainer;
+    using VContainer.Unity;
+    using TowerBreakers.SPUM;
+    using TowerBreakers.Player.Model;
+    using TowerBreakers.Player.Service;
+    using TowerBreakers.Player.Stat;
+    using TowerBreakers.Player.Controller;
+    using TowerBreakers.Tower.Data;
+    using TowerBreakers.Tower.Service;
+    using TowerBreakers.Core.Scene;
+    using TowerBreakers.UI.View;
+    using TowerBreakers.UI.ViewModel;
+    using TowerBreakers.UI.DTO;
+    using TowerBreakers.Player.Logic;
+    using TowerBreakers.Player.View;
+    using TowerBreakers.Player.DTO;
+    using Cysharp.Threading.Tasks;
+    using TowerBreakers.Core.DI;
+    using TowerBreakers.Enemy.DTO;
+    using TowerBreakers.Battle;
+    using TowerBreakers.Enemy.Service;
+    using TowerBreakers.Player.Data;
+    using TowerBreakers.Core.Service;
+    using TowerBreakers.Core.Events;
 
-namespace TowerBreakers.Core.Battle
-{
-    /// <summary>
-    /// [기능]: 인게임 전투 흐름 및 캐릭터 상태 제어기
-    /// </summary>
-    public class GameController : IStartable, ITickable
+    namespace TowerBreakers.Core.Battle
+    {
+        /// <summary>
+        /// [기능]: 인게임 전투 흐름 및 캐릭터 상태 제어기
+        /// </summary>
+        public class GameController : IStartable, ITickable, IDisposable
     {
         #region 내부 변수
         private readonly CustomSPUMManager m_characterManager;
@@ -41,7 +44,7 @@ namespace TowerBreakers.Core.Battle
         private readonly FloorTransitionService m_floorTransitionService;
         private readonly PlatformPool m_platformPool;
         private readonly PlayerSpawnService m_playerSpawnService;
-        private readonly BattleLifetimeScope m_battleLifetimeScope;
+        private readonly IEventBus m_eventBus;
         
         private PlayerPushReceiver m_playerPushReceiver;
         
@@ -57,6 +60,7 @@ namespace TowerBreakers.Core.Battle
         private readonly Transform m_rewardChestSpawnPoint;
         private readonly CombatSystem m_combatSystem;
         private readonly Transform m_parryReference; // [추가]
+        private readonly IEffectService m_effectService; // [추가: 이펙트 서비스]
         #endregion
 
         #region 유니티 생명주기
@@ -101,10 +105,12 @@ namespace TowerBreakers.Core.Battle
             EnemyConfigDTO enemyConfig,
             EquipmentDatabase equipmentDatabase,
             IEnemyDetectionService enemyDetectionService,
-            CombatSystem combatSystem, // [추가]
+            CombatSystem combatSystem,
+            IEventBus eventBus, // [추가]
             RewardChestView rewardChestPrefab = null,
             Transform rewardChestSpawnPoint = null,
-            Transform parryReference = null) // [추가]
+            Transform parryReference = null,
+            IEffectService effectService = null)
         {
             m_characterManager = characterManager;
             m_userSession = userSession;
@@ -127,10 +133,12 @@ namespace TowerBreakers.Core.Battle
             m_enemyConfig = enemyConfig;
             m_equipmentDatabase = equipmentDatabase;
             m_enemyDetectionService = enemyDetectionService;
-            m_combatSystem = combatSystem; // [추가]
+            m_combatSystem = combatSystem;
+            m_eventBus = eventBus; // [추가]
             m_rewardChestPrefab = rewardChestPrefab;
             m_rewardChestSpawnPoint = rewardChestSpawnPoint;
-            m_parryReference = parryReference; // [추가]
+            m_parryReference = parryReference;
+            m_effectService = effectService;
         }
 
         private readonly IEnemyDetectionService m_enemyDetectionService; // [추가]
@@ -143,9 +151,7 @@ namespace TowerBreakers.Core.Battle
             InitializeSystems();
             InitializePlatform();
             
-            Debug.Log("[3/5] 첫 층 설정 시작...");
             await SetupFirstFloorAsync();
-            Debug.Log("[4/5] 적 스폰 완료 - 플레이어 대시 대기 중");
             
             if (m_playerSpawnService != null)
             {
@@ -159,7 +165,7 @@ namespace TowerBreakers.Core.Battle
                 OnPlayerSpawnComplete();
             }
             
-            Debug.Log("[5/5] 인게임 전투 루프 시작");
+            // 전투 루프 시작
         }
 
         private async UniTask SetupFirstFloorAsync()
@@ -224,6 +230,22 @@ namespace TowerBreakers.Core.Battle
                 }
             }
         }
+
+        private void StopAdvanceForList(IReadOnlyList<GameObject> enemies, Transform platform)
+        {
+            foreach (var enemy in enemies)
+            {
+                if (enemy == null) continue;
+                if (enemy.transform.parent == platform)
+                {
+                    var pushController = enemy.GetComponent<EnemyPushController>();
+                    if (pushController != null)
+                    {
+                        pushController.StopMoving();
+                    }
+                }
+            }
+        }
         #endregion
 
         #region 내부 로직
@@ -261,7 +283,6 @@ namespace TowerBreakers.Core.Battle
         {
             if (m_enemySpawnService != null)
             {
-                Debug.Log("[GameController] 적 스폰 서비스 초기화 (기존 데이터 제거)");
                 m_enemySpawnService.ClearEnemies();
             }
         }
@@ -306,7 +327,7 @@ namespace TowerBreakers.Core.Battle
         {
             if (m_playerView != null)
             {
-                m_playerView.Initialize(m_playerLogic, m_uiViewModel, m_playerStatService, m_equipmentService, m_parryReference);
+                m_playerView.Initialize(m_playerLogic, m_uiViewModel, m_playerStatService, m_equipmentService, m_parryReference, m_effectService);
             }
         }
 
@@ -330,6 +351,61 @@ namespace TowerBreakers.Core.Battle
             {
                 m_floorTransitionService.OnPlatformReady += OnPlatformReady;
             }
+
+            if (m_eventBus != null)
+            {
+                m_eventBus.Subscribe<OnParryPerformed>(HandleParryPerformed);
+                m_eventBus.Subscribe<OnWallCrushOccurred>(HandleWallCrushOccurred);
+            }
+        }
+
+        private void UnsubscribeToEvents()
+        {
+            if (m_towerFloorService != null)
+            {
+                m_towerFloorService.OnAllEnemiesCleared -= OnAllEnemiesCleared;
+                m_towerFloorService.OnTowerCompleted -= OnTowerCompleted;
+            }
+
+            if (m_floorTransitionService != null)
+            {
+                m_floorTransitionService.OnPlatformReady -= OnPlatformReady;
+            }
+
+            if (m_eventBus != null)
+            {
+                m_eventBus.Unsubscribe<OnParryPerformed>(HandleParryPerformed);
+                m_eventBus.Unsubscribe<OnWallCrushOccurred>(HandleWallCrushOccurred);
+            }
+        }
+
+        public void Dispose()
+        {
+            UnsubscribeToEvents();
+        }
+
+        private void HandleParryPerformed(OnParryPerformed evt)
+        {
+            // [규칙]: 패링 성공 시 적들이 다시 진격을 시작함
+            Debug.Log("[GameController] 패링 성공 - 적 진격 재개");
+            StartEnemyAdvanceForCurrentFloor();
+        }
+
+        private void HandleWallCrushOccurred(OnWallCrushOccurred evt)
+        {
+            // [규칙]: 압착 데미지 발생 시 적들이 진격을 멈춤
+            Debug.Log("[GameController] 압착 데미지 발생 - 적 진격 일시 정지");
+            StopEnemyAdvanceForCurrentFloor();
+        }
+
+        private void StopEnemyAdvanceForCurrentFloor()
+        {
+            Transform currentPlatform = m_floorTransitionService?.GetCurrentPlatformTransform();
+            if (currentPlatform == null) return;
+
+            StopAdvanceForList(m_enemySpawnService.NormalEnemies, currentPlatform);
+            StopAdvanceForList(m_enemySpawnService.EliteEnemies, currentPlatform);
+            StopAdvanceForList(m_enemySpawnService.BossEnemies, currentPlatform);
         }
 
         private void StartFirstFloor()
@@ -373,8 +449,6 @@ namespace TowerBreakers.Core.Battle
             // [핵심 리팩토링]: 자식 개수(childCount)는 환경 오브젝트 등에 의해 부정확할 수 있으므로, 서비스 내부의 스폰 상태를 확인합니다.
             bool alreadySpawned = m_enemySpawnService.IsFloorSpawned(floor.FloorNumber);
 
-            Debug.Log($"[GameController-Diag] SpawnEnemiesForCurrentFloor 층:{floor.FloorNumber}, Platform:{platformTransform?.name}, PlatformY:{platformTransform?.position.y}, alreadySpawned:{alreadySpawned}");
-
             if (!alreadySpawned)
             {
                 Debug.Log($"[GameController] 현재 층({floor.FloorNumber}) 적이 없어 새로 스폰합니다.");
@@ -395,7 +469,6 @@ namespace TowerBreakers.Core.Battle
             if (m_floorTransitionService == null || m_towerFloorService == null) return;
 
             int currentFloor = m_towerFloorService.CurrentFloor;
-            Debug.Log($"[GameController-Diag] 선스폰 시작 - 현재 층: {currentFloor}");
 
             // 1. n+1 층 적 선스폰
             int nextFloor1 = currentFloor + 1;
@@ -406,12 +479,8 @@ namespace TowerBreakers.Core.Battle
                 
                 if (floorData != null && platform != null)
                 {
-                    bool alreadySpawned = m_enemySpawnService.IsFloorSpawned(nextFloor1);
-                    Debug.Log($"[GameController-Diag] n+1 층({nextFloor1}) 확인 - Platform:{platform.name}, PlatformY:{platform.position.y}, alreadySpawned:{alreadySpawned}");
-                    
-                    if (!alreadySpawned)
+                    if (!m_enemySpawnService.IsFloorSpawned(nextFloor1))
                     {
-                        Debug.Log($"[GameController] n+1 층({nextFloor1}) 적 선스폰 시작 (PlatformY: {platform.position.y})");
                         await m_enemySpawnService.SpawnEnemies(floorData, OnEnemyDeath, platform, false);
                     }
                 }
@@ -426,12 +495,8 @@ namespace TowerBreakers.Core.Battle
                 
                 if (floorData != null && platform != null)
                 {
-                    bool alreadySpawned = m_enemySpawnService.IsFloorSpawned(nextFloor2);
-                    Debug.Log($"[GameController-Diag] n+2 층({nextFloor2}) 확인 - Platform:{platform.name}, PlatformY:{platform.position.y}, alreadySpawned:{alreadySpawned}");
-
-                    if (!alreadySpawned)
+                    if (!m_enemySpawnService.IsFloorSpawned(nextFloor2))
                     {
-                        Debug.Log($"[GameController] n+2 층({nextFloor2}) 적 선스폰 시작 (PlatformY: {platform.position.y})");
                         await m_enemySpawnService.SpawnEnemies(floorData, OnEnemyDeath, platform, false);
                     }
                 }
@@ -564,7 +629,7 @@ namespace TowerBreakers.Core.Battle
 
             if (candidates.Count == 0) return null;
 
-            int randomIndex = Random.Range(0, candidates.Count);
+            int randomIndex = UnityEngine.Random.Range(0, candidates.Count);
             return candidates[randomIndex];
         }
 

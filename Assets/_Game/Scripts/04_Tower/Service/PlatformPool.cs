@@ -53,7 +53,7 @@ namespace TowerBreakers.Tower.Service
                 m_platformPool.Enqueue(platform);
             }
 
-            Debug.Log($"[PlatformPool] 풀 초기화 완료 - 크기: {m_poolSize}");
+            // 풀 생성 완료
         }
 
         private GameObject CreatePlatform(int index)
@@ -83,8 +83,6 @@ namespace TowerBreakers.Tower.Service
             platform.SetActive(true);
             m_activePlatforms.Add(platform);
 
-            Debug.Log($"[PlatformPool] 플랫폼 활성화 - 층: {floorNumber}");
-            
             return platform;
         }
 
@@ -108,7 +106,7 @@ namespace TowerBreakers.Tower.Service
             m_activePlatforms.Remove(platform);
             m_platformPool.Enqueue(platform);
 
-            Debug.Log("[PlatformPool] 플랫폼 반환 완료");
+            m_platformPool.Enqueue(platform);
         }
 
         public void ReturnAllPlatforms()
@@ -123,7 +121,7 @@ namespace TowerBreakers.Tower.Service
             }
 
             m_activePlatforms.Clear();
-            Debug.Log("[PlatformPool] 모든 플랫폼 반환 완료");
+            m_activePlatforms.Clear();
         }
 
         public void Clear()

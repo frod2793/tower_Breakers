@@ -76,7 +76,6 @@ namespace TowerBreakers.Tower.Service
             if (m_platformPool != null)
             {
                 m_platformDropHeight = m_platformPool.FloorSpacing;
-                Debug.Log($"[FloorTransitionService] 플랫폼 풀 설정 완료 - 하강 높이 동기화: {m_platformDropHeight}");
             }
         }
         #endregion
@@ -89,7 +88,6 @@ namespace TowerBreakers.Tower.Service
         public void SetCurrentPlatform(int floorNumber)
         {
             m_currentFloorNumber = floorNumber;
-            Debug.Log($"[FloorTransitionService] 플랫폼 번호 설정 - 현재: {floorNumber}, 다음: {floorNumber + 1}");
         }
 
         /// <summary>
@@ -126,8 +124,6 @@ namespace TowerBreakers.Tower.Service
         {
             OnTransitionStarted?.Invoke();
 
-            Debug.Log("[FloorTransitionService] ===== 트랜지션 시작 =====");
-
             // 1. UI 연출 및 클릭 대기
             if (m_uiViewModel != null)
             {
@@ -138,10 +134,9 @@ namespace TowerBreakers.Tower.Service
             if (m_playerTransform != null)
             {
                 m_playerTransform.SetParent(null);
-                Debug.Log("[FloorTransitionService] 플레이어 부모 해제 (Root 복구)");
+                m_playerTransform.SetParent(null);
             }
 
-            Debug.Log("[FloorTransitionService] 사용자 클릭 대기 중...");
             await WaitForClickAsync();
             
             if (m_uiViewModel != null)
@@ -150,16 +145,13 @@ namespace TowerBreakers.Tower.Service
             }
 
             // 2. 플레이어 퇴장 연출
-            Debug.Log("[FloorTransitionService] 플레이어 퇴장 시퀀스");
             await DashExitAsync();
 
             // 3. 지면 하강 및 플랫폼 교체
-            Debug.Log("[FloorTransitionService] 플랫폼 하강 애니메이션");
             await PlatformDropAnimationAsync();
             SwapPlatforms();
 
             // 4. 플레이어 입장 연출
-            Debug.Log("[FloorTransitionService] 플레이어 입장 시퀀스");
             if (m_playerSpawnService != null)
             {
                 await m_playerSpawnService.PlaySpawnAnimationAsync();
@@ -168,14 +160,11 @@ namespace TowerBreakers.Tower.Service
                 if (m_playerTransform != null && m_currentPlatform != null)
                 {
                     m_playerTransform.SetParent(m_currentPlatform.transform);
-                    Debug.Log($"[FloorTransitionService] 플레이어 부모 설정 완료: {m_currentPlatform.name} (WorldX:{m_currentPlatform.transform.position.x:F2})");
                 }
             }
 
             OnTransitionComplete?.Invoke();
             OnPlatformReady?.Invoke(m_currentFloorNumber);
-
-            Debug.Log("[FloorTransitionService] ===== 트랜지션 완료 =====");
         }
 
         /// <summary>
@@ -184,7 +173,6 @@ namespace TowerBreakers.Tower.Service
         public async UniTask ActivateFirstFloorPlatformAsync()
         {
             OnTransitionStarted?.Invoke();
-            Debug.Log("[FloorTransitionService] ===== 초기 플랫폼 활성화 =====");
 
             if (m_platformPool != null)
             {
@@ -196,7 +184,6 @@ namespace TowerBreakers.Tower.Service
                 if (m_playerTransform != null && m_currentPlatform != null)
                 {
                     m_playerTransform.SetParent(m_currentPlatform.transform);
-                    Debug.Log($"[FloorTransitionService] 초기 플레이어 부모 설정 완료: {m_currentPlatform.name}");
                 }
             }
 
@@ -216,7 +203,6 @@ namespace TowerBreakers.Tower.Service
             var tcs = new UniTaskCompletionSource();
             Action onClick = () => 
             {
-                Debug.Log("[FloorTransitionService] 클릭 이벤트 감지");
                 tcs.TrySetResult();
             };
             
@@ -246,7 +232,6 @@ namespace TowerBreakers.Tower.Service
             await m_playerTransform.DOMove(targetPos, 0.5f).SetEase(Ease.InQuad).ToUniTask();
             
             m_playerTransform.gameObject.SetActive(false);
-            Debug.Log("[FloorTransitionService] 플레이어 비활성화 완료");
         }
 
         /// <summary>

@@ -20,6 +20,7 @@ using TowerBreakers.Player.Logic;
 using TowerBreakers.Player.View;
 using TowerBreakers.Enemy.DTO;
 using TowerBreakers.Battle;
+using TowerBreakers.Core.Service;
 
 namespace TowerBreakers.Core.DI
 {
@@ -85,6 +86,10 @@ namespace TowerBreakers.Core.DI
 
         [SerializeField, Tooltip("씬 전환 트랜지션 설정")]
         private TransitionSettings m_transitionSettings;
+
+        [Header("이펙트")]
+        [SerializeField, Tooltip("이펙트 매니저")]
+        private EffectManager m_effectManager;
         #endregion
 
         #region 플레이어/카메라 참조
@@ -157,12 +162,15 @@ namespace TowerBreakers.Core.DI
             // [핵심]: 인스펙터에서 설정한 DTO 인스턴스를 직접 등록하여 값을 유지함
             if (m_playerConfig != null)
             {
-                Debug.Log($"[BattleLifetimeScope] 플레이어 설정 등록 완료: Hash={m_playerConfig.GetHashCode()}");
+                // 플레이어 설정 등록
             }
             
             builder.RegisterInstance(m_enemyConfig);
             builder.RegisterInstance(m_playerConfig);
             builder.RegisterInstance(m_battleUIConfig ?? new BattleUIDTO());
+            
+            // [추가]: PlayerLogic에 필요한 실시간 상태 객체 등록
+            builder.Register<PlayerStateDTO>(Lifetime.Scoped);
             
             if (m_transitionSettings != null)
             {
@@ -207,6 +215,12 @@ namespace TowerBreakers.Core.DI
 
             // 적 탐지 서비스 등록
             builder.Register<IEnemyDetectionService, EnemyDetectionService>(Lifetime.Scoped);
+
+            // 이펙트 서비스 등록 (MonoBehaviour 기반)
+            if (m_effectManager != null)
+            {
+                builder.RegisterComponent(m_effectManager).As<IEffectService>();
+            }
         }
 
         /// <summary>
@@ -253,7 +267,7 @@ namespace TowerBreakers.Core.DI
         {
             if (m_playerConfig == null) return;
 
-            Gizmos.color = Color.red;
+            Gizmos.color = new Color(1f, 0f, 0f, 0.5f); // 반투명 빨간색
             float x = m_playerConfig.LeftWallX;
             Gizmos.DrawLine(new Vector3(x, -10f, 0), new Vector3(x, 10f, 0));
         }
